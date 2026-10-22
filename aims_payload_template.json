@@ -1,0 +1,148 @@
+{
+  "note": "AIMS integration contract. Use this shape for payloads shared with AIMS. Screening values are Yes/No strings (not booleans). riskAssessment and raiAssessment are filled after RAIO assessment; they may be null/omitted at first submit.",
+  "template": {
+    "referenceId": "AIRA-YYYYMMDD-XXXXX",
+    "aiSystem": {
+      "name": "AI Use Case Name",
+      "businessOwner": {
+        "name": "Business Owner Name",
+        "email": "owner@example.com"
+      },
+      "businessUnit": "Technology"
+    },
+    "requestor": {
+      "email": "requestor@example.com"
+    },
+    "screening": {
+      "data": "Yes",
+      "decision": "No",
+      "action": "Yes"
+    },
+    "riskAssessment": {
+      "residualRiskScore": 72,
+      "severity": "High",
+      "tier": "Tier 3",
+      "baseApprovalLevel": "HoD"
+    },
+    "raiAssessment": {
+      "validationStatus": "Yes",
+      "assessedBy": "validator@example.com",
+      "assessedAt": "2026-10-20T09:00:00Z"
+    },
+    "assessmentUrl": "https://aims.example.com/submissions/AIRA-YYYYMMDD-XXXXX"
+  },
+  "fieldNotes": {
+    "referenceId": "Unique. Pattern AIRA-YYYYMMDD-XXXXX.",
+    "aiSystem.name": "String, max ~200.",
+    "aiSystem.businessOwner.name": "Request Owner display name.",
+    "aiSystem.businessOwner.email": "Owner email / UPN.",
+    "aiSystem.businessUnit": "Single value from agreed BU list.",
+    "requestor.email": "Requestor email / UPN.",
+    "screening.data": "Yes|No — sensitive data trigger.",
+    "screening.decision": "Yes|No — decision influence trigger.",
+    "screening.action": "Yes|No — act/communicate trigger.",
+    "riskAssessment.residualRiskScore": "Integer 0-100.",
+    "riskAssessment.severity": "Low|Medium|High|Critical.",
+    "riskAssessment.tier": "Tier 1|Tier 2|Tier 3|Tier 4.",
+    "riskAssessment.baseApprovalLevel": "From tier: Self-Review|Line Manager|HoD|C-Suite.",
+    "raiAssessment.validationStatus": "Yes|No.",
+    "raiAssessment.assessedBy": "Validator email.",
+    "raiAssessment.assessedAt": "ISO-8601 datetime UTC.",
+    "assessmentUrl": "Deep link to the validated assessment."
+  },
+  "examples": {
+    "AI For Us": {
+      "referenceId": "AIRA-20261020-FORUS1",
+      "aiSystem": {
+        "name": "Microsoft Copilot for Finance",
+        "businessOwner": {
+          "name": "Ayesha Khan",
+          "email": "ayesha.khan@jazz.example"
+        },
+        "businessUnit": "Finance"
+      },
+      "requestor": {
+        "email": "ayesha.khan@jazz.example"
+      },
+      "screening": {
+        "data": "Yes",
+        "decision": "No",
+        "action": "No"
+      },
+      "riskAssessment": {
+        "residualRiskScore": 42,
+        "severity": "Medium",
+        "tier": "Tier 2",
+        "baseApprovalLevel": "Line Manager"
+      },
+      "raiAssessment": {
+        "validationStatus": "Yes",
+        "assessedBy": "rahim.qureshi@jazz.example",
+        "assessedAt": "2026-10-20T09:00:00Z"
+      },
+      "assessmentUrl": "https://aims.example.com/submissions/AIRA-20261020-FORUS1"
+    },
+    "AI By Us": {
+      "referenceId": "AIRA-20261020-BYUS1",
+      "aiSystem": {
+        "name": "Credit Line Recommender",
+        "businessOwner": {
+          "name": "Ayesha Khan",
+          "email": "ayesha.khan@jazz.example"
+        },
+        "businessUnit": "JazzCash"
+      },
+      "requestor": {
+        "email": "ayesha.khan@jazz.example"
+      },
+      "screening": {
+        "data": "Yes",
+        "decision": "Yes",
+        "action": "No"
+      },
+      "riskAssessment": {
+        "residualRiskScore": 72,
+        "severity": "High",
+        "tier": "Tier 3",
+        "baseApprovalLevel": "HoD"
+      },
+      "raiAssessment": {
+        "validationStatus": "Yes",
+        "assessedBy": "rahim.qureshi@jazz.example",
+        "assessedAt": "2026-10-20T09:05:00Z"
+      },
+      "assessmentUrl": "https://aims.example.com/submissions/AIRA-20261020-BYUS1"
+    },
+    "AI Against Us": {
+      "referenceId": "AIRA-20261020-AGST1",
+      "aiSystem": {
+        "name": "Deepfake Payment Fraud Assessment",
+        "businessOwner": {
+          "name": "Ayesha Khan",
+          "email": "ayesha.khan@jazz.example"
+        },
+        "businessUnit": "Cybersecurity"
+      },
+      "requestor": {
+        "email": "ayesha.khan@jazz.example"
+      },
+      "screening": {
+        "data": "No",
+        "decision": "No",
+        "action": "No"
+      },
+      "riskAssessment": {
+        "residualRiskScore": 18,
+        "severity": "Low",
+        "tier": "Tier 1",
+        "baseApprovalLevel": "Self-Review"
+      },
+      "raiAssessment": {
+        "validationStatus": "Yes",
+        "assessedBy": "rahim.qureshi@jazz.example",
+        "assessedAt": "2026-10-20T09:10:00Z"
+      },
+      "assessmentUrl": "https://aims.example.com/submissions/AIRA-20261020-AGST1"
+    }
+  }
+}

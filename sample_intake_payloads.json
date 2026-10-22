@@ -1,0 +1,338 @@
+{
+  "note": "Sample submission payloads for JazzWorld AIRA conversational intake. Types and allowedValues match backend/app/intake/catalog.py. Conditional fields appear only when their when-rule is true. Residual risk Tier 1-4 is calculated later, not chosen in intake.",
+  "fieldCatalog": [
+    {
+      "name": "category",
+      "dataType": "string",
+      "allowedValues": ["AI For Us", "AI By Us", "AI Against Us"]
+    },
+    {
+      "name": "name",
+      "dataType": "string",
+      "allowedValues": null
+    },
+    {
+      "name": "owner",
+      "dataType": "string",
+      "allowedValues": null,
+      "source": "profile"
+    },
+    {
+      "name": "businessUnit",
+      "dataType": "string",
+      "allowedValues": [
+        "Compliance", "CRA", "Cybersecurity", "Enterprise", "Finance", "GSM",
+        "Internal Audit", "JazzCash", "JLV", "Legal", "MMBL", "P&O", "Strategy",
+        "Technology", "Teknosys"
+      ],
+      "source": "profile"
+    },
+    {
+      "name": "summary",
+      "dataType": "string",
+      "allowedValues": null,
+      "source": "auto from description"
+    },
+    {
+      "name": "segment",
+      "dataType": "string",
+      "allowedValues": [
+        "Consumer-Facing AI",
+        "Corporate AI",
+        "Enterprise AI",
+        "Internal Operations",
+        "Other"
+      ]
+    },
+    {
+      "name": "valueDriver",
+      "dataType": "string",
+      "allowedValues": [
+        "Productivity",
+        "Revenue Uplift",
+        "Cost Reduction",
+        "Customer Experience",
+        "Efficiency",
+        "Governance",
+        "Other"
+      ]
+    },
+    {
+      "name": "annualValue",
+      "dataType": "string",
+      "allowedValues": null,
+      "formatHint": "USD amount or ROI text, e.g. \"20000\" or \"10% ROI\""
+    },
+    {
+      "name": "investmentCost",
+      "dataType": "string",
+      "allowedValues": null,
+      "formatHint": "USD amount text, e.g. \"50000\""
+    },
+    {
+      "name": "spendingToDate",
+      "dataType": "string",
+      "allowedValues": null,
+      "formatHint": "USD amount text, e.g. \"0\" or \"12000\""
+    },
+    {
+      "name": "hoursSaved",
+      "dataType": "string",
+      "allowedValues": null,
+      "formatHint": "e.g. \"500 hours / year\""
+    },
+    {
+      "name": "sensitive",
+      "dataType": "string",
+      "allowedValues": ["Yes", "No"]
+    },
+    {
+      "name": "decision",
+      "dataType": "string",
+      "allowedValues": ["Yes", "No"]
+    },
+    {
+      "name": "action",
+      "dataType": "string",
+      "allowedValues": ["Yes", "No"]
+    },
+    {
+      "name": "forTool",
+      "dataType": "string",
+      "allowedValues": null,
+      "requiredWhen": "category == AI For Us"
+    },
+    {
+      "name": "forAccess",
+      "dataType": "string",
+      "allowedValues": [
+        "JazzWorld enterprise / corporate account",
+        "Supplier-managed enterprise service",
+        "Public / free web service",
+        "Individual / personal account",
+        "API / system integration"
+      ],
+      "requiredWhen": "category == AI For Us AND sensitive == Yes"
+    },
+    {
+      "name": "threatTypes",
+      "dataType": "string[]",
+      "allowedValues": [
+        "Phishing / social engineering",
+        "Deepfake / impersonation",
+        "Fraud / scam",
+        "Malware / cyber attack",
+        "Prompt / model abuse",
+        "Other"
+      ],
+      "requiredWhen": "category == AI Against Us"
+    },
+    {
+      "name": "dataExternal",
+      "dataType": "string",
+      "allowedValues": ["Yes", "No"],
+      "requiredWhen": "sensitive == Yes"
+    },
+    {
+      "name": "humanReview",
+      "dataType": "string",
+      "allowedValues": [
+        "Always",
+        "Sometimes / based on conditions",
+        "No - AI output can determine the outcome"
+      ],
+      "requiredWhen": "decision == Yes"
+    },
+    {
+      "name": "autonomy",
+      "dataType": "string",
+      "allowedValues": [
+        "Advisory only - it cannot take action",
+        "Action requires human approval each time",
+        "Can take limited actions within defined rules",
+        "Can take actions automatically across a workflow"
+      ],
+      "requiredWhen": "action == Yes"
+    }
+  ],
+  "examples": {
+    "AI For Us": {
+      "useCase": "Roll out Microsoft Copilot for finance on enterprise accounts to summarise contracts.",
+      "payload": {
+        "referenceId": "AIRA-20261019-FORUS1",
+        "submittedAt": "2026-10-19T09:00:00.000Z",
+        "category": "AI For Us",
+        "screening": {
+          "data": "Yes",
+          "decision": "No",
+          "action": "No"
+        },
+        "screeningEffective": {
+          "data": "Yes",
+          "decision": "No",
+          "action": "No"
+        },
+        "aiSystem": {
+          "name": "Microsoft Copilot for Finance",
+          "businessOwner": "Ayesha Khan",
+          "businessUnit": "Finance",
+          "summary": "Roll out Microsoft Copilot for finance on enterprise accounts to summarise contracts.",
+          "description": "We want to roll out Microsoft Copilot for finance on enterprise accounts. It will read confidential contracts and recommend summary wording, which the team reviews before use. It can only draft text and cannot send or update anything. Segment is Corporate AI. Value driver is Productivity. Estimated annual value USD 20000, investment 15000, spending to date 2000, about 40 hours per month saved."
+        },
+        "conditionalInformation": {
+          "aiForUs": {
+            "toolOrPlatform": "Microsoft Copilot",
+            "accessMethod": "JazzWorld enterprise / corporate account"
+          },
+          "data": {
+            "externalProcessing": "Yes"
+          },
+          "businessValue": {
+            "segment": "Corporate AI",
+            "valueDriver": "Productivity",
+            "annualValue": "20000",
+            "investmentCost": "15000",
+            "spendingToDate": "2000",
+            "hoursSaved": "40 hours per month"
+          }
+        },
+        "provenance": {
+          "category": { "value": "AI For Us", "source": "description", "confirmedByRequester": true },
+          "name": { "value": "Microsoft Copilot for Finance", "source": "you", "confirmedByRequester": true },
+          "segment": { "value": "Corporate AI", "source": "llm", "confirmedByRequester": true },
+          "valueDriver": { "value": "Productivity", "source": "llm", "confirmedByRequester": true },
+          "annualValue": { "value": "20000", "source": "description", "confirmedByRequester": true },
+          "investmentCost": { "value": "15000", "source": "you", "confirmedByRequester": true },
+          "spendingToDate": { "value": "2000", "source": "you", "confirmedByRequester": true },
+          "hoursSaved": { "value": "40 hours per month", "source": "description", "confirmedByRequester": true },
+          "sensitive": { "value": "Yes", "source": "description", "confirmedByRequester": true },
+          "decision": { "value": "No", "source": "you", "confirmedByRequester": true },
+          "action": { "value": "No", "source": "description", "confirmedByRequester": true },
+          "forTool": { "value": "Microsoft Copilot", "source": "description", "confirmedByRequester": true },
+          "forAccess": { "value": "JazzWorld enterprise / corporate account", "source": "description", "confirmedByRequester": true },
+          "dataExternal": { "value": "Yes", "source": "llm", "confirmedByRequester": true }
+        }
+      }
+    },
+    "AI By Us": {
+      "useCase": "Build Credit Line Recommender trained on JazzCash transactions, hosted on Azure.",
+      "payload": {
+        "referenceId": "AIRA-20261019-BYUS1",
+        "submittedAt": "2026-10-19T09:05:00.000Z",
+        "category": "AI By Us",
+        "screening": {
+          "data": "Yes",
+          "decision": "Yes",
+          "action": "No"
+        },
+        "screeningEffective": {
+          "data": "Yes",
+          "decision": "Yes",
+          "action": "No"
+        },
+        "aiSystem": {
+          "name": "Credit Line Recommender",
+          "businessOwner": "Ayesha Khan",
+          "businessUnit": "JazzCash",
+          "summary": "Build Credit Line Recommender trained on JazzCash transactions, hosted on Azure.",
+          "description": "We're building a model called \"Credit Line Recommender\" for JazzCash. It is trained on customer transactions, hosted on Azure, and recommends credit limit increases that analysts review one by one. It only produces a list and takes no action in any system. Segment Enterprise AI. Value driver Revenue Uplift. Annual value USD 100000, investment 80000, spending to date 25000, 1200 hours per year saved."
+        },
+        "conditionalInformation": {
+          "data": {
+            "externalProcessing": "Yes"
+          },
+          "decision": {
+            "humanReview": "Always"
+          },
+          "businessValue": {
+            "segment": "Enterprise AI",
+            "valueDriver": "Revenue Uplift",
+            "annualValue": "100000",
+            "investmentCost": "80000",
+            "spendingToDate": "25000",
+            "hoursSaved": "1200 hours per year"
+          }
+        },
+        "provenance": {
+          "category": { "value": "AI By Us", "source": "description", "confirmedByRequester": true },
+          "name": { "value": "Credit Line Recommender", "source": "description", "confirmedByRequester": true },
+          "segment": { "value": "Enterprise AI", "source": "you", "confirmedByRequester": true },
+          "valueDriver": { "value": "Revenue Uplift", "source": "llm", "confirmedByRequester": true },
+          "annualValue": { "value": "100000", "source": "description", "confirmedByRequester": true },
+          "investmentCost": { "value": "80000", "source": "you", "confirmedByRequester": true },
+          "spendingToDate": { "value": "25000", "source": "you", "confirmedByRequester": true },
+          "hoursSaved": { "value": "1200 hours per year", "source": "description", "confirmedByRequester": true },
+          "sensitive": { "value": "Yes", "source": "description", "confirmedByRequester": true },
+          "decision": { "value": "Yes", "source": "description", "confirmedByRequester": true },
+          "action": { "value": "No", "source": "description", "confirmedByRequester": true },
+          "dataExternal": { "value": "Yes", "source": "description", "confirmedByRequester": true },
+          "humanReview": { "value": "Always", "source": "description", "confirmedByRequester": true }
+        }
+      }
+    },
+    "AI Against Us": {
+      "useCase": "Assess deepfake voice-clone fraud risk against executives and payment staff.",
+      "payload": {
+        "referenceId": "AIRA-20261019-AGST1",
+        "submittedAt": "2026-10-19T09:10:00.000Z",
+        "category": "AI Against Us",
+        "screening": {
+          "data": "No",
+          "decision": "No",
+          "action": "No"
+        },
+        "screeningEffective": {
+          "data": "No",
+          "decision": "No",
+          "action": "No"
+        },
+        "aiSystem": {
+          "name": "Deepfake Payment Fraud Assessment",
+          "businessOwner": "Ayesha Khan",
+          "businessUnit": "Cybersecurity",
+          "summary": "Assess deepfake voice-clone fraud risk against executives and payment staff.",
+          "description": "Voice-cloned calls are impersonating our executives to get finance staff to approve payments. We want to assess this risk using public executive audio as the example. No decisions are involved, it is an assessment only, and nothing will be deployed. Segment Internal Operations. Value driver Governance. Annual value N/A, investment 5000, spending to date 0, hours saved N/A."
+        },
+        "conditionalInformation": {
+          "aiAgainstUs": {
+            "threatTypes": [
+              "Deepfake / impersonation",
+              "Fraud / scam",
+              "Phishing / social engineering"
+            ]
+          },
+          "businessValue": {
+            "segment": "Internal Operations",
+            "valueDriver": "Governance",
+            "annualValue": "N/A",
+            "investmentCost": "5000",
+            "spendingToDate": "0",
+            "hoursSaved": "N/A"
+          }
+        },
+        "provenance": {
+          "category": { "value": "AI Against Us", "source": "description", "confirmedByRequester": true },
+          "name": { "value": "Deepfake Payment Fraud Assessment", "source": "you", "confirmedByRequester": true },
+          "segment": { "value": "Internal Operations", "source": "you", "confirmedByRequester": true },
+          "valueDriver": { "value": "Governance", "source": "llm", "confirmedByRequester": true },
+          "annualValue": { "value": "N/A", "source": "you", "confirmedByRequester": true },
+          "investmentCost": { "value": "5000", "source": "you", "confirmedByRequester": true },
+          "spendingToDate": { "value": "0", "source": "you", "confirmedByRequester": true },
+          "hoursSaved": { "value": "N/A", "source": "you", "confirmedByRequester": true },
+          "sensitive": { "value": "No", "source": "description", "confirmedByRequester": true },
+          "decision": { "value": "No", "source": "description", "confirmedByRequester": true },
+          "action": { "value": "No", "source": "description", "confirmedByRequester": true },
+          "threatTypes": {
+            "value": [
+              "Deepfake / impersonation",
+              "Fraud / scam",
+              "Phishing / social engineering"
+            ],
+            "source": "description",
+            "confirmedByRequester": true
+          }
+        }
+      }
+    }
+  }
+}
