@@ -2,7 +2,9 @@
 
 Python API for the Responsible AI Office approval portal. It accepts a request in conversation or as the portal's submission payload, blocks near-duplicates, notifies the requester and Governance & Compliance, and scores residual risk with methodology **AIRA-DDA-1.0**.
 
-The scoring math, screening questions, early flags, reviewer routing, and 80% duplicate rule are the same ones embedded in `Ai_risk_assessment_icon_toggle.html`.
+> Full product docs, architecture diagrams, and the live demo link are in the [root README](../README.md).
+
+The scoring math, screening questions, early flags, reviewer routing, and **90%** duplicate rule are the same ones embedded in `Ai_risk_assessment_icon_toggle.html`.
 
 ## Run
 
