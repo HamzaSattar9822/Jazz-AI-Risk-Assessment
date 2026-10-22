@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: jazz-ai-risk-assessment
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: DATABASE_URL
+        value: sqlite:////tmp/aira.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE_MINUTES
+        value: "720"
+      - key: MAIL_PROVIDER
+        value: log
+      - key: CORS_ORIGINS
+        value: https://jazz-ai-risk-assessment.onrender.com
+      - key: DUPLICATE_THRESHOLD
+        value: "90"
+      - key: GOVERNANCE_EMAIL
+        value: sana.malik@jazz.example
