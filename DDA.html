@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JazzWorld AI Approval Portal - Conversational Intake (Prototype)</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>JazzWorld AI Approval Portal — AIRA</title>
 <style>
 :root{
   --red:#d71920;--magenta:#880939;--purple:#5a024e;
@@ -153,15 +155,15 @@ textarea{resize:vertical;min-height:88px;line-height:1.5}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .check{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line-strong);padding:10px 12px;border-radius:10px;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
 .check:hover{border-color:#65505d}
-.check input{width:18px;height:18px;margin:2px 0 0;accent-color:#d52c66;flex:none}
+.check input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:#d52c66;flex:none}
 .check span{font-size:14px;line-height:1.4}
-.check:has(input:checked){border-color:#d52c66;background:#1b0e15}
+.check:has(input[type=checkbox]:checked){border-color:#d52c66;background:#1b0e15}
 .check:has(input:focus-visible){outline:2px solid var(--accent-ink);outline-offset:2px}
 .more{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:16px}
 .more summary{cursor:pointer;padding:15px 18px;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
 .more summary::-webkit-details-marker{display:none}
 .more summary::after{content:"+";font-size:20px;color:var(--accent-ink);line-height:1}
-.more[open] summary::after{content:"–"}
+.more[open] summary::after{content:"-"}
 .more summary small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}
 .more .inner{padding:4px 18px 18px}
 
@@ -191,6 +193,10 @@ textarea{resize:vertical;min-height:88px;line-height:1.5}
 .route-box{background:radial-gradient(circle at 100% 0%,rgba(215,25,32,.14),transparent 38%),linear-gradient(135deg,#171014,#0d0b0e);border:1px solid #553044;border-radius:16px;padding:20px;margin-bottom:16px}
 .route-box h2{font-size:18px;color:#ffd0e0}
 .route-box .sub{font-size:14px;color:var(--muted);margin:4px 0 12px}
+
+.route-box.route-one{padding:14px 16px;font-size:14px;line-height:1.45;color:var(--ink)}
+.route-box.route-one b{color:#ffd0e0;margin-right:6px;font-weight:700}
+
 .route-chips{display:flex;gap:8px;flex-wrap:wrap}
 .route-chip{padding:6px 12px;border-radius:999px;background:#151216;border:1px solid #48323e;font-size:13px;font-weight:600;color:#f2e9ed}
 .sec{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:14px;overflow:hidden}
@@ -204,10 +210,67 @@ textarea{resize:vertical;min-height:88px;line-height:1.5}
 .sec-empty{padding:12px 0;color:var(--faint);font-size:14px}
 .notice{font-size:13px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line);padding:10px 13px;border-radius:10px;line-height:1.5}
 
+
+/* ---------- risk assessment placeholder ---------- */
+.risk-box{background:linear-gradient(160deg,#171019,#0d0b0e);border:1px solid #553044;border-radius:16px;padding:16px;margin-bottom:16px}
+.risk-box h3,.risk-box h2{font-size:16px;color:#ffd0e0;margin:0 0 4px}
+.risk-box .sub{font-size:12.5px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+.risk-box.pending{opacity:.92;border-style:dashed}
+.risk-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.risk-metric{background:#120f13;border:1px solid #362b34;border-radius:10px;padding:10px}
+.risk-metric b{display:block;font-size:22px;line-height:1.1;letter-spacing:-.02em}
+.risk-metric span{display:block;font-size:11.5px;color:var(--muted);margin-top:4px}
+.risk-metric.residual b{color:#ff8bad}
+.risk-detail{font-size:12.5px;color:#d9d4dc;display:grid;gap:4px}
+.risk-detail div{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #292329;padding-top:5px}
+.risk-detail div:first-child{border-top:0;padding-top:0}
+.risk-detail .k{color:var(--muted)}
+.risk-detail .v{text-align:right;font-weight:600}
+.risk-box.review-score{display:block}
+.risk-score-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px}
+.risk-score-top h2,.risk-score-top h3{margin:0 0 4px}
+.risk-score-top .sub{margin:0;max-width:48ch}
+.risk-dl{flex:none;align-self:center;white-space:nowrap}
+
+.guardrail{display:flex;gap:10px;align-items:flex-start;margin:8px 0 12px;padding:10px 12px;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:12px;color:var(--ink);font-size:13.5px;line-height:1.45;max-width:100%}
+.guardrail b{display:block;color:var(--warn);margin-bottom:2px;font-size:13px}
+.guardrail span{color:var(--muted)}
+.panel-guard{margin:0 0 12px;padding:10px 12px;border:1px dashed var(--accent-line);background:var(--accent-bg);border-radius:10px;font-size:12.5px;color:var(--accent-ink);line-height:1.45}
+.srow.flash{animation:slotFlash 1.4s ease;outline:1px solid var(--accent-line);background:var(--accent-bg)}
+@keyframes slotFlash{0%{background:var(--accent-bg);transform:scale(1)}30%{background:var(--ok-bg)}100%{background:transparent}}
+
+.risk-box.review-score .risk-metrics{grid-template-columns:1fr 1fr;margin-bottom:8px}
+.risk-box.review-score .risk-detail{grid-template-columns:1fr;gap:4px}
+
+.risk-flags{margin-top:12px;padding-top:10px;border-top:1px solid #3a2a34}
+.risk-flags .rf-h{font-size:12px;font-weight:700;color:#ffd0e0;letter-spacing:.02em;text-transform:uppercase;margin:0 0 8px}
+.risk-flags .rf{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid #292329;font-size:13px;line-height:1.4}
+.risk-flags .rf:first-of-type{border-top:0;padding-top:0}
+.risk-flags .rf i{width:8px;height:8px;border-radius:50%;background:var(--warn);margin-top:5px;flex:none}
+.risk-flags .rf.urgent i{background:#ff5b5b}
+.risk-flags .rf.info i{background:#6f9ad0}
+.risk-flags .rf b{display:block;font-weight:650;color:var(--ink)}
+.risk-flags .rf span{color:var(--muted);font-size:12.5px}
+.risk-flags .rf-none{font-size:13px;color:var(--muted);margin:0}
+body[data-theme="light"] .risk-flags{border-top-color:#efc4d2}
+body[data-theme="light"] .risk-flags .rf-h{color:#7c173a}
+body[data-theme="light"] .risk-flags .rf{border-top-color:#eee4e8}
+
+@media(max-width:600px){
+  .risk-score-top{flex-direction:column;align-items:stretch}
+  .risk-dl{width:100%}
+}
+
+
 /* ---------- done ---------- */
 .confirm{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px;margin-bottom:20px}
 .confirm-icon{width:56px;height:56px;border-radius:50%;margin-bottom:14px;display:grid;place-items:center;background:var(--ok-bg);color:var(--ok);font-size:26px;font-weight:800}
 .confirm h1{font-size:clamp(26px,4vw,34px)}
+.email-status{display:flex;gap:12px;align-items:flex-start;margin-top:18px;padding:14px 16px;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:12px;color:var(--warn);font-size:14px;line-height:1.5}
+.email-status b{display:block;margin-bottom:2px;color:var(--warn)}
+.email-status.sent{border-color:var(--ok-line);background:var(--ok-bg);color:var(--ok)}
+.email-status.sent b{color:var(--ok)}
+.email-status .email-status-icon{font-size:18px;line-height:1.2;flex:none}
 .ref-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 6px}
 .ref{font-family:Consolas,"SF Mono",monospace;font-size:18px;background:#09090b;border:1px solid var(--line-strong);border-radius:10px;padding:9px 14px}
 .next-list{list-style:none;margin:16px 0 0;padding:0;counter-reset:n}
@@ -251,14 +314,32 @@ textarea{resize:vertical;min-height:88px;line-height:1.5}
 
 /* ================= conversational intake prototype ================= */
 body{overflow-x:hidden}
+
+.link-btn{background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline;cursor:pointer;font-size:13.5px}
+.intro-tools .links{font-size:13.5px;color:var(--faint);display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px}
+.panel-head h2{margin:0}
+.panel-head .close-drawer{display:none}
+
+/* cover checklist (Data / Decision / Action) */
+.cover{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.cv{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:5px 12px 5px 8px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.cv:hover{border-color:#c64475;color:var(--ink)}
+.cv i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line-strong);display:grid;place-items:center;font-style:normal;font-size:9px;line-height:1;color:#06210f}
+.cv.hit{border-color:var(--ok-line);background:var(--ok-bg);color:var(--ok)}
+.cv.hit i{background:var(--ok);border-color:var(--ok)}
+.cv.hit i::before{content:"✓"}
+.cover-note{font-size:13.5px;color:var(--accent-ink);margin-left:4px}
+.cover-note.good{color:var(--ok)}
+
 .topbar-inner .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 .proto-tag{font-size:12px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line);padding:4px 10px;border-radius:999px}
 
 /* intro */
-.intro{max-width:620px;margin:0 auto;padding:12vh 18px 40px}
-.intro h1{font-size:clamp(26px,4vw,34px);letter-spacing:-.01em;margin:0 0 16px}
+.intro{max-width:760px;margin:0 auto;padding:44px 18px 60px}
+.intro h1{font-size:clamp(28px,4.6vw,44px);letter-spacing:-.015em;max-width:18ch;margin:18px 0 12px}
 .intro .lead{color:var(--muted);font-size:17px;max-width:60ch}
-.intro textarea{min-height:110px;font-size:16px}
+.intro textarea{min-height:170px;margin-top:22px;font-size:16px}
 .intro-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
 .tries{margin-top:26px}
 .tries h2{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:10px}
@@ -268,19 +349,51 @@ body{overflow-x:hidden}
 .try span{font-size:13px;color:var(--muted)}
 .fine{font-size:13px;color:var(--faint);margin-top:18px;max-width:64ch}
 
-/* split shell */
-.shell{display:block;height:calc(100vh - 66px);height:calc(100dvh - 66px)}
-.chat-col{height:100%}
-.chat-col{display:flex;flex-direction:column;min-height:0;min-width:0}
-.chat{flex:1;overflow-y:auto;padding:22px 22px 8px;scroll-behavior:smooth}
+/* split shell — form left, chat right */
+.shell{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);height:calc(100vh - 66px);height:calc(100dvh - 66px)}
+.chat-col{display:flex;flex-direction:column;min-height:0;min-width:0;border-left:1px solid var(--line)}
+.chat-head{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:rgba(9,9,11,.72);flex:none}
+.chat-head .bot-meta{min-width:0}
+.chat-head .bot-name{font-size:15px;font-weight:800;letter-spacing:.01em;line-height:1.2}
+.chat-head .bot-role{font-size:12px;color:var(--muted);margin-top:2px}
+.bot-avatar{
+  flex:none;width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(145deg,#e31b23 0%,#b40b48 55%,#72005e 100%);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 6px 16px rgba(180,11,72,.28);
+  display:grid;place-items:center;overflow:hidden;
+}
+.bot-avatar svg{width:22px;height:22px;display:block}
+.bot-avatar.sm{width:30px;height:30px;box-shadow:none}
+.bot-avatar.sm svg{width:16px;height:16px}
+.chat{flex:1;overflow-y:auto;padding:22px 22px 8px;scroll-behavior:smooth;min-height:0}
 .chat-inner{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
-.msg{max-width:88%;padding:12px 15px;border-radius:16px;font-size:15px;line-height:1.5;animation:pop .18s ease-out}
+.chat-widgets{flex:none;max-height:min(46vh,420px);overflow-y:auto;padding:10px 22px 12px;border-top:1px solid var(--line);background:rgba(9,9,11,.92);position:relative;z-index:5;pointer-events:auto;-webkit-overflow-scrolling:touch}
+.chat-widgets:empty{display:none;padding:0;border:0;max-height:0}
+.chat-widgets-inner{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.helper-q{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface-2)}
+.helper-q .hq-label{font-size:12.5px;color:var(--muted);line-height:1.35}
+.helper-q input[type=text]{
+  width:100%;min-height:42px;border:1px solid var(--line-strong);border-radius:10px;
+  background:#09090b;padding:10px 12px;font-size:15px;outline:none;color:inherit;
+  pointer-events:auto;cursor:text;
+}
+.helper-q input[type=text]:focus{border-color:#c64475;box-shadow:0 0 0 3px rgba(198,68,117,.18)}
+.helper-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.helper-opts .pill{padding:7px 12px;font-size:13px}
+.helper-opts .pill.on{border-color:#c64475;background:#2a101c;color:var(--accent-ink)}
+.msg-row{display:flex;align-items:flex-end;gap:8px;max-width:100%;animation:pop .18s ease-out}
+.msg-row.agent,.msg-row.coach{align-self:flex-start;max-width:92%}
+.msg-row.user{align-self:flex-end;flex-direction:row-reverse;max-width:88%}
+.msg{padding:12px 15px;border-radius:16px;font-size:15px;line-height:1.5;min-width:0}
 @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.msg.agent{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line);border-top-left-radius:4px}
-.msg.user{align-self:flex-end;background:#2a101c;border:1px solid var(--accent-line);border-top-right-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere}
-.msg.coach{align-self:flex-start;background:var(--warn-bg);border:1px solid var(--warn-line);border-top-left-radius:4px;color:#f5e7b0}
+.msg.agent{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.user{background:#2a101c;border:1px solid var(--accent-line);border-bottom-right-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.coach{background:var(--warn-bg);border:1px solid var(--warn-line);border-bottom-left-radius:4px;color:#f5e7b0}
 .msg.coach b{display:block;color:var(--warn);margin-bottom:2px}
 .msg .small{display:block;margin-top:6px}
+.msg .msg-from{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.msg.agent .msg-from{color:var(--accent-ink)}
 .msg.typing{display:flex;gap:5px;align-items:center;padding:14px 16px}
 .msg.typing i{width:7px;height:7px;border-radius:50%;background:var(--faint);animation:bl 1s infinite}
 .msg.typing i:nth-child(2){animation-delay:.15s}.msg.typing i:nth-child(3){animation-delay:.3s}
@@ -290,21 +403,23 @@ body{overflow-x:hidden}
 .batch .k{font-size:12px;color:var(--muted)}
 .batch .v{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .batch .w{font-size:12px;color:var(--faint)}
-.widget{align-self:flex-start;max-width:100%;display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px}
+.widget{align-self:flex-start;max-width:100%;display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px;position:relative;z-index:2;pointer-events:auto}
 .widget.col{flex-direction:column;align-items:stretch;width:min(460px,100%)}
-.pill{border:1px solid var(--line-strong);background:var(--surface-2);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:14px;transition:background .15s,border-color .15s;text-align:left}
+.pill{border:1px solid var(--line-strong);background:var(--surface-2);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:14px;transition:background .15s,border-color .15s;text-align:left;pointer-events:auto;-webkit-tap-highlight-color:transparent}
 .pill:hover{border-color:#c64475;background:var(--surface-3)}
 .pill.primary{background:var(--grad);border-color:#bc1743;color:#fff}
-.widget .check{width:100%}
-.widget .row-in{display:flex;gap:8px;width:100%}
-.widget input[type=text]{flex:1}
+.widget .check{width:100%;cursor:pointer;pointer-events:auto}
+.widget .check input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;flex:none}
+.widget .row-in{display:flex;gap:8px;width:100%;align-items:center}
+.widget input[type=text]{flex:1;min-height:42px;pointer-events:auto;cursor:text}
+.widget button,.widget input,.widget label,.helper-q,.helper-q *{pointer-events:auto}
 .composer{border-top:1px solid var(--line);background:rgba(5,5,6,.94);padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px))}
 .composer-in{max-width:640px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
 .composer textarea{min-height:46px;max-height:130px;resize:none;padding:11px 12px}
 .composer .hintline{max-width:640px;margin:6px auto 0;font-size:12px;color:var(--faint)}
 
-/* live summary */
-.panel-col{border-left:1px solid var(--line);overflow-y:auto;min-height:0;background:rgba(9,9,11,.6)}
+/* live summary (left column) */
+.panel-col{overflow-y:auto;min-height:0;background:rgba(9,9,11,.6)}
 .panel-in{padding:20px 20px 40px;max-width:620px;margin:0 auto}
 .panel-in h2{font-size:17px}
 .meter{margin:10px 0 4px;height:6px;background:#1d1a1f;border-radius:99px;overflow:hidden}
@@ -335,12 +450,25 @@ body{overflow-x:hidden}
 .pf b{display:block}
 .pf span{color:var(--muted)}
 
-/* summary drawer */
-.panel-col{position:fixed;top:66px;right:0;bottom:0;width:min(400px,100%);z-index:35;background:var(--bg);border-left:1px solid var(--line-strong);box-shadow:-24px 0 50px rgba(0,0,0,.55);transform:translateX(102%);visibility:hidden;transition:transform .2s,visibility .2s}
-.panel-col.open{transform:none;visibility:visible}
-.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-@media(max-width:700px){.srow{grid-template-columns:1fr auto}.srow .l{grid-column:1/-1;padding:0}.proto-tag{display:none}.msg{max-width:94%}.topbar-inner .brand small{display:none}}
-
+/* mobile: summary drawer (DDA-style) instead of tabs */
+.tabs{display:none!important}
+@media(max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .chat-col{border-left:0}
+  .panel-col{
+    position:fixed;top:66px;left:0;bottom:0;width:min(400px,100%);z-index:35;
+    background:var(--bg);border-right:1px solid var(--line-strong);
+    box-shadow:24px 0 50px rgba(0,0,0,.55);
+    transform:translateX(-102%);visibility:hidden;
+    transition:transform .2s,visibility .2s;overflow-y:auto;
+  }
+  .panel-col.open{transform:none;visibility:visible}
+  .panel-head .close-drawer{display:inline-flex}
+  .srow{grid-template-columns:1fr auto}.srow .l{grid-column:1/-1;padding:0}
+  .proto-tag{display:none}
+  .msg{max-width:94%}
+  .topbar-inner .brand small{display:none}
+}
 /* review overlay + done */
 .overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}
 .sheet{width:min(760px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--bg);border:1px solid var(--line-strong);border-radius:20px;padding:24px}
@@ -354,34 +482,254 @@ body{overflow-x:hidden}
 @media print{.overlay{display:none}.shell,.intro,.topbar{display:none!important}.donewrap{display:block!important}}
 
 
-.cover{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
-.cv{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:5px 12px 5px 8px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
-.cv:hover{border-color:#c64475;color:var(--ink)}
-.cv i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line-strong);display:grid;place-items:center;font-style:normal;font-size:9px;line-height:1;color:#06210f}
-.cv.hit{border-color:var(--ok-line);background:var(--ok-bg);color:var(--ok)}
-.cv.hit i{background:var(--ok);border-color:var(--ok)}
-.cv.hit i::before{content:"✓"}
-.cover-note{font-size:13.5px;color:var(--accent-ink);margin-left:4px}
-.cover-note.good{color:var(--ok)}
-.intro-tools{margin-top:14px}
-.intro-tools .links{font-size:13.5px;color:var(--faint)}
-.link-btn{font-size:13.5px}
-.fine{margin-top:28px;font-size:12.5px}
-/* calmer chat */
-.chat{padding:20px 16px 8px}
-.msg{font-size:15px;padding:10px 14px}
-.batch{margin:8px 0 0;gap:4px}
-.batch li{grid-template-columns:130px 1fr;gap:2px 10px;padding:7px 10px;align-items:baseline}
-.batch .w{grid-column:2;font-size:11.5px}
-.msg.coach b{display:inline;margin:0 6px 0 0}
-@media(max-width:700px){.batch li{grid-template-columns:1fr}.batch .w{grid-column:1}}
-.batch{gap:0}
-.batch li{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;padding:6px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none}
-.batch li:last-child{border-bottom:0}
-.batch .k{flex:0 0 140px;font-size:13px}
-.batch .v{flex:0 1 auto;font-size:14px}
-.batch .w{grid-column:auto;font-size:12px;flex:1 1 100%;padding-left:150px;margin-top:-1px}
-@media(max-width:700px){.batch .k{flex-basis:100%}.batch .w{padding-left:0}}
+/* ---------- light theme ---------- */
+body[data-theme="light"]{
+  --bg:#f7f4f5;
+  --surface:#ffffff;
+  --surface-2:#f3eef0;
+  --surface-3:#ebe3e6;
+  --line:#e5dbe0;
+  --line-strong:#d2c4cb;
+  --ink:#1c1216;
+  --muted:#5c5157;
+  --faint:#81757c;
+  --accent:#d71920;
+  --accent-ink:#9b1438;
+  --accent-bg:#fdf2f5;
+  --accent-line:#efc9d4;
+  --ok:#0f6b45;
+  --ok-bg:#eef8f2;
+  --ok-line:#b4dfc5;
+  --warn:#7a5f10;
+  --warn-bg:#fff8e6;
+  --warn-line:#e5d190;
+  --err:#b4232e;
+  --err-bg:#fff1f2;
+  --err-line:#efc0c4;
+  color-scheme:light;
+  color:var(--ink);
+  background:
+    radial-gradient(920px 420px at 8% -6%,rgba(215,25,32,.10),transparent 58%),
+    radial-gradient(780px 380px at 96% 0%,rgba(136,9,57,.07),transparent 55%),
+    linear-gradient(180deg,#fbf8f9 0%,#f4f0f2 100%);
+  background-attachment:fixed;
+}
+body[data-theme="light"] .topbar,
+body[data-theme="light"] .composer{
+  background:rgba(255,255,255,.92);
+  border-color:var(--line);
+  box-shadow:0 1px 0 rgba(28,18,22,.04);
+}
+body[data-theme="light"] .topbar{backdrop-filter:blur(14px)}
+body[data-theme="light"] .brand small,
+body[data-theme="light"] .proto-tag{color:var(--warn)}
+body[data-theme="light"] .proto-tag{
+  background:var(--warn-bg);border-color:var(--warn-line);color:#6d540c;
+}
+body[data-theme="light"] .btn{
+  background:var(--surface);border-color:var(--line-strong);color:var(--ink);
+  box-shadow:0 1px 2px rgba(28,18,22,.04);
+}
+body[data-theme="light"] .btn:hover:not(:disabled){background:var(--surface-2);border-color:#c4b0b8}
+body[data-theme="light"] .btn.ghost{background:transparent;border-color:transparent;color:var(--muted);box-shadow:none}
+body[data-theme="light"] .btn.primary{
+  background:var(--grad);border-color:#bc1743;color:#fff;
+  box-shadow:0 8px 20px rgba(136,9,57,.18);
+}
+body[data-theme="light"] input[type=text],
+body[data-theme="light"] input[type=number],
+body[data-theme="light"] input[type=date],
+body[data-theme="light"] select,
+body[data-theme="light"] textarea{
+  background:#fff;color:var(--ink);border-color:var(--line-strong);
+  box-shadow:inset 0 1px 2px rgba(28,18,22,.03);
+}
+body[data-theme="light"] input:focus,
+body[data-theme="light"] select:focus,
+body[data-theme="light"] textarea:focus{
+  border-color:#d98aa3;outline:none;box-shadow:0 0 0 3px rgba(215,25,32,.12);
+}
+body[data-theme="light"] .try{
+  background:#fff;border-color:var(--line);box-shadow:0 2px 8px rgba(28,18,22,.04);
+}
+body[data-theme="light"] .try:hover{border-color:#d98aa3;background:var(--accent-bg)}
+body[data-theme="light"] .fine{color:var(--faint)}
+body[data-theme="light"] .cover-note{color:var(--accent-ink)}
+body[data-theme="light"] .cv{
+  background:#fff;border-color:var(--line-strong);color:var(--muted);
+  box-shadow:0 1px 2px rgba(28,18,22,.03);
+}
+body[data-theme="light"] .cv:hover{border-color:#d98aa3;color:var(--ink)}
+body[data-theme="light"] .cv.hit{
+  background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok);
+}
+body[data-theme="light"] .shell{background:transparent}
+body[data-theme="light"] .chat{background:transparent}
+body[data-theme="light"] .chat-head{
+  background:rgba(255,255,255,.92);
+  border-bottom-color:var(--line);
+}
+body[data-theme="light"] .chat-head .bot-name{color:var(--ink)}
+body[data-theme="light"] .msg.agent,
+body[data-theme="light"] .batch li{
+  background:#fff;border-color:var(--line);
+  box-shadow:0 2px 10px rgba(28,18,22,.05);
+  color:var(--ink);
+}
+body[data-theme="light"] .msg.agent .msg-from{color:#8b1a3a}
+body[data-theme="light"] .msg.user{
+  background:linear-gradient(160deg,#fff0f4,#ffe8ef);
+  border-color:var(--accent-line);color:#3a1824;
+  box-shadow:0 2px 10px rgba(215,25,32,.08);
+}
+body[data-theme="light"] .msg.coach{
+  background:var(--warn-bg);border-color:var(--warn-line);color:#5c4a12;
+}
+body[data-theme="light"] .msg.coach b{color:var(--warn)}
+body[data-theme="light"] .msg.typing i{background:var(--faint)}
+body[data-theme="light"] .batch .k,
+body[data-theme="light"] .batch .w{color:var(--muted)}
+body[data-theme="light"] .batch .v{color:var(--ink)}
+body[data-theme="light"] .pill{
+  background:#fff;border-color:var(--line-strong);color:var(--ink);
+  box-shadow:0 1px 2px rgba(28,18,22,.04);
+}
+body[data-theme="light"] .pill:hover{border-color:#d98aa3;background:var(--accent-bg)}
+body[data-theme="light"] .pill.primary{
+  background:var(--grad);border-color:#bc1743;color:#fff;box-shadow:0 6px 16px rgba(136,9,57,.2);
+}
+body[data-theme="light"] .composer{backdrop-filter:blur(12px)}
+body[data-theme="light"] .hintline{color:var(--faint)}
+body[data-theme="light"] .panel-col{
+  background:rgba(255,255,255,.88);
+  border-left:1px solid var(--line);
+  box-shadow:-8px 0 28px rgba(28,18,22,.04);
+}
+body[data-theme="light"] .panel-in h2{color:var(--ink)}
+body[data-theme="light"] .meter{background:#eadfe4}
+body[data-theme="light"] .meter-t,
+body[data-theme="light"] .grp h3,
+body[data-theme="light"] .side-note{color:var(--muted)}
+body[data-theme="light"] .srow{
+  background:#fff;border-color:var(--line);
+  box-shadow:0 1px 3px rgba(28,18,22,.04);
+}
+body[data-theme="light"] .srow.inferred{
+  background:var(--accent-bg);border-color:var(--accent-line);
+}
+body[data-theme="light"] .srow.empty{background:transparent;border-color:var(--line-strong)}
+body[data-theme="light"] .srow .l,
+body[data-theme="light"] .srow .tag{color:var(--muted)}
+body[data-theme="light"] .srow.inferred .tag{color:var(--accent-ink)}
+body[data-theme="light"] .mini{
+  background:#fff;border-color:var(--line-strong);color:var(--ink);
+}
+body[data-theme="light"] .mini:hover{border-color:#d98aa3;background:var(--accent-bg)}
+body[data-theme="light"] .panel-guard{
+  background:var(--accent-bg);border-color:var(--accent-line);color:var(--accent-ink);
+}
+body[data-theme="light"] .pf{border-top-color:var(--line)}
+body[data-theme="light"] .pf span{color:var(--muted)}
+body[data-theme="light"] .route-box{
+  background:linear-gradient(145deg,#fff7f9,#ffffff);
+  border-color:var(--accent-line);
+  box-shadow:0 4px 16px rgba(215,25,32,.06);
+}
+body[data-theme="light"] .route-box h2,
+body[data-theme="light"] .route-box.route-one b{color:var(--accent-ink)}
+body[data-theme="light"] .route-chip{
+  background:#fff;border-color:var(--accent-line);color:#3a242c;
+}
+body[data-theme="light"] .risk-box{
+  background:linear-gradient(160deg,#fff8fa,#ffffff);
+  border-color:var(--accent-line);
+  box-shadow:0 4px 18px rgba(215,25,32,.06);
+}
+body[data-theme="light"] .risk-box h3,
+body[data-theme="light"] .risk-box h2{color:var(--accent-ink)}
+body[data-theme="light"] .risk-box .sub{color:var(--muted)}
+body[data-theme="light"] .risk-metric{
+  background:#fff;border-color:var(--line);
+}
+body[data-theme="light"] .risk-metric.residual b{color:#c12959}
+body[data-theme="light"] .risk-detail{color:var(--ink)}
+body[data-theme="light"] .risk-detail div{border-top-color:var(--line)}
+body[data-theme="light"] .risk-detail .k{color:var(--muted)}
+body[data-theme="light"] .risk-flags{border-top-color:var(--accent-line)}
+body[data-theme="light"] .risk-flags .rf-h{color:var(--accent-ink)}
+body[data-theme="light"] .risk-flags .rf{border-top-color:var(--line)}
+body[data-theme="light"] .risk-flags .rf span,
+body[data-theme="light"] .risk-flags .rf-none{color:var(--muted)}
+body[data-theme="light"] .guardrail{
+  background:var(--warn-bg);border-color:var(--warn-line);color:#5c4a12;
+}
+body[data-theme="light"] .guardrail b{color:var(--warn)}
+body[data-theme="light"] .overlay{background:rgba(40,20,28,.45)}
+body[data-theme="light"] .sheet{
+  background:#fff;border-color:var(--line-strong);
+  box-shadow:0 24px 60px rgba(28,18,22,.18);
+}
+body[data-theme="light"] .sheet .btns{
+  background:linear-gradient(transparent,#fff 35%);
+}
+body[data-theme="light"] .stat{
+  background:var(--surface-2);border-color:var(--line);
+}
+body[data-theme="light"] .stat span{color:var(--muted)}
+body[data-theme="light"] .confirm{
+  background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;
+  box-shadow:0 8px 28px rgba(28,18,22,.06);
+}
+body[data-theme="light"] .ref{
+  background:var(--surface-2);color:var(--ink);border:1px solid var(--line);
+}
+body[data-theme="light"] .sec-head{background:var(--surface-2);color:var(--ink)}
+body[data-theme="light"] .email-status{
+  background:var(--ok-bg);border-color:var(--ok-line);color:#185c3c;
+}
+body[data-theme="light"] .toast{
+  background:#1c1216;color:#fff;
+}
+body[data-theme="light"] .link-btn{color:var(--accent-ink)}
+body[data-theme="light"] .tabs{background:rgba(255,255,255,.95);border-color:var(--line)}
+body[data-theme="light"] .tabs button{color:var(--muted)}
+body[data-theme="light"] .tabs button[aria-selected=true]{color:var(--accent-ink);border-color:var(--accent)}
+body[data-theme="light"] .cat-body{background:linear-gradient(160deg,#fff,#f7f2f4)}
+body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient(160deg,#fff1f5,#fff)}
+@media(max-width:860px){
+  body[data-theme="light"] .panel-col{
+    background:#fff;border-left:1px solid var(--line-strong);
+    box-shadow:-18px 0 40px rgba(28,18,22,.12);
+  }
+}
+
+.theme-toggle{width:38px;height:38px;min-height:38px;padding:0;display:inline-grid;place-items:center;flex:0 0 38px;font-size:19px;line-height:1;border-radius:10px}
+.email-status{display:flex;gap:12px;align-items:flex-start;margin-top:20px;padding:16px;border:1px solid var(--ok-line);border-radius:14px;background:var(--ok-bg);color:var(--ink);font-size:14px;line-height:1.5}
+.email-status-icon{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:var(--ok);color:#fff;font-size:19px;font-weight:900}
+.email-status b{display:block;font-size:15px;margin-bottom:3px}
+.email-status strong{color:var(--ok)}
+.request-box{margin:14px 0;padding:16px 18px;border:1px solid var(--line-strong);border-radius:13px;background:var(--surface)}
+.request-box.blocked{border-color:var(--err-line);background:var(--err-bg)}
+.request-box h3{font-size:15px;margin:0 0 10px;font-weight:800}
+.request-box .req-row{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;padding:6px 0;border-top:1px solid var(--line);font-size:14px;align-items:start}
+.request-box .req-row:first-of-type{border-top:0;padding-top:0}
+.request-box .req-row .k{color:var(--muted);font-size:13px}
+.request-box .req-row .v{overflow-wrap:anywhere}
+.request-box .match-score{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
+.request-box .match-meta{font-size:13px;color:var(--muted);margin-top:6px}
+body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
+
+@media(max-width:600px){.theme-toggle{width:36px;height:36px;min-height:36px;flex-basis:36px;font-size:18px}.topbar-inner{gap:9px}.brand{font-size:13px}}
+
+
+/* Review: keep request details collapsed until the user opens them */
+.review-details>summary{cursor:pointer;list-style:none}
+.review-details>summary::-webkit-details-marker{display:none}
+.review-details>summary::after{content:"+";font-size:22px;color:var(--accent-ink);margin-left:auto;line-height:1}
+.review-details[open]>summary::after{content:"−"}
+.review-details .sec-head{display:flex;align-items:center;gap:12px}
+.review-toggle-hint{font-size:12px;color:var(--muted);font-weight:500;margin-left:auto}
+.review-details[open] .review-toggle-hint{display:none}
 
 
 /* AIRA visual layer — self-contained vector character and state animations */
@@ -419,7 +767,8 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
     <div class="brand">AI System / Use Case Approval Portal<small>Responsible AI Office (RAIO)</small></div>
     <div class="tb-right">
       <button type="button" class="btn small" id="sumBtn" hidden aria-expanded="false" aria-controls="panelCol">Summary</button>
-      <span class="proto-tag">Prototype</span>
+      <span class="proto-tag">Prototype · Jazz Gemma</span>
+      <button type="button" class="btn small theme-toggle" id="themeToggle" aria-label="Switch to light mode" title="Switch to light mode" aria-pressed="false">☀</button>
       <button type="button" class="btn small ghost" id="restart" hidden>Start over</button>
     </div>
   </div>
@@ -442,19 +791,35 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
 <p class="fine">You’ll review the details before submitting.<br>Prototype: keyword-based suggestions; nothing is transmitted.</p>
 </section>
 
-<!-- CHAT + LIVE SUMMARY -->
-<section id="view-shell" class="shell" data-tab="chat" hidden>
-  <div class="chat-col"><div class="aira-guide"><div class="aira-avatar" data-aira-state="idle"><svg viewBox="0 0 180 150" aria-hidden="true" class="aira-svg"><defs><linearGradient id="airaShellchat" x2=".7" y2="1"><stop stop-color="#ff87c3"/><stop offset=".45" stop-color="#ef326d"/><stop offset="1" stop-color="#a41473"/></linearGradient></defs><g class="aira-head"><path d="M29 105 C4 73 19 18 69 13 C122 5 149 37 148 76 L166 99 Q169 110 140 108 C113 138 57 135 29 105" fill="url(#airaShellchat)" stroke="#ff75b5" stroke-width="2"/><ellipse cx="83" cy="71" rx="51" ry="42" fill="#260b28"/><g class="aira-eyes"><ellipse cx="65" cy="65" rx="9" ry="12" fill="#fff0fc"/><ellipse cx="104" cy="65" rx="9" ry="12" fill="#fff0fc"/><g class="aira-pupils" fill="#30102f"><ellipse cx="67" cy="68" rx="4" ry="6"/><ellipse cx="106" cy="68" rx="4" ry="6"/></g></g><path class="aira-mouth" d="M72 89 Q84 101 96 89" fill="none" stroke="#ff72b1" stroke-width="4" stroke-linecap="round"/><path class="aira-brows" d="M55 47 L73 43 M95 43 L113 47" fill="none" stroke="#ffb8db" stroke-width="3" stroke-linecap="round"/></g><g fill="url(#airaShellchat)" stroke="#ff75b5"><rect x="30" y="119" width="28" height="19" rx="9"/><rect class="aira-hand" x="112" y="119" width="28" height="19" rx="9"/></g><path d="M157 18 L160 27 L169 30 L160 33 L157 42 L154 33 L145 30 L154 27Z" fill="#ff97ca" class="aira-spark"/></svg></div><div><strong>AIRA</strong><p id="airaStatus" role="status">Let’s shape your AI idea.</p></div><button class="mini" id="airaMotion" type="button" aria-pressed="false">Pause motion</button></div>
-    <div class="chat" id="chat" role="log" aria-live="polite" aria-label="Conversation"><div class="chat-inner" id="chatIn"></div></div>
+<!-- FORM LEFT + CHAT RIGHT -->
+<section id="view-shell" class="shell" hidden>
+  <aside class="panel-col" id="panelCol" aria-label="Live summary of your request"><div class="panel-in" id="panelIn"></div></aside>
+  <div class="chat-col">
+    <header class="chat-head" aria-label="AIRA assistant">
+      <div class="bot-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3.5 4.8 19h2.7l1.45-3.35h6.1L16.5 19H19.2L12 3.5Zm-2.2 9.7L12 7.4l2.2 5.8h-4.4Z" fill="#fff"/>
+          <circle cx="18.4" cy="6.2" r="1.6" fill="#fff" opacity=".9"/>
+        </svg>
+      </div>
+      <div class="bot-meta">
+        <div class="bot-name">AIRA</div>
+        <div class="bot-role">AI Risk Assistant · JazzWorld RAIO</div>
+      </div>
+    </header>
+    <div class="chat" id="chat" aria-label="Conversation with AIRA">
+      <div class="chat-inner" id="chatIn" role="log" aria-live="polite"></div>
+    </div>
+    <div class="chat-widgets" id="chatWidgets" aria-label="Answer options"><div class="chat-widgets-inner" id="chatWidgetsIn"></div></div>
     <div class="composer">
       <div class="composer-in">
-        <label for="composerText" class="sr-only">Add more detail</label>
-        <textarea id="composerText" rows="1" placeholder="Add detail or correct something…"></textarea>
+        <label for="composerText" class="sr-only">Message AIRA</label>
+        <textarea id="composerText" rows="1" placeholder="Ask AIRA to help fill a field, or say “help me estimate”…"></textarea>
         <button type="button" class="btn primary" id="composerSend">Send</button>
       </div>
+      <p class="hintline">Anything you add here is read again, and new details are shown for you to confirm.</p>
     </div>
   </div>
-  <aside class="panel-col" id="panelCol" aria-label="Live summary of your request"><div class="panel-in" id="panelIn"></div></aside>
 </section>
 
 <!-- DONE -->
@@ -730,20 +1095,188 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
   window.JazzWorldAIRAEngine=AIRA_ENGINE;
 
   /* =====================================================================
-   * Lean conversational intake (prototype).
-   * 14 slots instead of ~25 fields. Owner / business unit come from the
-   * sign-in profile, the summary is derived from the description, and each
-   * branch keeps only the one question that changes routing or flags.
-   * Extraction below is a keyword matcher standing in for an LLM.
+   * Lean conversational intake.
+   * Slot answers are filled by Jazz Gemma via the local API when available;
+   * keyword rules remain only as an offline fallback.
    * ===================================================================== */
+  const CFG=Object.assign({
+    // Same-origin when served by the API (Render/local :8000); otherwise local static on :8080 → API :8000.
+    apiBase:(location.port==='8080'||location.port==='5500')
+      ?('http://'+location.hostname+':8000/api/v1')
+      :(location.origin.replace(/\/$/,'')+'/api/v1'),
+    email:'ayesha.khan@jazz.example',
+    password:'JazzDemo-2026'
+  }, window.JazzWorldConfig||{});
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>[...r.querySelectorAll(s)];
   const esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const sleep=ms=>new Promise(r=>setTimeout(r,(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)?0:ms));
+  /** Concise offline rewrite — never paste the full user prompt as the summary. */
+  function makeConciseSummary(description){
+    let compact=String(description||'').replace(/\s+/g,' ').trim();
+    if(!compact) return '';
+    let stripped=compact.replace(/^(?:we(?:'d| would)? like to|we want to|i want to|we(?:'re| are) (?:going to|planning to)|this (?:is|request is) (?:about|for)|looking to)\s+/i,'').trim()||compact;
+    const parts=stripped.split(/(?<=[.!?])\s+/).map(p=>p.trim()).filter(Boolean);
+    const chosen=[];
+    for(const part of parts){
+      const trial=[...chosen,part].join(' ').trim();
+      if(chosen.length&&trial.length>200) break;
+      chosen.push(part);
+      if(chosen.join(' ').length>=90) break;
+      if(chosen.length>=2) break;
+    }
+    let summary=(chosen.join(' ').trim()||stripped);
+    if(summary.length>220) summary=summary.slice(0,217).replace(/\s+\S*$/,'')+'…';
+    if(summary&&summary[0]===summary[0].toLowerCase()) summary=summary[0].toUpperCase()+summary.slice(1);
+    if(summary&&!/[.!?…]$/.test(summary)) summary=summary.replace(/[ ,;]+$/,'')+'.';
+    return summary.slice(0,280);
+  }
   const PROFILE={name:'Ayesha Khan',unit:'Technology'};
+
+  /* AIRA character motion from DDA.html */
+  function setAira(state,message){
+    document.querySelectorAll('.aira-avatar').forEach(el=>{el.dataset.airaState=state});
+    const label=document.getElementById('airaStatus');
+    if(label&&message) label.textContent=message;
+  }
+  let airaTimer,welcomeTimer,waveEnd,welcomeShown=false;
+  function airaTyping(e){
+    setAira(e.target.value.trim()?'attentive':'idle','I’m listening.');
+    clearTimeout(airaTimer);
+    airaTimer=setTimeout(()=>setAira('idle','Ready when you are.'),2000);
+  }
+  function welcomeWave(){
+    const perch=document.querySelector('.aira-perch');
+    const intro=document.getElementById('view-intro');
+    if(!perch||document.hidden||(intro&&intro.hidden)) return;
+    clearTimeout(waveEnd);
+    const avatar=perch.querySelector('.aira-avatar');
+    if(!avatar) return;
+    avatar.dataset.airaState='idle';void avatar.offsetWidth;
+    avatar.dataset.airaState='welcome';
+    waveEnd=setTimeout(()=>{if(avatar.dataset.airaState==='welcome')avatar.dataset.airaState='idle'},1500);
+  }
+  function scheduleWelcome(){
+    clearTimeout(welcomeTimer);
+    if(!document.hidden) welcomeTimer=setTimeout(()=>{welcomeShown=true;welcomeWave()},900);
+  }
+  (()=>{
+    const perch=document.querySelector('.aira-perch');
+    if(!perch) return;
+    perch.setAttribute('role','button');
+    perch.setAttribute('tabindex','0');
+    perch.setAttribute('aria-label','Replay AIRA’s welcome wave');
+    perch.title='Click to say hello';
+    perch.addEventListener('click',welcomeWave);
+    perch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();welcomeWave()}});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!welcomeShown)scheduleWelcome()});
+    scheduleWelcome();
+  })();
+
+  let ACCESS_TOKEN='';
+  let LAST_EXTRACTOR='keyword';
+  async function ensureAuth(){
+    if(ACCESS_TOKEN) return ACCESS_TOKEN;
+    if(!CFG.apiBase) throw new Error('API base URL is not configured');
+    const response=await fetch(CFG.apiBase.replace(/\/$/,'')+'/auth/login',{
+      method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+      body:JSON.stringify({email:CFG.email,password:CFG.password})
+    });
+    if(!response.ok) throw new Error('Sign-in failed ('+response.status+')');
+    const data=await response.json();
+    ACCESS_TOKEN=data.accessToken||'';
+    if(data.user){
+      if(data.user.name) PROFILE.name=data.user.name;
+      if(data.user.businessUnit) PROFILE.unit=data.user.businessUnit;
+    }
+    return ACCESS_TOKEN;
+  }
+  async function apiFetch(path, options={}){
+    await ensureAuth();
+    const headers=Object.assign({'Content-Type':'application/json'}, options.headers||{});
+    if(ACCESS_TOKEN) headers.Authorization='Bearer '+ACCESS_TOKEN;
+    let response=await fetch(CFG.apiBase.replace(/\/$/,'')+path,{
+      method:options.method||'GET',
+      headers,
+      credentials:'include',
+      body:options.body
+    });
+    if(response.status===401){
+      ACCESS_TOKEN='';
+      await ensureAuth();
+      headers.Authorization='Bearer '+ACCESS_TOKEN;
+      response=await fetch(CFG.apiBase.replace(/\/$/,'')+path,{
+        method:options.method||'GET',
+        headers,
+        credentials:'include',
+        body:options.body
+      });
+    }
+    return response;
+  }
+  /** Map server session slots into the live left-hand form. */
+  function applyServerSession(view,{renderChat=false}={}){
+    if(!view) return;
+    S.sessionId=view.id||S.sessionId;
+    if(view.description) S.text=view.description;
+    (view.slots||[]).forEach(slot=>{
+      const id=slot.id;if(!BY[id]) return;
+      const value=slot.value;
+      const empty=Array.isArray(value)?!value.length:!value;
+      Object.assign(st(id),{
+        value:empty?(isMulti(BY[id])?[]:''):value,
+        status:slot.status||(empty?'empty':'confirmed'),
+        src:slot.source||undefined,
+        why:slot.why||''
+      });
+    });
+    if(view.summary!=null&&String(view.summary).trim()){
+      const sumSrc=(view.slots||[]).find(s=>s.id==='summary');
+      Object.assign(st('summary'),{
+        value:String(view.summary).trim(),
+        status:'confirmed',
+        src:(sumSrc&&sumSrc.source)||(view.extractor==='llm'?'llm':'auto'),
+        why:(sumSrc&&sumSrc.why)||'AI-generated concise summary'
+      });
+    }
+    if(typeof view.progress?.questionsAsked==='number') S.asked=view.progress.questionsAsked;
+    if(renderChat&&Array.isArray(view.transcript)){
+      chatIn.innerHTML='';
+      view.transcript.forEach(turn=>{
+        const role=turn.role==='assistant'?'agent':(turn.role==='user'?'user':'agent');
+        bubble(role, esc(turn.text||''));
+      });
+    }
+    renderPanel();
+  }
+  async function openServerSession(description){
+    const response=await apiFetch('/intake/sessions',{
+      method:'POST',
+      body:JSON.stringify({description})
+    });
+    if(!response.ok){
+      let detail='Could not start saved chat session';
+      try{const err=await response.json();detail=err.detail?.message||err.detail||detail}catch(e){}
+      throw new Error(typeof detail==='string'?detail:JSON.stringify(detail));
+    }
+    return response.json();
+  }
+  async function postServerMessage(text){
+    if(!S.sessionId) throw new Error('No active session');
+    const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/messages',{
+      method:'POST',
+      body:JSON.stringify({text})
+    });
+    if(!response.ok){
+      let detail='Could not save message';
+      try{const err=await response.json();detail=err.detail?.message||err.detail||detail}catch(e){}
+      throw new Error(typeof detail==='string'?detail:JSON.stringify(detail));
+    }
+    return response.json();
+  }
   const BUS=['Compliance','CRA','Cybersecurity','Enterprise','Finance','GSM','Internal Audit','JazzCash','JLV','Legal','MMBL','P&O','Strategy','Technology','Teknosys'];
-  const YNN=['Yes','No','Not sure'];
-  const S={text:'',v:{},asked:0,announced:new Set(),done:false,editing:null};
+  const YNN=['Yes','No'];
+  const S={text:'',v:{},asked:0,announced:new Set(),done:false,editing:null,sessionId:null,batchShown:false,askingId:null};
   const TOOLS=[[/microsoft copilot|copilot/,'Microsoft Copilot'],[/chatgpt/,'ChatGPT'],[/gemini/,'Google Gemini'],[/azure openai/,'Azure OpenAI'],[/openai/,'OpenAI'],[/claude/,'Claude']];
 
   const first=(re,t)=>{const m=t.match(re);return m?m[0]:null};
@@ -752,21 +1285,41 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
   const SLOTS=[
     {id:'category',g:'about',label:'Type',kind:'single',q:'Which of these is closest to what you want to do?',
       opts:[{v:'AI For Us',l:'Use a tool someone else provides'},{v:'AI By Us',l:'Build or deploy our own'},{v:'AI Against Us',l:'Assess a threat against us'}],
-      infer:t=>{let m;
-        if(m=first(/phishing|deepfake|impersonat|voice[- ]clon|scam|fraud|ransomware|malware|jailbreak|prompt injection/,t))return{v:'AI Against Us',why:`mentions “${m}”`};
-        if(m=first(/\b(build|building|develop|developing|train|trained|fine-?tun\w*|in-house|our own|prototype)\b/,t))return{v:'AI By Us',why:`mentions “${m}”`};
-        if(m=first(/copilot|chatgpt|gemini|licen[cs]e|subscribe|vendor|procure|purchase|roll ?out|adopt|third-party/,t))return{v:'AI For Us',why:`mentions “${m}”`};return null}},
+      infer:t=>{
+        const score=(rules)=>{let s=0,hit=null;for(const [w,re] of rules){const m=t.match(re);if(m){s+=w;if(!hit)hit=m[0]}}return{s,hit}};
+        const against=score([[3,/phishing|deepfake|impersonat|voice[- ]clon|social engineering/],[3,/\b(ai against us|against us|threat (to|against)|adversar\w*|threat assess)/],[2,/ransomware|malware|jailbreak|prompt injection|cyber[- ]?attack/],[2,/\b(scam|fraud)\b.{0,40}\b(call|email|voice|executive|employee|staff)/],[2,/\b(assess(ing)?|evaluate|monitor).{0,40}\b(threat|risk|attack|deepfake|fraud)/]]);
+        const byUs=score([[3,/\b(build|building|develop|developing|creating|created)\b/],[3,/\b(train|trained|training|fine-?tun\w*|retrain)\b/],[3,/\b(in[- ]house|our own|internally|custom model|model called|prototype)\b/],[2,/\b(deploy(ing|ed)? (our|an? internal)|internal (ai|model|system|assistant))\b/],[2,/\b(ml model|machine learning|recommender)\b/]]);
+        let forUs=score([[3,/\b(microsoft copilot|copilot|chatgpt|google gemini|gemini|claude)\b/],[3,/\b(vendor|third[- ]party|saas|off[- ]the[- ]shelf|procure|purchase|licen[cs]e|subscribe)\b/],[2,/\b(roll ?out|adopt(ing|ion)?|buy|bought|supplier (tool|solution|platform))\b/],[2,/\b(enterprise (account|licence|license)|corporate account)\b/]]);
+        if(byUs.s&&/\b(hosted on|hosting on|using|via)\s+(azure|aws|gcp|openai|vertex)/.test(t)) forUs={s:Math.max(0,forUs.s-2),hit:forUs.hit};
+        const ranked=[['AI Against Us',against],['AI By Us',byUs],['AI For Us',forUs]].sort((a,b)=>b[1].s-a[1].s||(['AI Against Us','AI By Us','AI For Us'].indexOf(a[0])-['AI Against Us','AI By Us','AI For Us'].indexOf(b[0])));
+        if(!ranked[0][1].s)return null;
+        return{v:ranked[0][0],why:`category signals point to ${ranked[0][0]} (e.g. “${ranked[0][1].hit}”)`};
+      }},
     {id:'name',g:'about',label:'Name',kind:'text',q:'What should we call this request?',ph:'A short name people will recognise',
       infer:(t,raw)=>{const m=raw.match(/(?:called|named)\s+["“']([^"”']+)["”']/i)||raw.match(/["“]([^"”]{4,50})["”]/);return m?{v:m[1],why:'you named it'}:null}},
     {id:'summary',g:'about',label:'Summary',kind:'text',auto:true},
     {id:'owner',g:'about',label:'Business owner',kind:'text',profile:true},
     {id:'businessUnit',g:'about',label:'Business unit',kind:'single',opts:BUS,profile:true},
+    {id:'segment',g:'value',label:'Segment',kind:'single',q:'Which segment does this AI use case serve?',
+      opts:['Consumer-Facing AI','Corporate AI','Enterprise AI','Internal Operations','Other'],
+      infer:t=>/consumer[- ]facing|customer[- ]facing|customer care|b2c|end[- ]user/.test(t)?{v:'Consumer-Facing AI',why:'mentions consumer or customer-facing use'}:/enterprise ai|b2b|organisation[- ]wide|organization[- ]wide/.test(t)?{v:'Enterprise AI',why:'mentions enterprise use'}:/corporate ai|employees?|internal staff|back[- ]office/.test(t)?{v:'Corporate AI',why:'mentions corporate or employee use'}:/internal operations|ops team|operations team|non[- ]customer/.test(t)?{v:'Internal Operations',why:'mentions internal operations'}:null},
+    {id:'valueDriver',g:'value',label:'Value driver',kind:'single',q:'What is the main value driver for this use case?',
+      opts:['Productivity','Revenue Uplift','Cost Reduction','Customer Experience','Efficiency','Governance','Other'],
+      infer:t=>/revenue uplift|increase revenue|upsell|cross[- ]sell|arpu/.test(t)?{v:'Revenue Uplift',why:'mentions revenue uplift'}:/cost reduction|reduce cost|save cost|cost saving/.test(t)?{v:'Cost Reduction',why:'mentions cost reduction'}:/customer experience|\bcx\b|\bnps\b|satisfaction/.test(t)?{v:'Customer Experience',why:'mentions customer experience'}:/\bgovernance\b|compliance oversight/.test(t)?{v:'Governance',why:'mentions governance'}:/\befficiency\b/.test(t)?{v:'Efficiency',why:'mentions efficiency'}:/productivity|hours saved|automate[ds]? work|analyst effort/.test(t)?{v:'Productivity',why:'mentions productivity'}:null},
+    {id:'annualValue',g:'value',label:'Estimated annual value / ROI',kind:'text',q:'What is the estimated annual value or ROI (USD)?',ph:'e.g. 20000 or 10% ROI',
+      infer:(t,raw)=>{const m=raw.match(/(?:annual value|roi|return on investment|benefit(?:s)?)\s*(?:of|is|:)?\s*((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*(?:USD|%|percent))?)/i)||raw.match(/((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*(?:USD|%|percent))?)\s*(?:annual value|roi|return on investment)/i);return m?{v:m[1].replace(/\s+/g,' ').trim(),why:'value or ROI amount found in the description'}:null}},
+    {id:'investmentCost',g:'value',label:'Estimated investment / cost',kind:'text',q:'What is the estimated investment or cost (USD)?',ph:'e.g. 50000',
+      infer:(t,raw)=>{const m=raw.match(/(?:investment|capex|budget|project cost|estimated cost|total cost)\s*(?:of|is|:)?\s*((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*USD)?)/i)||raw.match(/((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*USD)?)\s*(?:investment|capex|budget|project cost)/i);return m?{v:m[1].replace(/\s+/g,' ').trim(),why:'investment or cost amount found in the description'}:null}},
+    {id:'spendingToDate',g:'value',label:'Spending done to date',kind:'text',q:'How much has been spent to date (USD)?',ph:'e.g. 0 or 12000',
+      infer:(t,raw)=>{const m=raw.match(/(?:spent to date|spending to date|spent so far|already spent)\s*(?:of|is|:)?\s*((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*USD)?)/i);return m?{v:m[1].replace(/\s+/g,' ').trim(),why:'spending-to-date amount found in the description'}:null}},
+    {id:'hoursSaved',g:'value',label:'Estimated hours saved (annual)',kind:'text',q:'How many hours do you expect to save each year?',ph:'e.g. 500 hours / year',
+      infer:(t,raw)=>{if(!/save|saving|saved|fte|effort/.test(t))return null;const m=raw.match(/(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*(?:hours?|hrs?)(?:\s*(?:per|\/)\s*(?:year|yr|month|week|day))?)/i);return m?{v:m[1].trim(),why:'hours-saved figure found in the description'}:null}},
     {id:'sensitive',g:'screen',label:'Sensitive information',kind:'single',opts:YNN,q:'Will the AI handle sensitive information, such as customer or employee data, financial details, contracts, or credentials?',
       infer:t=>{if(/no (personal|sensitive|customer) data|public data only|non-?sensitive/.test(t))return{v:'No',why:'you said no sensitive data'};const m=first(/customer|subscriber|personal|cnic|employee|salary|payment|financial|billing|account|kyc|password|credential|confidential|contract|transaction|health/,t);return m?{v:'Yes',why:`mentions “${m}”`}:null}},
     {id:'decision',g:'screen',label:'Affects decisions',kind:'single',opts:YNN,q:'Will its output affect decisions about people or business outcomes, like eligibility, pricing, ranking, or approvals?',
-      infer:t=>{if(first(/decision:\s*none|no decisions?|decides? nothing|(won't|will not|does not|doesn't) (make|take) any decisions?|does not (decide|recommend)/,t))return{v:'No',why:'you said it makes no decisions'};const m=first(/eligib\w*|credit (limit|score|line)|scor(e|es|ing)|reject\w*|shortlist\w*|rank(s|ing)?\b|prioriti[sz]\w*|pricing|recommend\w*|churn|collections/,t);return m?{v:'Yes',why:`mentions “${m}”`}:null}},
+      infer:t=>{const m=first(/eligib\w*|credit (limit|score|line)|scor(e|es|ing)|reject\w*|shortlist\w*|rank(s|ing)?\b|prioriti[sz]\w*|pricing|recommend\w*|churn|collections/,t);return m?{v:'Yes',why:`mentions “${m}”`}:null}},
     {id:'action',g:'screen',label:'Interacts or acts',kind:'single',opts:YNN,q:'Will the AI talk to people directly, or take actions in a system, like sending messages or updating records?',
-      infer:t=>{if(first(/cannot (send|act|take action|update|approve)|takes? no action|no action in any|advisory only|read-only|assessment only|nothing (is )?deployed|only (drafts|produces|suggests)/,t))return{v:'No',why:'you said it takes no action'};const m=first(/chatbot|customer-facing|automatically|ai agent|agentic|updat\w+ (the )?(crm|records?)|trigger\w*|initiat\w+|sends? (emails?|sms|messages?)/,t);return m?{v:'Yes',why:`mentions “${m}”`}:null}},
+      infer:t=>{const m=first(/chatbot|customer-facing|automatically|ai agent|agentic|updat\w+ (the )?(crm|records?)|trigger\w*|initiat\w+|sends? (emails?|sms|messages?)/,t);return m?{v:'Yes',why:`mentions “${m}”`}:null}},
     {id:'forTool',g:'more',label:'Tool or service',kind:'text',q:'Which tool or service is it?',ph:'Product or vendor name',when:()=>V('category')==='AI For Us',
       infer:t=>{const x=TOOLS.find(([re])=>re.test(t));return x?{v:x[1],why:'named in your description'}:null}},
     {id:'forAccess',g:'more',label:'How it is accessed',kind:'single',q:'Because sensitive information is involved: how will people access it?',
@@ -779,10 +1332,10 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
     {id:'dataExternal',g:'more',label:'Data sent to an outside provider',kind:'single',opts:YNN,q:'Will any of that information be sent to or processed by an outside provider?',when:()=>on('sensitive'),
       infer:t=>/on-?prem|self-hosted|in-house servers|jazzworld-managed/.test(t)?{v:'No',why:'you said it stays in-house'}:(first(/openai|chatgpt|azure|aws|google|gemini|copilot|vendor|third-party|saas|external/,t)?{v:'Yes',why:`mentions “${first(/openai|chatgpt|azure|aws|google|gemini|copilot|vendor|third-party|saas|external/,t)}”`}:null)},
     {id:'humanReview',g:'more',label:'Human review',kind:'single',q:'Will a person check the AI\'s output before a final decision or action?',when:()=>on('decision'),
-      opts:['Always','Sometimes / based on conditions','No — AI output can determine the outcome','Not decided yet'],
-      infer:t=>/without human|fully automat\w*|no human|automatically (decides?|approves?|rejects?)/.test(t)?{v:'No — AI output can determine the outcome',why:'you described it as automatic'}:(/(agents?|staff|analysts?|humans?|managers?|people|team)\b.{0,30}\b(review\w*|approv\w*|check\w*|verif\w*)|human[- ]in[- ]the[- ]loop/.test(t)?{v:'Always',why:'you said people review it'}:null)},
+      opts:['Always','Sometimes / based on conditions','No - AI output can determine the outcome'],
+      infer:t=>/without human|fully automat\w*|no human|automatically (decides?|approves?|rejects?)/.test(t)?{v:'No - AI output can determine the outcome',why:'you described it as automatic'}:(/(agents?|staff|analysts?|humans?|managers?|people|team)\b.{0,30}\b(review\w*|approv\w*|check\w*|verif\w*)|human[- ]in[- ]the[- ]loop/.test(t)?{v:'Always',why:'you said people review it'}:null)},
     {id:'autonomy',g:'more',label:'How independently it acts',kind:'single',q:'How independently can it act?',when:()=>on('action'),
-      opts:['Advisory only — it cannot take action','Action requires human approval each time','Can take limited actions within defined rules','Can take actions automatically across a workflow','Not decided yet'],
+      opts:['Advisory only - it cannot take action','Action requires human approval each time','Can take limited actions within defined rules','Can take actions automatically across a workflow'],
       infer:t=>/automatically|autonomous|end-to-end/.test(t)?{v:'Can take actions automatically across a workflow',why:'mentions acting automatically'}:null}
   ];
   const BY=Object.fromEntries(SLOTS.map(s=>[s.id,s]));
@@ -790,20 +1343,225 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
   function st(id){return S.v[id]||(S.v[id]={value:isMulti(BY[id])?[]:'',status:'empty'})}
   const V=id=>st(id).value;
   const has=id=>{const v=V(id);return Array.isArray(v)?v.length>0:!!v};
-  const on=id=>V(id)==='Yes'||V(id)==='Not sure';
+  const on=id=>V(id)==='Yes';
   const active=()=>SLOTS.filter(s=>!s.auto&&(!s.when||s.when()));
   const optsOf=s=>(s.opts||[]).map(o=>typeof o==='string'?{v:o,l:o}:o);
   const fmt=s=>{const v=V(s.id);return Array.isArray(v)?v.join(', '):v};
 
-  /* ---------- inference (LLM stand-in) ---------- */
-  function infer(){
-    const t=S.text.toLowerCase();let n=0;
+  /* ---------- inference (Gemma via API, keyword fallback) ---------- */
+  function sameSlotValue(a,b){
+    if(Array.isArray(a)||Array.isArray(b)){
+      const A=Array.isArray(a)?a:(a?[a]:[]);
+      const B=Array.isArray(b)?b:(b?[b]:[]);
+      return A.slice().map(String).sort().join('|')===B.slice().map(String).sort().join('|');
+    }
+    return String(a||'')===String(b||'');
+  }
+  function normalizeChoice(slot, value){
+    if(slot.kind==='multi'){
+      const list=Array.isArray(value)?value:(value?[value]:[]);
+      const allowed=new Set(optsOf(slot).map(o=>o.v));
+      return list.filter(v=>allowed.has(v));
+    }
+    if(slot.kind==='single'){
+      const allowed=optsOf(slot).map(o=>o.v);
+      if(allowed.includes(value)) return value;
+      const hit=allowed.find(v=>v.toLowerCase()===String(value||'').toLowerCase());
+      return hit||null;
+    }
+    const text=String(value||'').trim();
+    return text||null;
+  }
+  function applySlotUpdate(id, raw, {src='you', why='', status='confirmed', overwrite=true}={}){
+    const slot=BY[id];if(!slot||slot.profile||slot.auto) return null;
+    const value=normalizeChoice(slot, raw);
+    if(value==null||(Array.isArray(value)&&!value.length)) return null;
+    const cur=st(id);
+    if(!overwrite&&cur.status!=='empty') return null;
+    if(cur.status!=='empty'&&sameSlotValue(cur.value,value)) return null;
+    Object.assign(cur,{value,status,src,why:why||(src==='you'?'from your chat message':'from your description')});
+    return id;
+  }
+  function keywordInfer(text, {overwrite=false, status='inferred', src='description'}={}){
+    const raw=text||S.text;
+    const t=raw.toLowerCase();
+    const changed=[];
     SLOTS.forEach(s=>{
-      if(!s.infer||st(s.id).status!=='empty')return;
-      const r=s.infer(t,S.text);if(!r)return;
-      Object.assign(st(s.id),{value:r.v,status:'inferred',src:'description',why:r.why});
-      if(!s.when||s.when())n++;
-    });return n;
+      if(!s.infer)return;
+      if(!overwrite&&st(s.id).status!=='empty')return;
+      const r=s.infer(t,raw);if(!r)return;
+      const id=applySlotUpdate(s.id,r.v,{src,why:r.why,status,overwrite});
+      if(id&&(!s.when||s.when())) changed.push(id);
+    });
+    return changed;
+  }
+  function applyRemoteExtractions(extractions, {overwrite=false, status='inferred', src}={}){
+    const changed=[];
+    Object.entries(extractions||{}).forEach(([id,r])=>{
+      if(!r)return;
+      const useSrc=src||(r.source==='llm'?'llm':'description');
+      if(id==='summary'){
+        const text=String(r.value||'').trim();
+        if(!text) return;
+        const cur=st('summary');
+        if(!overwrite&&cur.status==='confirmed'&&cur.src==='llm'&&cur.value) return;
+        if(sameSlotValue(cur.value,text)) return;
+        Object.assign(cur,{value:text.slice(0,280),status:'confirmed',src:useSrc==='llm'?'llm':'auto',why:r.why||'AI-generated concise summary'});
+        changed.push('summary');
+        return;
+      }
+      const got=applySlotUpdate(id,r.value,{src:useSrc,why:r.why||'from your description',status,overwrite});
+      if(got&&BY[got]&&(!BY[got].when||BY[got].when())) changed.push(got);
+    });
+    return changed;
+  }
+  /** Intent parser: map short chat corrections onto form fields. */
+  function parseChatIntent(message){
+    const raw=String(message||'').trim();
+    if(!raw) return {};
+    const t=raw.toLowerCase();
+    const out={};
+    const setYesNo=(id, yesRe, noRe)=>{
+      if(noRe.test(t)) out[id]={value:'No',why:'from your chat message'};
+      else if(yesRe.test(t)) out[id]={value:'Yes',why:'from your chat message'};
+    };
+    let m=raw.match(/(?:(?:change|update|set|rename)\s+(?:the\s+)?(?:name|title|use\s*case)\s+(?:to|as|:)\s*|(?:call|name)\s+it\s+)["']?([^"'\n.]+)["']?/i)
+      ||raw.match(/^(?:name|title)\s*[:=]\s*["']?([^"'\n.]+)["']?/i);
+    if(m) out.name={value:m[1].trim(),why:'name from your chat message'};
+    if(/\b(change|set|update|category|type|it'?s|it is)\b/.test(t)&&/\bfor\s+us\b/.test(t)) out.category={value:'AI For Us',why:'category from your chat'};
+    if(/\b(change|set|update|category|type|it'?s|it is)\b/.test(t)&&/\bby\s+us\b/.test(t)) out.category={value:'AI By Us',why:'category from your chat'};
+    if(/\b(change|set|update|category|type|it'?s|it is)\b/.test(t)&&/\bagainst\s+us\b/.test(t)) out.category={value:'AI Against Us',why:'category from your chat'};
+    if(/\bcategory\s*[:=]\s*ai\s+for\s+us\b/i.test(raw)) out.category={value:'AI For Us',why:'category from your chat'};
+    if(/\bcategory\s*[:=]\s*ai\s+by\s+us\b/i.test(raw)) out.category={value:'AI By Us',why:'category from your chat'};
+    if(/\bcategory\s*[:=]\s*ai\s+against\s+us\b/i.test(raw)) out.category={value:'AI Against Us',why:'category from your chat'};
+    setYesNo('sensitive',
+      /\b(sensitive|personal|customer|employee)\b.{0,40}\b(yes|true|is involved|will (use|handle)|does)\b|\b(yes|it does|it will)\b.{0,40}\b(sensitive|personal data)\b/i,
+      /\b(no|not|doesn'?t|does not|won'?t|will not)\b.{0,40}\b(sensitive|personal data)\b|\bsensitive\b.{0,20}\b(no|false)\b/i);
+    setYesNo('decision',
+      /\b(decision|decisions|eligib|approv|ranking|pricing)\b.{0,40}\b(yes|true|will|does|affect)\b|\b(yes|it does|it will)\b.{0,40}\b(decision|affect)\b/i,
+      /\b(no|not|doesn'?t|won'?t)\b.{0,40}\b(decision|affect decisions)\b|\bdecision\b.{0,20}\b(no|false)\b/i);
+    setYesNo('action',
+      /\b(action|actions|send|update records|talk to people|chat)\b.{0,40}\b(yes|true|will|can|does)\b|\b(yes|it can|it will)\b.{0,40}\b(act|send|update)\b/i,
+      /\b(no|not|doesn'?t|won'?t|cannot|can'?t)\b.{0,40}\b(act|action|send|update)\b|\baction\b.{0,20}\b(no|false)\b/i);
+    setYesNo('dataExternal',
+      /\b(external|outside|third[- ]party)\b.{0,40}\b(yes|true|will|sent|processed)\b/i,
+      /\b(no|not|won'?t)\b.{0,40}\b(external|outside provider)\b/i);
+    const pickOpt=(id, patterns)=>{
+      const slot=BY[id];if(!slot)return;
+      for(const [re,val] of patterns){if(re.test(raw)||re.test(t)){out[id]={value:val,why:slot.label+' from your chat'};return}}
+    };
+    pickOpt('segment',[
+      [/consumer[- ]facing/i,'Consumer-Facing AI'],[/corporate\s+ai/i,'Corporate AI'],[/enterprise\s+ai/i,'Enterprise AI'],[/internal\s+operations/i,'Internal Operations']
+    ]);
+    pickOpt('valueDriver',[
+      [/productivity/i,'Productivity'],[/revenue\s+uplift/i,'Revenue Uplift'],[/cost\s+reduction/i,'Cost Reduction'],[/customer\s+experience/i,'Customer Experience'],[/\befficiency\b/i,'Efficiency'],[/\bgovernance\b/i,'Governance']
+    ]);
+    // businessUnit / owner stay profile-locked unless edited in the panel.
+    m=raw.match(/(?:annual\s+value|roi|estimated\s+value)\s*(?:is|=|:)?\s*([^\n,.]+)/i);
+    if(m) out.annualValue={value:m[1].trim(),why:'annual value from your chat'};
+    m=raw.match(/(?:investment|cost)\s*(?:is|=|:)?\s*([^\n,.]+)/i);
+    if(m&&!/cost\s+reduction/i.test(m[0])) out.investmentCost={value:m[1].trim(),why:'investment from your chat'};
+    m=raw.match(/(?:spending|spent)\s*(?:to\s+date|so\s+far)?\s*(?:is|=|:)?\s*([^\n,.]+)/i);
+    if(m) out.spendingToDate={value:m[1].trim(),why:'spending from your chat'};
+    m=raw.match(/(?:hours?\s+saved|save[s]?\s+(?:about\s+)?[\d,.]+)/i);
+    if(m){
+      const h=raw.match(/(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*hours?(?:\s*\/\s*(?:year|month|week|day))?)/i);
+      if(h) out.hoursSaved={value:h[1].trim(),why:'hours saved from your chat'};
+    }
+    m=raw.match(/(?:tool|service|product)\s*(?:is|=|:)?\s*["']?([^"'\n.]+)["']?/i);
+    if(m) out.forTool={value:m[1].trim(),why:'tool from your chat'};
+    return out;
+  }
+  function applyIntentMap(map, {overwrite=true, status='confirmed', src='you'}={}){
+    const changed=[];
+    Object.entries(map||{}).forEach(([id,r])=>{
+      const got=applySlotUpdate(id,r.value,{src,why:r.why||'',status,overwrite});
+      if(got) changed.push(got);
+    });
+    return changed;
+  }
+  async function extractFromText(text){
+    if(CFG.apiBase){
+      try{
+        const response=await apiFetch('/intake/extract',{
+          method:'POST',
+          body:JSON.stringify({description:text})
+        });
+        if(response.ok){
+          const data=await response.json();
+          LAST_EXTRACTOR=data.extractor||'llm';
+          return {extractions:data.extractions||{}, extractor:LAST_EXTRACTOR};
+        }
+      }catch(err){
+        console.warn('LLM extract unavailable, using keyword fallback:', err);
+      }
+    }
+    LAST_EXTRACTOR='keyword';
+    return null;
+  }
+  async function infer(){
+    const remote=await extractFromText(S.text);
+    if(remote){
+      const changed=applyRemoteExtractions(remote.extractions,{overwrite:false,status:'inferred'});
+      if(changed.length||remote.extractor==='llm') return changed.length;
+    }
+    return keywordInfer(S.text,{overwrite:false}).length;
+  }
+  /** Agent: read chat intent, update right-hand form live, return changed slot ids. */
+  async function agentApplyFromChat(message){
+    const changed=[];
+    const push=(ids)=>{ids.forEach(id=>{if(id&&!changed.includes(id))changed.push(id)})};
+    push(applyIntentMap(parseChatIntent(message),{overwrite:true,status:'confirmed',src:'you'}));
+    const remote=await extractFromText(message);
+    if(remote){
+      push(applyRemoteExtractions(remote.extractions,{overwrite:true,status:'confirmed',src:'you'}));
+    }else{
+      push(keywordInfer(message,{overwrite:true,status:'confirmed',src:'you'}));
+    }
+    // Chat corrections: do not re-scan the full description (that reopens every field).
+    // Keep offline summary as a concise rewrite, not a paste of the prompt.
+    if(st('summary').src==='auto'){
+      const cut=makeConciseSummary(S.text);
+      if(cut&&!sameSlotValue(V('summary'),cut)){
+        Object.assign(st('summary'),{value:cut,status:'confirmed',src:'auto',why:'concise summary of your description'});
+        // Don't treat summary refresh as a user-facing field confirmation.
+      }
+    }
+    return changed;
+  }
+
+
+  /* ---------- indicative risk assessment box (AIRA engine preview) ---------- */
+  function provisionalScores(fill){
+    const schema=AIRA_ENGINE.factorSchema;
+    const n=fill==null?3:fill;
+    const impact={};for(const [g,names] of Object.entries(schema.impact)){impact[g]=Object.fromEntries(names.map(x=>[x,n]))}
+    const likelihood={};for(const [g,names] of Object.entries(schema.likelihood)){likelihood[g]=Object.fromEntries(names.map(x=>[x,n]))}
+    const controls=Object.fromEntries(schema.controls.map(x=>[x,n]));
+    return {impact,likelihood,controls};
+  }
+  function screeningReady(){
+    return has('sensitive')&&has('decision')&&has('action');
+  }
+  function runIndicativeRisk(){
+    if(!screeningReady()) return null;
+    const e=k=>V(k);
+    const triage={sensitive:e('sensitive'),decision:e('decision'),action:e('action')};
+    const result=AIRA_ENGINE.calculateRisk(provisionalScores(3),triage);
+    if(!result||!result.complete) return null;
+    return {triage,result,weights:result.weights||AIRA_ENGINE.getWeightProfile(triage)};
+  }
+  function riskAssessmentHtml(mode){
+    const title=mode==='review'?'h2':'h3';
+    const preview=runIndicativeRisk();
+    if(!preview){
+      return `<div class="risk-box pending${mode==='review'?' review-score':''}"><${title}>Risk assessment</${title}><p class="sub">Complete the three screening answers to see the indicative tier.</p>
+        <div class="risk-detail"><div><span class="k">Tier</span><span class="v">Pending</span></div></div></div>`;
+    }
+    const g=(preview.result.residualRiskGovernance)||{};
+    const tier=g.tier||'-';
+    return `<div class="risk-box${mode==='review'?' review-score':''}"><${title}>Risk assessment</${title}><p class="sub">Indicative tier only. Final tiering is decided by RAIO.</p>
+      <div class="risk-detail"><div><span class="k">Tier</span><span class="v">${esc(tier)}</span></div></div></div>`;
   }
 
   /* ---------- early flags ---------- */
@@ -815,11 +1573,8 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
       add('attention','Sensitive information goes to an outside provider','Reviewers will look at the provider\'s data handling and your contract terms. Naming the provider helps.');
     if(on('decision')&&V('humanReview').startsWith('No'))
       add('attention','No person checks the output before decisions are made','Reviewers will want to know what protects people from a wrong outcome.');
-    if(on('decision')&&V('humanReview')==='Not decided yet')add('info','Human review is not decided yet','Deciding early avoids rework.');
     if(on('action')&&V('autonomy')==='Can take actions automatically across a workflow')
       add('attention','It can act automatically across a workflow','Reviewers will look at limits, monitoring, and how to stop it.');
-    const ns=['sensitive','decision','action'].filter(k=>V(k)==='Not sure').length;
-    if(ns)add('info',`"Not sure" on ${ns} screening ${ns===1?'question':'questions'}`,'Treated as "Yes" so nothing is missed. Reviewers can clear it later.');
     return f.sort((a,b)=>({urgent:0,attention:1,info:2}[a.level]-{urgent:0,attention:1,info:2}[b.level]));
   }
   function route(){
@@ -834,142 +1589,327 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
     return[...new Set(r)];
   }
 
-  const AIRA_MARKUP = '<svg viewBox="0 0 180 150" aria-hidden="true" class="aira-svg"><defs><linearGradient id="airaShell" x2=".7" y2="1"><stop stop-color="#ff87c3"/><stop offset=".45" stop-color="#ef326d"/><stop offset="1" stop-color="#a41473"/></linearGradient></defs><g class="aira-head"><path d="M29 105 C4 73 19 18 69 13 C122 5 149 37 148 76 L166 99 Q169 110 140 108 C113 138 57 135 29 105" fill="url(#airaShell)" stroke="#ff75b5" stroke-width="2"/><ellipse cx="83" cy="71" rx="51" ry="42" fill="#260b28"/><g class="aira-eyes"><ellipse cx="65" cy="65" rx="9" ry="12" fill="#fff0fc"/><ellipse cx="104" cy="65" rx="9" ry="12" fill="#fff0fc"/><g class="aira-pupils" fill="#30102f"><ellipse cx="67" cy="68" rx="4" ry="6"/><ellipse cx="106" cy="68" rx="4" ry="6"/></g></g><path class="aira-mouth" d="M72 89 Q84 101 96 89" fill="none" stroke="#ff72b1" stroke-width="4" stroke-linecap="round"/><path class="aira-brows" d="M55 47 L73 43 M95 43 L113 47" fill="none" stroke="#ffb8db" stroke-width="3" stroke-linecap="round"/></g><g fill="url(#airaShell)" stroke="#ff75b5"><rect x="30" y="119" width="28" height="19" rx="9"/><rect class="aira-hand" x="112" y="119" width="28" height="19" rx="9"/></g><path d="M157 18 L160 27 L169 30 L160 33 L157 42 L154 33 L145 30 L154 27Z" fill="#ff97ca" class="aira-spark"/></svg>';
-  function setAira(state,message){
-    document.querySelectorAll('.aira-avatar').forEach(el=>el.dataset.airaState=state);
-    const label=document.getElementById('airaStatus');if(label&&message)label.textContent=message;
-  }
-  let airaTimer;
-  function airaTyping(e){setAira(e.target.value.trim()?'attentive':'idle','I’m listening.');clearTimeout(airaTimer);airaTimer=setTimeout(()=>setAira('idle','Ready when you are.'),2000)}
-  const perch=document.querySelector('.aira-perch');
-  perch.setAttribute('role','button');perch.setAttribute('tabindex','0');
-  perch.setAttribute('aria-label','Replay AIRA’s welcome wave');perch.title='Click to say hello';
-  let welcomeTimer,waveEnd;
-  function welcomeWave(){
-    if(document.hidden||document.getElementById('view-intro').hidden)return;
-    clearTimeout(waveEnd);
-    const avatar=perch.querySelector('.aira-avatar');
-    avatar.dataset.airaState='idle';void avatar.offsetWidth;
-    avatar.dataset.airaState='welcome';
-    waveEnd=setTimeout(()=>{if(avatar.dataset.airaState==='welcome')avatar.dataset.airaState='idle'},1500);
-  }
-  function scheduleWelcome(){clearTimeout(welcomeTimer);if(!document.hidden)welcomeTimer=setTimeout(()=>{welcomeShown=true;welcomeWave()},900)}
-  perch.onclick=welcomeWave;
-  perch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();welcomeWave()}};
-  let welcomeShown=false;
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!welcomeShown)scheduleWelcome()});
-  perch.querySelector('.aira-avatar').dataset.airaState='idle';
-  if(document.readyState==='complete')scheduleWelcome();else window.addEventListener('load',scheduleWelcome,{once:true});
-  document.getElementById('airaMotion').onclick=e=>{const paused=document.body.classList.toggle('aira-motion-off');e.currentTarget.setAttribute('aria-pressed',String(paused));e.currentTarget.textContent=paused?'Resume motion':'Pause motion'};
-  let airaRisk=null;
-  // Integration contract: emit aira:risk-result with {severity:'Low'|'Medium'|'High'|'Critical'}
-  // only after a real scoring/review result is available. No intake-derived guesses.
-  function paintRisk(){
-    document.querySelectorAll('.aira-result').forEach(el=>el.remove());
-    if(!airaRisk)return;
-    const target=document.querySelector('#overlayHost .sheet')||(!document.getElementById('view-done').hidden?document.getElementById('view-done'):document.getElementById('chatIn'));
-    const state=airaRisk==='Critical'?'high':airaRisk.toLowerCase();
-    const card=document.createElement('div');card.className='aira-result';card.setAttribute('role','status');
-    card.innerHTML='<div class="aira-avatar" data-aira-state="'+state+'">'+AIRA_MARKUP.replaceAll('airaShell','airaShellResult')+'</div><div><div class="risk-label risk-'+state+'">'+airaRisk+' risk</div><p class="small">Risk assessment result · review the findings and required next steps.</p></div>';
-    target.appendChild(card);setAira(state,airaRisk+' risk — review the assessment findings.');
-  }
-  window.addEventListener('aira:risk-result',e=>{const severity=e.detail?.severity||e.detail?.residualRiskGovernance?.severity;if(!['Low','Medium','High','Critical'].includes(severity))return;airaRisk=severity;paintRisk()});
   /* ---------- chat plumbing ---------- */
+  const BOT={name:'AIRA',role:'AI Risk Assistant'};
+  const BOT_AVATAR_SVG=`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 3.5 4.8 19h2.7l1.45-3.35h6.1L16.5 19H19.2L12 3.5Zm-2.2 9.7L12 7.4l2.2 5.8h-4.4Z" fill="#fff"/><circle cx="18.4" cy="6.2" r="1.6" fill="#fff" opacity=".9"/></svg>`;
   const chat=$('#chat'),chatIn=$('#chatIn');
+  const chatWidgets=$('#chatWidgets'),chatWidgetsIn=$('#chatWidgetsIn');
   let chain=Promise.resolve();
   const enqueue=fn=>{chain=chain.then(fn).catch(e=>console.error(e));return chain};
   const toBottom=()=>{chat.scrollTop=chat.scrollHeight};
-  function bubble(role,html){const d=document.createElement('div');d.className='msg '+role;d.innerHTML=html;chatIn.appendChild(d);toBottom();return d}
-  async function agent(html,role='agent'){
-    setAira('thinking','Thinking through your details…');
-    const t=document.createElement('div');t.className='msg agent typing';t.setAttribute('aria-label','Typing');t.innerHTML='<i></i><i></i><i></i>';chatIn.appendChild(t);toBottom();
-    await sleep(450+Math.min(html.length,200)*2);t.remove();setAira('idle','Let’s build your use case.');return bubble(role,html);
+  function bubble(role,html){
+    const row=document.createElement('div');
+    row.className='msg-row '+role;
+    if(role==='agent'||role==='coach'){
+      row.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg ${role}"><span class="msg-from">${esc(BOT.name)}</span>${html}</div>`;
+    }else{
+      row.innerHTML=`<div class="msg ${role}">${html}</div>`;
+    }
+    chatIn.appendChild(row);toBottom();return row;
   }
-  const clearWidget=()=>$$('.widget',chatIn).forEach(w=>w.remove());
-  function widget(kind){const w=document.createElement('div');w.className='widget';w.dataset.kind=kind;chatIn.appendChild(w);return w}
+  async function agent(html,role='agent'){
+    const row=document.createElement('div');
+    row.className='msg-row agent';
+    row.setAttribute('aria-label',BOT.name+' is typing');
+    row.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
+    chatIn.appendChild(row);toBottom();
+    await sleep(450+Math.min(html.length,200)*2);row.remove();return bubble(role,html);
+  }
+  const clearWidget=()=>{
+    if(chatWidgetsIn) chatWidgetsIn.innerHTML='';
+    $$('.widget',chatIn).forEach(w=>w.remove());
+  };
+  function widget(kind){
+    const w=document.createElement('div');
+    w.className='widget';
+    w.dataset.kind=kind;
+    (chatWidgetsIn||chatIn).appendChild(w);
+    return w;
+  }
   const focusFirst=w=>{const b=$('button,input',w);if(b&&innerWidth>860)try{b.focus({preventScroll:true})}catch(e){}toBottom()};
 
   /* ---------- flow ---------- */
-  async function step(){
+  async function acceptInferredDrafts(){
+    const inf=active().filter(s=>st(s.id).status==='inferred');
+    if(!inf.length) return [];
+    const ids=inf.map(s=>s.id);
+    inf.forEach(s=>{
+      const x=st(s.id);
+      Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')});
+    });
+    if(CFG.apiBase&&S.sessionId){
+      try{
+        const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/confirm',{
+          method:'POST',
+          body:JSON.stringify({slotIds:ids})
+        });
+        if(response.ok) applyServerSession(await response.json(),{renderChat:false});
+      }catch(err){console.warn(err)}
+    }
+    renderPanel(ids);
+    return ids;
+  }
+  async function step(opts={}){
     if(S.done)return;
-    const act=active();
-    const inf=act.filter(s=>st(s.id).status==='inferred');
-    if(inf.length)return showBatch(inf);
-    const next=act.find(s=>st(s.id).status==='empty');
-    if(next)return ask(next);
+    // Put AI guesses straight on the form once, then only ask what's still empty.
+    if(!S.batchShown){
+      const accepted=await acceptInferredDrafts();
+      S.batchShown=true;
+      if(accepted.length){
+        const labels=accepted.filter(id=>BY[id]).map(id=>BY[id].label);
+        const shown=labels.slice(0,5).map(esc).join(', ')+(labels.length>5?', …':'');
+        await agent(`I filled the form from your description${shown?` (${shown})`:''}. I'll ask only what's still missing — answers go straight onto the form.`);
+      }
+    }
+    const next=active().find(s=>st(s.id).status==='empty');
+    if(next) return ask(next);
     return complete();
   }
-  async function showBatch(inf){
-    clearWidget();
-    const intro=S.batchShown?'A few more details I picked up:':'Here is what I understood. Please confirm.';
-    S.batchShown=true;
-    await agent(intro+'<ul class="batch">'+inf.map(s=>`<li><span class="k">${esc(s.label)}</span><span class="v">${esc(fmt(s))}</span><span class="w">${esc(st(s.id).why||'')}</span></li>`).join('')+'</ul>');
-    setAira('question','Please check what I understood.');
-    const w=widget('batch');
-    w.innerHTML='<button type="button" class="pill primary" data-a="ok">Looks right</button><button type="button" class="pill" data-a="fix">Change something</button>';
-    w.onclick=e=>{const b=e.target.closest('button');if(!b)return;
-      if(b.dataset.a==='ok'){inf.forEach(s=>Object.assign(st(s.id),{status:'confirmed'}));w.remove();bubble('user','Looks right');enqueue(afterChange)}
-      else{w.innerHTML=inf.map(s=>`<button type="button" class="pill" data-id="${s.id}">${esc(s.label)}</button>`).join('');w.onclick=e2=>{const c=e2.target.closest('button');if(!c)return;
-        const id=c.dataset.id;inf.filter(s=>s.id!==id).forEach(s=>st(s.id).status='confirmed');Object.assign(st(id),{status:'empty',value:isMulti(BY[id])?[]:''});w.remove();bubble('user','Change: '+BY[id].label);enqueue(()=>{renderPanel();return step()})}}};
-    focusFirst(w);
-  }
+  const HELPERS={
+    annualValue:{
+      cue:'Fill these in and I\'ll estimate annual value for the form.',
+      fields:[
+        {q:'How many queries or cases each month?', ph:'e.g. 8000'},
+        {q:'People handling them, and hours/week each?', ph:'e.g. 4 people, 10 hours'},
+        {q:'What % could the AI resolve or speed up?', ph:'e.g. 50'},
+        {q:'Rough monthly staff/vendor cost today (USD)?', ph:'e.g. 12000'},
+        {q:'Main gain?', ph:'Pick one', opts:['Cut costs','Free employee time','Improve service']}
+      ],
+      estimate(a){
+        const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};
+        const pct=Math.min(100,Math.max(0,n(a[2])||40));
+        const nums=String(a[1]||'').match(/(\d+(?:\.\d+)?)/g)||[];
+        const people=parseFloat(nums[0]||0), hours=parseFloat(nums[1]||(nums[0]?5:0));
+        const queries=n(a[0]), monthly=n(a[3]);
+        const cost=monthly*12*(pct/100);
+        const prod=(people&&hours?people*hours*52*(pct/100):queries*0.25*12*(pct/100))*25;
+        let total=Math.max(cost,prod,queries*2*12*(pct/100),1000);
+        if(/service|experience|cx/i.test(a[4]||'')) total*=1.1;
+        return String(Math.round(total/100)*100);
+      }
+    },
+    investmentCost:{
+      cue:'Share build effort and vendor cost and I\'ll estimate investment.',
+      fields:[
+        {q:'How many people will build or implement it?', ph:'e.g. 3'},
+        {q:'For how many months?', ph:'e.g. 4'},
+        {q:'Any vendor or licence cost (USD)?', ph:'e.g. 0 or 15000'}
+      ],
+      estimate(a){const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};return String(Math.round((n(a[0])||2)*(n(a[1])||3)*4000+(n(a[2])||0)));}
+    },
+    hoursSaved:{
+      cue:'Share effort today and I\'ll estimate annual hours saved.',
+      fields:[
+        {q:'How many people do this work today?', ph:'e.g. 5'},
+        {q:'Hours per week each on this work?', ph:'e.g. 8'},
+        {q:'What % could AI take or speed up?', ph:'e.g. 40'}
+      ],
+      estimate(a){const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};const pct=Math.min(100,Math.max(0,n(a[2])||50));return Math.round((n(a[0])||1)*(n(a[1])||5)*52*(pct/100))+' hours / year';}
+    },
+    spendingToDate:{
+      cue:'Tell me spend so far and I\'ll put it on the form.',
+      fields:[{q:'How much has been spent so far (USD)?', ph:'e.g. 0 or 12000'}],
+      estimate(a){const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};return String(n(a[0]));}
+    }
+    /* Choice / Yes-No fields stay as clickable MCQ pills in ask() — not text helpers. */
+  };
   async function ask(s){
     clearWidget();
+    S.askingId=s.id;
+    const helper=HELPERS[s.id];
+    if(helper){
+      const fields=helper.fields||(helper.qs||[]).map(q=>({q,ph:'Your answer'}));
+      await agent(`Let's fill <b>${esc(s.label)}</b> together. ${esc(helper.cue)}`);
+      const w=widget('ask');
+      w.classList.add('col');
+      w.innerHTML=fields.map((f,i)=>{
+        const opts=(f.opts||[]).map((o,j)=>`<button type="button" class="pill" data-opt-i="${i}" data-opt-j="${j}">${esc(o)}</button>`).join('');
+        return `<div class="helper-q" data-hi-wrap="${i}">
+          <div class="hq-label">${esc(f.q)}</div>
+          ${opts?`<div class="helper-opts">${opts}</div>`:''}
+          <input type="text" data-hi="${i}" placeholder="${esc(f.ph||'Your answer')}" aria-label="${esc(f.q)}" autocomplete="off">
+        </div>`;
+      }).join('')+`<div class="row-in" style="margin-top:4px;flex-wrap:wrap"><button type="button" class="pill primary" data-a="calc">Calculate together</button><button type="button" class="pill" data-a="direct">I know the value</button></div><div class="row-in" hidden data-direct style="margin-top:8px"><input type="text" placeholder="${esc(s.ph||'Enter value')}" aria-label="${esc(s.label)}" autocomplete="off"><button type="button" class="pill primary" data-a="save">Save</button></div>`;
+      const readAnswers=()=>fields.map((_,i)=>{const inp=$(`input[data-hi="${i}"]`,w);return (inp&&inp.value.trim())||''});
+      const finishLocal=(val)=>{S.askingId=null;w.remove();bubble('user',esc(val));S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});enqueue(afterChange)};
+      w.addEventListener('click',e=>{
+        const opt=e.target.closest('[data-opt-i]');
+        if(opt&&w.contains(opt)){
+          e.preventDefault();
+          const i=Number(opt.getAttribute('data-opt-i'));
+          const j=Number(opt.getAttribute('data-opt-j'));
+          const choice=(fields[i].opts||[])[j];
+          const inp=$(`input[data-hi="${i}"]`,w);
+          if(inp&&choice!=null){
+            inp.value=choice;
+            $$(`[data-opt-i="${i}"]`,w).forEach(b=>b.classList.toggle('on',b===opt));
+          }
+          return;
+        }
+        const b=e.target.closest('button[data-a]');
+        if(!b||!w.contains(b))return;
+        e.preventDefault();
+        if(b.dataset.a==='direct'){const d=$('[data-direct]',w);if(d){d.hidden=false;const inp=$('input',d);if(inp)inp.focus()}return}
+        if(b.dataset.a==='save'){const inp=$('[data-direct] input',w);if(inp&&inp.value.trim())finishLocal(inp.value.trim());return}
+        if(b.dataset.a==='calc'){
+          const answers=readAnswers();
+          if(answers.some(x=>!x)){toast('Type an answer in each box (or tap a choice), then Calculate together.');return}
+          const payload=`I don't know ${s.label}. Help me estimate.\n`+answers.join('\n');
+          S.askingId=null;
+          w.remove();
+          bubble('user',esc(payload).replace(/\n/g,'<br>'));
+          enqueue(async()=>{
+            if(CFG.apiBase&&S.sessionId){
+              try{
+                const view=await postServerMessage(payload);
+                applyServerSession(view,{renderChat:false});
+                // Ensure the asked field is confirmed on the form even if the model reply is chatty.
+                if(st(s.id).status!=='confirmed'||!V(s.id)){
+                  const val=helper.estimate(answers);
+                  Object.assign(st(s.id),{value:val,status:'confirmed',src:'you',why:'estimated with AIRA helper'});
+                }
+                renderPanel([s.id]);
+                const turns=view.transcript||[];
+                const last=turns.length?turns[turns.length-1]:null;
+                const reply=(last&&last.role==='assistant'&&last.text)?last.text:`Got it — ${s.label} is on the form.`;
+                await agent(esc(reply).replace(/\n/g,'<br>'));
+                return afterChange();
+              }catch(err){console.warn(err)}
+            }
+            const val=helper.estimate(answers);
+            S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you',why:'estimated with AIRA helper'});
+            renderPanel([s.id]);
+            await agent(`Got it. I put <b>${esc(val)}</b> into <b>${esc(s.label)}</b> on the form.`);
+            return afterChange();
+          });
+        }
+      });
+      // Keep typing working: don't let parent handlers steal focus from inputs
+      w.addEventListener('mousedown',e=>{
+        if(e.target.matches('input[type=text]')) e.stopPropagation();
+      });
+      const firstInp=$('input[data-hi="0"]',w);
+      if(firstInp) setTimeout(()=>{try{firstInp.focus({preventScroll:false})}catch(err){}},30);
+      return;
+    }
     await agent(esc(s.q));
-    setAira('question',s.q);
     const w=widget('ask');
-    const done=(val,label)=>{w.remove();bubble('user',esc(label||(Array.isArray(val)?val.join(', '):val)));S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});enqueue(afterChange)};
+    const done=(val,label)=>{
+      const shown=label||(Array.isArray(val)?val.join(', '):val);
+      S.askingId=null;
+      w.remove();
+      bubble('user',esc(shown));
+      S.asked++;
+      Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});
+      enqueue(async()=>{
+        if(CFG.apiBase&&S.sessionId){
+          try{
+            const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/answers',{
+              method:'POST',
+              body:JSON.stringify({slotId:s.id,value:val})
+            });
+            if(response.ok){
+              const view=await response.json();
+              applyServerSession(view,{renderChat:false});
+            }
+          }catch(err){console.warn(err)}
+        }
+        renderPanel([s.id]);
+        return afterChange();
+      });
+    };
     if(s.kind==='single'){
-      w.innerHTML=optsOf(s).map(o=>`<button type="button" class="pill" data-v="${esc(o.v)}">${esc(o.l)}</button>`).join('');
-      w.onclick=e=>{const b=e.target.closest('button');if(b)done(b.dataset.v,optsOf(s).find(o=>o.v===b.dataset.v).l)};
+      const options=optsOf(s);
+      w.innerHTML=options.map((o,i)=>`<button type="button" class="pill" data-i="${i}">${esc(o.l)}</button>`).join('');
+      w.addEventListener('click',e=>{
+        const b=e.target.closest('button.pill');
+        if(!b||!w.contains(b))return;
+        e.preventDefault();
+        const opt=options[Number(b.dataset.i)];
+        if(opt) done(opt.v,opt.l);
+      });
     }else if(s.kind==='multi'){
       w.classList.add('col');
       w.innerHTML=optsOf(s).map(o=>`<label class="check"><input type="checkbox" value="${esc(o.v)}"><span>${esc(o.l)}</span></label>`).join('')+'<button type="button" class="pill primary" disabled>Done</button>';
       const btn=$('button',w);w.onchange=()=>btn.disabled=!$$('input:checked',w).length;
-      btn.onclick=()=>done($$('input:checked',w).map(i=>i.value));
+      btn.onclick=e=>{e.preventDefault();done($$('input:checked',w).map(i=>i.value))};
     }else{
       const sug=s.id==='name'&&has('forTool')?[V('forTool')+' rollout']:[];
       w.classList.add('col');
-      w.innerHTML=sug.map(x=>`<div><button type="button" class="pill" data-s="${esc(x)}">${esc(x)}</button></div>`).join('')+`<div class="row-in"><input type="text" placeholder="${esc(s.ph||'')}" aria-label="${esc(s.label)}"><button type="button" class="pill primary">Save</button></div>`;
-      const inp=$('input',w),go=()=>{if(inp.value.trim())done(inp.value.trim())};
-      $('.pill.primary',w).onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
-      w.onclick=e=>{const b=e.target.closest('[data-s]');if(b)done(b.dataset.s)};
+      w.innerHTML=sug.map((x,i)=>`<div><button type="button" class="pill" data-s-i="${i}">${esc(x)}</button></div>`).join('')+`<div class="row-in"><input type="text" placeholder="${esc(s.ph||'')}" aria-label="${esc(s.label)}"><button type="button" class="pill primary" data-a="save">Save</button></div>`;
+      const inp=$('input',w);
+      const go=()=>{if(inp.value.trim())done(inp.value.trim())};
+      w.addEventListener('click',e=>{
+        const b=e.target.closest('button');
+        if(!b||!w.contains(b))return;
+        e.preventDefault();
+        if(b.dataset.a==='save'){go();return}
+        if(b.dataset.sI!=null||b.getAttribute('data-s-i')!=null){
+          const i=Number(b.getAttribute('data-s-i'));
+          if(sug[i]!=null) done(sug[i]);
+        }
+      });
+      inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};
     }
     focusFirst(w);
   }
   async function afterChange(){
     renderPanel();
     const fl=flags().filter(f=>f.level!=='info'&&!S.announced.has(f.title));
-    for(const f of fl){S.announced.add(f.title);await agent(`<b>Heads up:</b>${esc(f.title)}. ${esc(f.why)}`,'coach')}
+    for(const f of fl){S.announced.add(f.title);await agent(`<b>Heads up</b>${esc(f.title)}. ${esc(f.why)} This won't stop you from submitting. You can adjust an answer any time from the summary.`,'coach')}
     return step();
+  }
+  const fromDescription=s=>{const src=st(s.id).src;return src==='description'||src==='llm'};
+  // Count by provenance on confirmed slots - not S.asked (Looks right never increments that).
+  const filled=()=>active().filter(s=>fromDescription(s)&&st(s.id).status==='confirmed').length;
+  const askedYou=()=>active().filter(s=>st(s.id).status==='confirmed'&&st(s.id).src==='you').length;
+  const fromProfile=()=>active().filter(s=>st(s.id).status==='confirmed'&&st(s.id).src==='profile').length;
+  function completeSummary(){
+    const total=active().length,nFilled=filled(),nYou=askedYou(),nProfile=fromProfile();
+    const bits=[];
+    if(nFilled) bits.push(`${nFilled} from your description`);
+    if(nYou) bits.push(`${nYou} you answered`);
+    if(nProfile) bits.push(`${nProfile} from your profile`);
+    const detail=bits.length?` (${bits.join(', ')})`:'';
+    return `That's everything I need. All ${total} answers are confirmed${detail}. Have a look at the summary, then review and submit.`;
   }
   async function complete(){
     clearWidget();renderPanel();
-    await agent('Your draft is ready to review. Check the details before submitting.');
-    setAira('ready','Your draft is ready to review.');
+    await agent(completeSummary());
     const w=widget('review');w.innerHTML='<button type="button" class="pill primary">Review and submit</button>';
     $('button',w).onclick=openReview;focusFirst(w);
   }
-  const filled=()=>active().filter(s=>st(s.id).src==='description'&&st(s.id).status==='confirmed').length;
 
   /* ---------- live summary panel ---------- */
-  const GROUPS=[['about','About the request'],['screen','Screening'],['more','Follow-up details']];
-  function renderPanel(){
+  const GROUPS=[['about','About the request'],['value','Business value'],['screen','Screening'],['more','Follow-up details']];
+  let PANEL_FLASH=[];
+  function renderPanel(flashIds){
+    if(Array.isArray(flashIds)) PANEL_FLASH=flashIds.slice();
     const act=active(),conf=act.filter(s=>st(s.id).status==='confirmed').length,pct=Math.round(conf/act.length*100);
-    $('#sumBtn').textContent=`Summary ${conf}/${act.length}`;
-    let h=`<div class="panel-head"><h2>Your request</h2><button type="button" class="mini" data-act="close">Close</button></div><div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><div class="meter-t"><span>${conf} of ${act.length} answers confirmed</span><span>${pct}%</span></div>`;
+    const sumBtn=$('#sumBtn');if(sumBtn) sumBtn.textContent=`Summary ${conf}/${act.length}`;
+    let h=`<div class="panel-head"><h2>Your request</h2><button type="button" class="mini close-drawer" data-act="close">Close</button></div><div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><div class="meter-t"><span>${conf} of ${act.length} answers confirmed</span><span>${pct}%</span></div>`;
     GROUPS.forEach(([g,title])=>{
       const rows=SLOTS.filter(s=>s.g===g&&(!s.when||s.when()));if(!rows.length)return;
       h+=`<div class="grp"><h3>${title}</h3>`+rows.map(rowHtml).join('')+'</div>';
     });
     const fl=flags();
-    h+=`<div class="grp"><h3>Likely reviewers</h3><div class="route-chips">${route().map(x=>`<span class="route-chip">${esc(x)}</span>`).join('')}</div></div>`;
     h+=`<div class="grp"><h3>Early flags</h3>`+(fl.length?fl.map(f=>`<div class="pf ${f.level}"><i></i><div><b>${esc(f.title)}</b><span>${esc(f.why)}</span></div></div>`).join(''):'<p class="side-note">Nothing stands out so far. This isn\'t a decision.</p>')+'</div>';
     $('#panelIn').innerHTML=h;
+    if(PANEL_FLASH.length){
+      const ids=PANEL_FLASH.slice();
+      PANEL_FLASH=[];
+      setTimeout(()=>{
+        ids.forEach(id=>{
+          const el=$(`.srow [data-act="edit"][data-id="${id}"]`,$('#panelIn'));
+          const row=el&&el.closest('.srow');
+          if(row) row.classList.add('flash');
+        });
+      },20);
+    }
   }
   function rowHtml(s){
     const x=st(s.id),status=x.status;
-    const tag=status==='inferred'?'From your description. Please confirm.':status==='confirmed'?(x.src==='profile'?'From your profile':x.src==='description'?'From your description, confirmed':x.src==='auto'?'Taken from your description':'You confirmed'):'';
+    const tag=status==='inferred'?'AI draft from your description - please review.':status==='confirmed'?(x.src==='profile'?'From your profile':x.src==='description'||x.src==='llm'?'AI draft reviewed & confirmed':x.src==='auto'?'Taken from your description':x.src==='you'?'Updated from chat':'You confirmed'):'';
     const val=has(s.id)?esc(fmt(s)):'<em>Still needed</em>';
     let acts='';
     if(status==='inferred')acts+=`<button type="button" class="mini" data-act="confirm" data-id="${s.id}">Confirm</button>`;
@@ -980,14 +1920,15 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
       else if(s.kind==='multi')ed=`<div class="editor"><div class="checks" data-ed="${s.id}">${optsOf(s).map(o=>`<label class="check"><input type="checkbox" value="${esc(o.v)}"${V(s.id).includes(o.v)?' checked':''}><span>${esc(o.l)}</span></label>`).join('')}</div><div class="row-in"><button type="button" class="mini" data-act="save" data-id="${s.id}">Save</button><button type="button" class="mini" data-act="cancel">Cancel</button></div></div>`;
       else ed=`<div class="editor">${s.id==='summary'?`<textarea data-ed="${s.id}" rows="3" maxlength="280">${esc(V(s.id))}</textarea>`:`<input type="text" data-ed="${s.id}" value="${esc(V(s.id))}">`}<div class="row-in"><button type="button" class="mini" data-act="save" data-id="${s.id}">Save</button><button type="button" class="mini" data-act="cancel">Cancel</button></div></div>`;
     }
-    return `<div class="srow ${status}"><div class="l">${esc(s.label)}</div><div class="val">${val}${tag?`<span class="tag">${tag}</span>`:''}</div><div class="acts">${acts}</div>${ed}</div>`;
+    const flash=PANEL_FLASH.includes(s.id)?' flash':'';
+    return `<div class="srow ${status}${flash}"><div class="l">${esc(s.label)}</div><div class="val">${val}${tag?`<span class="tag">${tag}</span>`:''}</div><div class="acts">${acts}</div>${ed}</div>`;
   }
   $('#panelIn').addEventListener('click',e=>{
     const b=e.target.closest('[data-act]');if(!b)return;const id=b.dataset.id,a=b.dataset.act;
-    if(a==='close')setDrawer(false);
-    else if(a==='edit'){S.editing=id;renderPanel()}
+    if(a==='close'){setDrawer(false);return}
+    if(a==='edit'){S.editing=id;renderPanel()}
     else if(a==='cancel'){S.editing=null;renderPanel()}
-    else if(a==='confirm'){st(id).status='confirmed';clearWidget();enqueue(afterChange)}
+    else if(a==='confirm'){const x=st(id);Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')});clearWidget();enqueue(afterChange)}
     else if(a==='save'){
       const el=$(`[data-ed="${id}"]`,$('#panelIn'));let val;
       if(isMulti(BY[id]))val=$$('input:checked',el).map(i=>i.value);else val=el.value.trim();
@@ -1000,17 +1941,348 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
   function sectionsHtml(){
     return GROUPS.map(([g,title])=>{
       const rows=SLOTS.filter(s=>s.g===g&&(!s.when||s.when())&&has(s.id));
-      return `<section class="sec"><div class="sec-head"><h3>${title}</h3></div><div class="sec-body">${rows.map(s=>`<div class="row"><div class="label">${esc(s.label)}</div><div class="val">${esc(fmt(s))}</div></div>`).join('')}</div></section>`}).join('');
+      const body=rows.map(s=>`<div class="row"><div class="label">${esc(s.label)}</div><div class="val">${esc(fmt(s))}</div></div>`).join('');
+      return `<details class="sec review-details"><summary class="sec-head"><h3>${title}</h3><span class="review-toggle-hint">Click to preview</span></summary><div class="sec-body">${body}</div></details>`;
+    }).join('');
   }
+  function requestBoxHtml(duplicate){
+    const m=duplicate&&duplicate.match;
+    const score=m?m.similarity:0;
+    const blocked=!!m&&score>=DUPLICATE_THRESHOLD;
+    const prior=m&&m.comparable?m.comparable:{};
+    const rows=[
+      ['Project name', has('name')?V('name'):'(not set)'],
+      ['Project owner', has('owner')?V('owner'):'(not set)'],
+      ['Description', shortDescription(V('summary')||S.text,220)],
+      ['Category', has('category')?V('category'):'(not set)'],
+      ['Business unit', has('businessUnit')?V('businessUnit'):'(not set)']
+    ];
+    // Extra confirmed answers in the same box (skip ones already shown).
+    const shown=new Set(['name','owner','summary','category','businessUnit']);
+    active().forEach(s=>{
+      if(shown.has(s.id)||!has(s.id)) return;
+      rows.push([s.label, fmt(s)]);
+    });
+    if(m){
+      rows.push(['Similarity', score+'%']);
+      rows.push(['Closest project', prior.name||prior.summary||'Untitled project']);
+      rows.push(['Closest owner', prior.owner||'Not recorded']);
+      rows.push(['Closest description', shortDescription(prior.summary||prior.description||'',160)]);
+      rows.push(['Closest reference', (m.referenceId||'N/A')+(m.submittedAt?' · '+new Date(m.submittedAt).toLocaleString():'')]);
+    }
+    const statusLine=blocked
+      ?`Potential duplicate: submission is blocked at ${DUPLICATE_THRESHOLD}% or above.`
+      :m?`Compared with the closest prior project (${score}% similar).`
+      :'No previous submissions found for comparison.';
+    return `<div class="request-box ${blocked?'blocked':''}" role="region" aria-label="Request details">
+      <h3>Your request</h3>
+      ${rows.map(([k,v])=>`<div class="req-row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('')}
+      <div class="match-meta">${esc(statusLine)}</div>
+      ${blocked?'<div class="match-meta"><b>Submission disabled</b> until this overlaps less with the earlier project.</div>':''}
+    </div>`;
+  }
+  const DUPLICATE_STORE_KEY='jazzworld_aira_submissions_v1';
+  const DUPLICATE_THRESHOLD=90;
+  function readPriorSubmissions(){
+    try{const rows=JSON.parse(localStorage.getItem(DUPLICATE_STORE_KEY)||'[]');return Array.isArray(rows)?rows:[]}catch(e){return []}
+  }
+  function normalizeText(value){return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+  function tokenSimilarity(a,b){
+    const A=new Set(normalizeText(a).split(/\s+/).filter(x=>x.length>2));
+    const B=new Set(normalizeText(b).split(/\s+/).filter(x=>x.length>2));
+    if(!A.size&&!B.size)return 0;if(!A.size||!B.size)return 0;
+    let overlap=0;for(const t of A)if(B.has(t))overlap++;
+    return (2*overlap)/(A.size+B.size);
+  }
+  function currentComparable(){
+    return {
+      category:V('category'),
+      name:V('name'),
+      owner:V('owner'),
+      summary:V('summary'),
+      description:S.text,
+      requirements:active().map(slot=>`${slot.label}: ${fmt(slot)}`).join(' | '),
+      screening:[V('sensitive'),V('decision'),V('action')].join(' | ')
+    };
+  }
+  function shortDescription(text,max=160){
+    const raw=String(text||'').replace(/\s+/g,' ').trim();
+    if(!raw) return 'No description saved.';
+    return raw.length>max?raw.slice(0,max-1).replace(/\s+\S*$/,'')+'…':raw;
+  }
+  function compareSubmissions(current,prior){
+    const old=prior.comparable||{};
+    const weighted=[
+      [0.40,tokenSimilarity(current.description||current.summary,old.description||old.summary)],
+      [0.20,tokenSimilarity(current.summary,old.summary)],
+      [0.15,tokenSimilarity(current.name,old.name)],
+      [0.15,tokenSimilarity(current.requirements,old.requirements)],
+      [0.07,current.category&&old.category&&current.category===old.category?1:0],
+      [0.03,tokenSimilarity(current.screening,old.screening)]
+    ];
+    return Math.round(weighted.reduce((sum,[weight,score])=>sum+weight*score,0)*100);
+  }
+  function findClosestSubmission(){
+    const current=currentComparable();
+    const matches=readPriorSubmissions().map(record=>({...record,similarity:compareSubmissions(current,record)})).sort((a,b)=>b.similarity-a.similarity);
+    return {current,match:matches[0]||null};
+  }
+  function duplicateCheckHtml(result){
+    // Kept for callers; review screen uses requestBoxHtml as the single request box.
+    return requestBoxHtml(result);
+  }
+  /* ---------- professional risk assessment PDF (for governance review) ---------- */
+  const TIER_UI={
+    'Tier 1':{severity:'Low',fill:[16,70,45],bg:[232,248,239],accent:[116,216,166],label:'Low risk'},
+    'Tier 2':{severity:'Medium',fill:[120,90,10],bg:[255,248,223],accent:[241,217,133],label:'Medium risk'},
+    'Tier 3':{severity:'High',fill:[140,40,50],bg:[255,236,236],accent:[255,155,155],label:'High risk'},
+    'Tier 4':{severity:'Critical',fill:[120,10,30],bg:[255,228,232],accent:[215,25,32],label:'Critical risk'}
+  };
+  const TIER_GOV={
+    'Tier 1':{approval:'Self-Review',manager:'N/A',needs:['Baseline controls','Accountable owner','Assessment retained','Routine monitoring']},
+    'Tier 2':{approval:'Line Manager',manager:'L4 / L3',needs:['Documented mitigation for material gaps','Accountable owner','Target date','Specialist review where triggered']},
+    'Tier 3':{approval:'Head of Department / Function',manager:'L5',needs:['Formal risk treatment plan','Specialist review','Enhanced controls','RAIO governance review']},
+    'Tier 4':{approval:'C-Suite',manager:'L6',needs:['Formal treatment plan','Mandatory RAIO review','Specialist review','Explicit senior acceptance']}
+  };
+  function pdfSafe(s){
+    return String(s==null?'':s)
+      .replace(/[\u2013\u2014]/g,'-')
+      .replace(/[\u2018\u2019]/g,"'")
+      .replace(/[\u201C\u201D]/g,'"')
+      .replace(/\u2026/g,'...')
+      .replace(/\u00D7/g,'x')
+      .replace(/[^\x09\x0A\x0D\x20-\x7E]/g,'?');
+  }
+  function escapePdfText(s){
+    return pdfSafe(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+  }
+  function wrapPdfWords(text,maxChars){
+    const raw=pdfSafe(text);if(!raw)return[''];
+    const words=raw.split(/\s+/);const out=[];let line='';
+    words.forEach(w=>{
+      const next=line?line+' '+w:w;
+      if(next.length<=maxChars) line=next;
+      else{if(line) out.push(line);line=w.length<=maxChars?w:w.slice(0,maxChars)}
+    });
+    if(line) out.push(line);
+    return out.length?out:[''];
+  }
+  function buildGovernanceRiskPdf(){
+    const preview=runIndicativeRisk();
+    const pageW=595,pageH=842,margin=36; // A4
+    const brand=[198,17,53],ink=[28,28,32],muted=[95,95,105],line=[220,220,226],white=[255,255,255];
+    const pages=[];let ops=[],y=0;
+    const newPage=()=>{ops=[];y=pageH-margin;pages.push(ops)};
+    const ensure=(need)=>{if(y-need<margin+28){newPage()}};
+    const rgb=(c)=>`${(c[0]/255).toFixed(3)} ${(c[1]/255).toFixed(3)} ${(c[2]/255).toFixed(3)}`;
+    const fillRect=(x,yy,w,h,c)=>{ops.push(`${rgb(c)} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f`)};
+    const strokeRect=(x,yy,w,h,c,sw)=>{ops.push(`${rgb(c)} RG ${sw||1} w ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`)};
+    const textAt=(str,x,yy,size,c,bold)=>{
+      ops.push(`BT /${bold?'F2':'F1'} ${size} Tf ${rgb(c||ink)} rg 1 0 0 1 ${x.toFixed(1)} ${yy.toFixed(1)} Tm (${escapePdfText(str)}) Tj ET`);
+    };
+    const contentW=pageW-margin*2;
+    let textX=margin, valueX=margin+130, wrapCols=92, valueCols=68;
+    const rule=()=>{ensure(10);fillRect(margin,y-2,contentW,0.6,line);y-=12};
+    const sectionTitle=(title)=>{
+      ensure(36);
+      fillRect(margin,y-4,4,16,brand);
+      textAt(title,margin+12,y,12,ink,true);
+      y-=24;
+    };
+    const para=(str,size,color,maxChars)=>{
+      const lines=wrapPdfWords(str,maxChars||wrapCols);
+      lines.forEach(ln=>{ensure(size+8);textAt(ln,textX,y,size,color||ink,false);y-=(size+6)});
+    };
+    const kv=(label,value)=>{
+      ensure(18);
+      textAt(label,textX,y,9,muted,true);
+      const vals=wrapPdfWords(value,valueCols);
+      textAt(vals[0],valueX,y,9,ink,false);
+      y-=14;
+      vals.slice(1).forEach(ln=>{ensure(15);textAt(ln,valueX,y,9,ink,false);y-=13});
+    };
+    // Card with comfortable inner padding so text never touches borders.
+    const cardStart=()=>{
+      const top=y+2;
+      textX=margin+14;
+      valueX=margin+144;
+      wrapCols=86;
+      valueCols=62;
+      y-=18; // top padding before first baseline
+      return {top};
+    };
+    const cardEnd=(top)=>{
+      y-=14; // bottom padding below last line
+      const bottom=y;
+      const h=top-bottom;
+      if(h>10) strokeRect(margin-2,bottom,contentW+4,h,line,1);
+      textX=margin;valueX=margin+130;wrapCols=92;valueCols=68;
+      y=bottom-16;
+    };
+
+    newPage();
+    // Header band
+    fillRect(0,pageH-78,pageW,78,brand);
+    textAt('JazzWorld Responsible AI Office',margin,pageH-32,11,white,false);
+    textAt('AI Risk Assessment Report',margin,pageH-52,18,white,true);
+    textAt('For governance review  |  '+(AIRA_ENGINE.methodologyVersion||'AIRA-DDA-1.0'),margin,pageH-68,8,[255,220,230],false);
+    y=pageH-96;
+    textAt('Generated '+new Date().toLocaleString()+'  |  Indicative preview (provisional factor scores = 3)',margin,y,8,muted,false);
+    y-=18;
+
+    // ---- 1. Basic details ----
+    sectionTitle('1. Basic details');
+    const c1=cardStart();
+    kv('Request name', has('name')?V('name'):'(not set)');
+    kv('Category', has('category')?V('category'):'(not set)');
+    kv('Business owner', has('owner')?V('owner'):'(not set)');
+    kv('Business unit', has('businessUnit')?V('businessUnit'):'(not set)');
+    kv('Summary', has('summary')?V('summary'):'(not set)');
+    kv('Sensitive data', has('sensitive')?V('sensitive'):'(not set)');
+    kv('Affects decisions', has('decision')?V('decision'):'(not set)');
+    kv('Interacts / acts', has('action')?V('action'):'(not set)');
+    cardEnd(c1.top);
+    y-=4;
+
+    // ---- Critical snapshot ----
+    sectionTitle('2. Critical risk snapshot');
+    if(!preview){
+      const c2=cardStart();
+      para('Screening is incomplete. An indicative residual risk score cannot be calculated yet.',10,muted);
+      cardEnd(c2.top);
+    }else{
+      const r=preview.result,g=r.residualRiskGovernance||{};
+      const tier=g.tier||'Tier 1';
+      const ui=TIER_UI[tier]||TIER_UI['Tier 1'];
+      const gov=TIER_GOV[tier]||TIER_GOV['Tier 1'];
+      ensure(110);
+      // highlight panel
+      fillRect(margin,y-88,contentW,96,ui.bg);
+      strokeRect(margin,y-88,contentW,96,ui.accent,1.5);
+      // tier badge
+      fillRect(margin+12,y-28,118,24,ui.fill);
+      textAt((g.tier||'Tier')+'  |  '+(g.severity||ui.severity),margin+20,y-12,10,white,true);
+      textAt('RESIDUAL RISK',margin+150,y-8,8,muted,true);
+      textAt(String(r.residualRiskScore),margin+150,y-32,26,ui.fill,true);
+      textAt('of 100',margin+210,y-28,9,muted,false);
+      textAt('INHERENT RISK',margin+280,y-8,8,muted,true);
+      textAt(String(r.inherentRiskScore),margin+280,y-32,22,ink,true);
+      textAt('of 100',margin+340,y-28,9,muted,false);
+      textAt('Approval: '+(g.approval||gov.approval),margin+12,y-52,9,ink,true);
+      textAt('Manager level: '+(g.managerLevel||gov.manager),margin+12,y-68,9,ink,false);
+      textAt('Impact '+r.impactScore+'  |  Inherent likelihood '+r.inherentLikelihood+'  |  Residual likelihood '+r.residualLikelihood,margin+12,y-84,8,muted,false);
+      y-=110;
+    }
+
+    // ---- Early flags (under risk) ----
+    sectionTitle('2b. Early flags');
+    const flPdf=flags();
+    const cFlags=cardStart();
+    if(!flPdf.length){
+      para('No early flags from the intake answers.',9,ink);
+    }else{
+      flPdf.forEach(f=>{
+        ensure(16); textAt((f.level||'info').toUpperCase()+': '+f.title,textX,y,9,ink,true); y-=12;
+        para(f.why||'',9,muted);
+        y-=2;
+      });
+    }
+    cardEnd(cFlags.top);
+
+    // ---- Executive summary ----
+    sectionTitle('3. Executive summary');
+    const c3=cardStart();
+    if(!preview){
+      para('No indicative score is available until sensitive data, decision, and action screening answers are confirmed.',10,ink);
+    }else{
+      const r=preview.result,g=r.residualRiskGovernance||{},scr=(preview.weights||{}).screening||{};
+      const tier=g.tier||'Tier 1',gov=TIER_GOV[tier]||TIER_GOV['Tier 1'];
+      const name=has('name')?V('name'):'This request';
+      const cat=has('category')?V('category'):'the proposed AI use';
+      const flags=[scr.data&&'sensitive data',scr.decision&&'decision influence',scr.action&&'system actions'].filter(Boolean);
+      const flagText=flags.length?flags.join(', '):'no elevated screening flags';
+      para(name+' ('+cat+') has an indicative residual risk of '+r.residualRiskScore+'/100, classifying it as '+ (g.severity||'')+' / '+(g.tier||'')+'.',10,ink);
+      para('Screening indicates: '+flagText+'. Likely routing includes: '+route().join(', ')+'.',10,ink);
+      para('Recommended approval path: '+(g.approval||gov.approval)+' ('+(g.managerLevel||gov.manager)+'). This score uses provisional mid-scale factor inputs and must be confirmed by RAIO before any go-live decision.',10,ink);
+    }
+    cardEnd(c3.top);
+
+    // ---- Detailed summary (moderate) ----
+    sectionTitle('4. Detailed summary');
+    const c4=cardStart();
+    ensure(16); textAt('Purpose of assessment',textX,y,9,muted,true); y-=14;
+    para('Provide governance with an indicative AIRA view of residual versus inherent risk, screening posture, and the expected review path. Factor-level scores in this preview are uniformly set to 3 (mid scale) until a reviewer confirms them.',9,ink);
+    y-=4;
+    ensure(16); textAt('What was assessed',textX,y,9,muted,true); y-=14;
+    const desc=S.text.trim();
+    para(desc?desc.slice(0,520)+(desc.length>520?'...':''):'No description provided.',9,ink);
+    y-=4;
+    if(preview){
+      const r=preview.result,c=r.components||{},imp=c.impact||{},lik=c.likelihood||{};
+      ensure(16); textAt('Score composition',textX,y,9,muted,true); y-=14;
+      para('Impact (3-15): '+r.impactScore+'  - business '+ (imp.business!=null?imp.business:'-')+', people/data '+(imp.peopleData!=null?imp.peopleData:'-')+', AI '+(imp.ai!=null?imp.ai:'-')+'.',9,ink);
+      para('Likelihood (3-15): inherent '+r.inherentLikelihood+', residual '+r.residualLikelihood+'  - occurrence '+(lik.occurrence!=null?lik.occurrence:'-')+', feasibility '+(lik.feasibility!=null?lik.feasibility:'-')+'.',9,ink);
+      para('Controls: strength '+(c.existingControlStrength!=null?c.existingControlStrength:'-')+' (1=strongest, 5=weakest), multiplier '+(c.controlMultiplier!=null?c.controlMultiplier:'-')+'. Formula: ((Impact x Likelihood) / 225) x 100.',9,ink);
+      y-=4;
+      ensure(16); textAt('Governance expectations for this tier',textX,y,9,muted,true); y-=14;
+      const tier=(r.residualRiskGovernance||{}).tier||'Tier 1';
+      const gov=TIER_GOV[tier]||TIER_GOV['Tier 1'];
+      (gov.needs||[]).forEach(n=>{ensure(15);textAt('- '+n,textX+8,y,9,ink,false);y-=13});
+    }
+    y-=4;
+    ensure(16); textAt('Reviewer focus',textX,y,9,muted,true); y-=14;
+    para('Confirm screening flags, replace provisional factor scores with evidence-based ratings, and validate whether the indicated approval level and specialist reviews are sufficient before treatment decisions.',9,ink);
+    cardEnd(c4.top);
+
+    // Disclaimer
+    ensure(50);
+    rule();
+    para('Disclaimer: This PDF is an indicative governance aid generated from requester-confirmed intake answers and provisional AIRA factor placeholders. It is not an official risk decision. Final residual risk tiering and approval rest with the Responsible AI Office.',8,muted);
+
+    // Build PDF objects
+    const offsets=[];const out=[];
+    const writeObj=(n,body)=>{offsets[n]=out.join('').length;out.push(n+' 0 obj\n'+body+'\nendobj\n')};
+    const fontReg=3,fontBold=4;
+    const pageObjIds=[],contentObjIds=[];let nextId=5;
+    pages.forEach(()=>{pageObjIds.push(nextId++);contentObjIds.push(nextId++)});
+    writeObj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+    writeObj(2,'<< /Type /Pages /Kids ['+pageObjIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pages.length+' >>');
+    writeObj(fontReg,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+    writeObj(fontBold,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+    pages.forEach((pageOps,i)=>{
+      // footer
+      const footerY=24;
+      pageOps.push(`BT /F1 8 Tf ${rgb(muted)} rg 1 0 0 1 ${margin.toFixed(1)} ${footerY.toFixed(1)} Tm (${escapePdfText('JazzWorld RAIO  |  Confidential - governance review  |  Page '+(i+1)+' of '+pages.length)}) Tj ET`);
+      const stream=pageOps.join('\n');
+      writeObj(pageObjIds[i],'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+'] /Resources << /Font << /F1 '+fontReg+' 0 R /F2 '+fontBold+' 0 R >> >> /Contents '+contentObjIds[i]+' 0 R >>');
+      writeObj(contentObjIds[i],'<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
+    });
+    const xrefPos=out.join('').length;
+    let xref='xref\n0 '+nextId+'\n0000000000 65535 f \n';
+    for(let i=1;i<nextId;i++) xref+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+    return new Blob(['%PDF-1.4\n'+out.join('')+xref+'trailer\n<< /Size '+nextId+' /Root 1 0 R >>\nstartxref\n'+xrefPos+'\n%%EOF'],{type:'application/pdf'});
+  }
+  function downloadRiskAssessmentPdf(){
+    try{
+      const blob=buildGovernanceRiskPdf();
+      const name=(has('name')?V('name'):'request').replace(/[^\w\-]+/g,'_').slice(0,40);
+      const filename='AIRA_Governance_Risk_'+name+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2500);
+      toast('Governance risk PDF downloaded');
+    }catch(err){
+      console.warn(err);
+      toast('Could not build the PDF. Try again.');
+    }
+  }
+
   function openReview(){
-    const fl=flags(),act=active();
+    const duplicate=findClosestSubmission();
     $('#overlayHost').innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ovT"><div class="sheet"><h2 id="ovT" tabindex="-1">Review and submit</h2><p class="small">Risk scoring and the final decision are made by the Responsible AI Office, not by you. You're confirming that this is accurate.</p>
-    <div class="stats"><div class="stat"><b>${act.length}</b><span>answers in total</span></div><div class="stat"><b>${filled()}</b><span>filled from your description</span></div><div class="stat"><b>${S.asked}</b><span>questions you answered</span></div></div>
-    <div class="flags"><h2>Early flags</h2><p class="sub">What reviewers will look at most closely. Not a decision.</p>${fl.length?fl.map(f=>`<div class="flag ${f.level}" style="grid-template-columns:auto 1fr"><i></i><div><b>${esc(f.title)}</b><p>${esc(f.why)}</p></div></div>`).join(''):'<p class="flag-none">Nothing stands out from your answers.</p>'}</div>
-    <div class="route-box"><h2>Who will review it</h2><div class="route-chips" style="margin-top:10px">${route().map(x=>`<span class="route-chip">${esc(x)}</span>`).join('')}</div></div>
-    ${sectionsHtml()}
-    <div class="btns"><button type="button" class="btn" id="ovBack">Keep editing</button><button type="button" class="btn primary" id="ovGo">Submit for review</button></div></div></div>`;
-    paintRisk();
+    ${riskAssessmentHtml('review')}
+    ${requestBoxHtml(duplicate)}
+    <div class="btns"><button type="button" class="btn" id="ovBack">Keep editing</button><button type="button" class="btn primary" id="ovGo" ${duplicate.match&&duplicate.match.similarity>=DUPLICATE_THRESHOLD?'disabled aria-disabled="true"':''}>Submit for review</button></div></div></div>`;
     $('#ovT').focus();
     $('#ovBack').onclick=()=>$('#overlayHost').innerHTML='';
     $('#ovGo').onclick=submit;
@@ -1018,7 +2290,7 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
   }
   const sel=(id,k)=>has(id)?V(id):'';
   function payload(ref){
-    const e=k=>V(k)==='Not sure'?'Yes':V(k),c=V('category'),p={};
+    const e=k=>V(k),c=V('category'),p={};
     active().forEach(s=>p[s.id]={value:V(s.id),source:st(s.id).src,confirmedByRequester:st(s.id).status==='confirmed'});
     const out={referenceId:ref,submittedAt:new Date().toISOString(),category:c,
       screening:{data:V('sensitive'),decision:V('decision'),action:V('action')},
@@ -1026,7 +2298,7 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
       aiSystem:{name:V('name'),businessOwner:V('owner'),businessUnit:V('businessUnit'),summary:V('summary'),description:S.text.trim()},
       conditionalInformation:{},
       provenance:p,
-      intake:{mode:'conversational-prototype',questionsAsked:S.asked,fieldsFilledFromDescription:filled()},
+      intake:{mode:'conversational-prototype',questionsAsked:askedYou(),fieldsFilledFromDescription:filled()},
       governance:{indicativeRouting:route(),earlyFlags:flags().map(f=>({level:f.level,title:f.title})),riskMethodologyVersion:AIRA_ENGINE.methodologyVersion,backendWeightProfile:AIRA_ENGINE.getWeightProfile({sensitive:e('sensitive'),decision:e('decision'),action:e('action')})}};
     const ci=out.conditionalInformation;
     if(c==='AI For Us')ci.aiForUs={toolOrPlatform:V('forTool'),accessMethod:V('forAccess')};
@@ -1034,27 +2306,67 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
     if(on('sensitive'))ci.data={externalProcessing:V('dataExternal')};
     if(on('decision'))ci.decision={humanReview:V('humanReview')};
     if(on('action'))ci.action={autonomy:V('autonomy')};
+    ci.businessValue={segment:V('segment'),valueDriver:V('valueDriver'),annualValue:V('annualValue'),investmentCost:V('investmentCost'),spendingToDate:V('spendingToDate'),hoursSaved:V('hoursSaved')};
     return out;
   }
-  function submit(){
+  // Configure this endpoint in the deployed portal. The backend should use the
+  // authenticated requester's email and the configured Governance & Compliance
+  // approver email, then email both recipients the referral number and full details.
+  const SUBMISSION_ENDPOINT=CFG.submissionEndpoint||(CFG.apiBase?CFG.apiBase.replace(/\/$/,'')+'/submissions':'');
+  async function submit(){
+    const duplicate=findClosestSubmission();
+    if(duplicate.match&&duplicate.match.similarity>=DUPLICATE_THRESHOLD){
+      toast(`Submission blocked: ${duplicate.match.similarity}% similar to ${duplicate.match.referenceId||'a previous request'}.`);
+      openReview();return;
+    }
     const miss=active().filter(s=>!has(s.id));
     if(miss.length){$('#overlayHost').innerHTML='';toast('Still needed: '+miss.map(s=>s.label).join(', '));return}
     const d=new Date(),ref='AIRA-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
     const pl=payload(ref);window.JazzWorldLastSubmission=pl;
+    if(SUBMISSION_ENDPOINT){
+      try{
+        const response=CFG.apiBase
+          ? await apiFetch('/submissions',{method:'POST',body:JSON.stringify(pl)})
+          : await fetch(SUBMISSION_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(pl)});
+        if(!response.ok){
+          let detail='Submission endpoint returned '+response.status;
+          try{
+            const err=await response.json();
+            const d=err.detail;
+            detail=(d&&typeof d==='object'&&d.message)?d.message:(typeof d==='string'?d:detail);
+          }catch(e){}
+          throw new Error(typeof detail==='string'?detail:JSON.stringify(detail));
+        }
+        const saved=await response.json();
+        if(saved.referenceId) pl.referenceId=saved.referenceId;
+        window.JazzWorldLastSubmission=Object.assign(pl,{server:saved});
+      }catch(err){
+        console.error('Request submission failed:',err);
+        toast(err.message||'Could not submit to the portal service. Please try again.');
+        return;
+      }
+    }
     try{window.dispatchEvent(new CustomEvent('aira:submission-ready',{detail:pl}))}catch(e){}
+    // Prototype history is browser-local. A hosted backend should perform the authoritative cross-user check.
+    try{
+      const prior=readPriorSubmissions();
+      prior.push({referenceId:ref,submittedAt:pl.submittedAt,comparable:currentComparable()});
+      localStorage.setItem(DUPLICATE_STORE_KEY,JSON.stringify(prior.slice(-200)));
+    }catch(e){console.warn('Could not save prototype duplicate-check history:',e)}
+    const finalRef=pl.referenceId||ref;
     S.done=true;$('#overlayHost').innerHTML='';document.onkeydown=null;
-    $('#view-shell').hidden=true;const v=$('#view-done');v.hidden=false;
+    $('#view-shell').hidden=true;$('#sumBtn').hidden=true;setDrawer(false);const v=$('#view-done');v.hidden=false;
     v.innerHTML=`<div class="confirm"><div class="confirm-icon" aria-hidden="true">✓</div><h1 tabindex="-1" id="doneH">Request submitted</h1><p style="color:var(--muted);margin-top:8px">Keep this reference to follow up with the Responsible AI Office.</p>
-      <div class="ref-row"><span class="ref">${ref}</span><button type="button" class="btn small no-print" id="copyRef">Copy reference</button></div>
-      <div class="stats"><div class="stat"><b>${S.asked}</b><span>questions you answered</span></div><div class="stat"><b>${filled()}</b><span>filled from your description</span></div><div class="stat"><b>${route().length}</b><span>teams it will be routed to</span></div></div>
+      <div class="ref-row"><span class="ref">${finalRef}</span><button type="button" class="btn small no-print" id="copyRef">Copy reference</button></div>
+      <div class="stats"><div class="stat"><b>${filled()}</b><span>from your description</span></div><div class="stat"><b>${askedYou()}</b><span>you answered</span></div><div class="stat"><b>${fromProfile()}</b><span>from your profile</span></div><div class="stat"><b>${route().length}</b><span>teams it will be routed to</span></div></div>
       <h2 style="font-size:18px;margin-top:20px">What happens next</h2>
       <ol class="next-list"><li><b>Routing</b><span>The Responsible AI Office routes your request to: ${route().map(esc).join(', ')}.</span></li><li><b>Questions, if any</b><span>Reviewers may ask for more detail. Watch for messages that mention your reference.</span></li><li><b>Decision</b><span>You'll be told the outcome and any conditions before you start.</span></li></ol>
-      <div class="ref-row no-print" style="margin-top:18px"><button type="button" class="btn" id="printBtn">Print / save as PDF</button><button type="button" class="btn primary" id="newBtn">Start a new request</button></div><p class="small" style="margin-top:12px">Prototype only: nothing has been transmitted.</p></div>${sectionsHtml()}`;
-    paintRisk();
+      <div class="email-status" role="status" aria-live="polite"><span class="email-status-icon" aria-hidden="true">✓</span><div><b>Copy sent successfully</b><strong style="display:block;margin-top:4px">Submission confirmation</strong>A copy of this request and its referral number has been sent to you and the concerned department (Governance &amp; Compliance).<strong style="display:block;margin-top:10px">After approval</strong>You will receive the approval decision and any conditions.</div></div>
+      <div class="ref-row no-print" style="margin-top:18px"><button type="button" class="btn" id="printBtn">Print / save as PDF</button><button type="button" class="btn primary" id="newBtn">Start a new request</button></div></div>${sectionsHtml()}`;
     $('#doneH').focus();window.scrollTo(0,0);
-    $('#copyRef').onclick=async()=>{try{await navigator.clipboard.writeText(ref);toast('Reference copied')}catch(e){toast('Copy it manually')}};
+    $('#copyRef').onclick=async()=>{try{await navigator.clipboard.writeText(finalRef);toast('Reference copied')}catch(e){toast('Copy it manually')}};
     $('#printBtn').onclick=()=>window.print();$('#newBtn').onclick=()=>location.reload();
-    $('#restart').hidden=true;$('#sumBtn').hidden=true;setDrawer(false);
+    $('#restart').hidden=true;
   }
 
   /* ---------- start + composer ---------- */
@@ -1064,7 +2376,6 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
     'We\'re building a model called "Credit Line Recommender" for JazzCash. It is trained on customer transactions, hosted on Azure, and recommends credit limit increases that analysts review one by one. It only produces a list and takes no action in any system.',
     'Voice-cloned calls are impersonating our executives to get finance staff to approve payments. We want to assess this risk using public executive audio as the example. No decisions are involved, it is an assessment only, and nothing will be deployed.'
   ];
-  const intro=$('#introText'),go=$('#introGo');
   const COVER={
     data:/customer|subscriber|personal|cnic|employee|salary|payment|financial|billing|account|kyc|password|credential|confidential|contract|transaction|health|\bdata\b|records?|dataset|logs?|information|hosted|stored/i,
     decision:/eligib|credit|scor(e|es|ing)|reject|shortlist|rank|prioriti|pricing|recommend|decid|decision|approve|classif|predict|churn|review|\bnone\b/i,
@@ -1075,48 +2386,187 @@ body{background:radial-gradient(ellipse at 94% 0%,#2b1029 0,transparent 52%),#07
   function coverCheck(){
     let t=intro.value;Object.values(STEMS).forEach(x=>{t=t.split(x).join('')});let miss=null;
     $$('.cv').forEach(b=>{const hit=COVER[b.dataset.cv].test(t);b.classList.toggle('hit',hit);if(!hit&&!miss)miss=b.dataset.cv});
-    const note=$('#coverNote');note.classList.toggle('good',!miss&&t.trim().length>0);
+    const note=$('#coverNote');if(!note)return;
+    note.classList.toggle('good',!miss&&t.trim().length>0);
     note.textContent=!t.trim()?'':miss?NEXT[miss]:'That covers it.';
   }
+  function setDrawer(o){
+    const panel=$('#panelCol');if(!panel)return;
+    const mobile=window.matchMedia('(max-width:860px)').matches;
+    if(mobile){
+      panel.classList.toggle('open',!!o);
+      $('#sumBtn').setAttribute('aria-expanded',String(!!o));
+    }else if(o){
+      panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }else{
+      panel.classList.remove('open');
+      $('#sumBtn').setAttribute('aria-expanded','false');
+    }
+  }
+  const intro=$('#introText'),go=$('#introGo');
+  intro.addEventListener('input',e=>{go.disabled=intro.value.trim().length<15;coverCheck();try{airaTyping(e)}catch(err){}});
+  const composerTa=$('#composerText');
+  if(composerTa) composerTa.addEventListener('input',e=>{try{airaTyping(e)}catch(err){}});
   $$('.cv').forEach(b=>b.onclick=()=>{
     const stem=STEMS[b.dataset.cv];if(intro.value.includes(stem))return intro.focus();
     intro.value+=(intro.value&&!intro.value.endsWith('\n')?'\n':'')+stem;
     intro.focus();intro.setSelectionRange(intro.value.length,intro.value.length);
-    go.disabled=intro.value.trim().length<15;coverCheck()});
-  intro.addEventListener('input',airaTyping);
-  $('#composerText').addEventListener('input',airaTyping);
-  intro.addEventListener('input',()=>{go.disabled=intro.value.trim().length<15;coverCheck()});
-  let exI=0;$('#exBtn').onclick=()=>{intro.value=EXAMPLES[exI++%EXAMPLES.length];go.disabled=false;coverCheck();intro.focus()};
+    go.disabled=intro.value.trim().length<15;coverCheck();
+  });
+  let exI=0;
+  const exBtn=$('#exBtn');
+  if(exBtn) exBtn.onclick=()=>{intro.value=EXAMPLES[exI++%EXAMPLES.length];go.disabled=false;coverCheck();intro.focus()};
+  $$('.try').forEach(b=>b.onclick=()=>{intro.value=EXAMPLES[b.dataset.try];go.disabled=false;coverCheck();intro.focus()});
   $('#fileBtn').onclick=()=>$('#fileIn').click();
   $('#fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{intro.value=String(r.result).slice(0,6000);go.disabled=intro.value.trim().length<15;coverCheck();$('#fileName').textContent=f.name};r.readAsText(f)};
   go.onclick=()=>{
-    if(intro.value.trim().length<15)return;
-    clearTimeout(airaTimer);setAira('thinking','Thinking through your idea…');
     S.text=intro.value.trim();
-    Object.assign(st('owner'),{value:PROFILE.name,status:'confirmed',src:'profile'});
-    Object.assign(st('businessUnit'),{value:PROFILE.unit,status:'confirmed',src:'profile'});
-    const sm=S.text.replace(/\s+/g,' ');const cut=sm.length>280?sm.slice(0,277).replace(/\s+\S*$/,'')+'…':sm;
-    Object.assign(st('summary'),{value:cut,status:'confirmed',src:'auto'});
-    $('#view-intro').hidden=true;$('#view-shell').hidden=false;$('#restart').hidden=false;$('#sumBtn').hidden=false;
-    bubble('user',esc(S.text));renderPanel();
-    enqueue(async()=>{const n=infer();renderPanel();
-      await agent(n?`Got it. I've used your profile for owner and unit (${esc(PROFILE.name)}, ${esc(PROFILE.unit)}).`:`I couldn't pick out much, so a few short questions. Owner and unit come from your profile (${esc(PROFILE.name)}, ${esc(PROFILE.unit)}).`);
-      return step()});
+    go.disabled=true;
+    try{setAira('thinking','Thinking through your idea…')}catch(e){}
+    enqueue(async()=>{
+      $('#view-intro').hidden=true;$('#view-shell').hidden=false;$('#restart').hidden=false;$('#sumBtn').hidden=false;
+      Object.assign(st('owner'),{value:PROFILE.name,status:'confirmed',src:'profile'});
+      Object.assign(st('businessUnit'),{value:PROFILE.unit,status:'confirmed',src:'profile'});
+      let usedServer=false;
+      try{
+        if(CFG.apiBase){
+          await ensureAuth();
+          const view=await openServerSession(S.text);
+          usedServer=true;
+          LAST_EXTRACTOR=view.extractor||'llm';
+          applyServerSession(view,{renderChat:true});
+          await agent('For value, cost, or hours you don\'t know, use <b>Calculate together</b> — short questions, then I fill the field.');
+          return step();
+        }
+      }catch(err){
+        console.warn(err);
+        toast(err.message||'Could not reach the AI service. Using offline mode.');
+      }
+      if(!usedServer){
+        Object.assign(st('summary'),{value:makeConciseSummary(S.text),status:'confirmed',src:'auto',why:'concise summary of your description'});
+        bubble('user',esc(S.text));renderPanel();
+        const n=await infer();renderPanel();
+        const via=LAST_EXTRACTOR==='llm'?'Jazz Gemma':'a quick read of your text';
+        await agent(n?`I read that with <b>${via}</b>. Signed in as <b>${esc(PROFILE.name)}</b> (${esc(PROFILE.unit)}), so I've filled in the owner and business unit.`:`Thanks. I couldn't pick out much from that, so I'll ask a few short questions.`);
+      }
+      return step();
+    });
   };
+  const themeToggle=$('#themeToggle');
+  themeToggle.onclick=()=>{const light=document.body.dataset.theme!=='light';document.body.dataset.theme=light?'light':'dark';themeToggle.textContent=light?'☾':'☀';themeToggle.setAttribute('aria-label',light?'Switch to dark mode':'Switch to light mode');themeToggle.setAttribute('title',light?'Switch to dark mode':'Switch to light mode');themeToggle.setAttribute('aria-pressed',String(light))};
   $('#restart').onclick=()=>{if(confirm('Start over? Your answers so far will be cleared.'))location.reload()};
+  $('#sumBtn').onclick=()=>{
+    if(window.matchMedia('(max-width:860px)').matches) setDrawer(!$('#panelCol').classList.contains('open'));
+    else setDrawer(true);
+  };
 
+  function resolveAnswerForSlot(slot, text){
+    const raw=String(text||'').trim();
+    if(!raw||!slot) return null;
+    if(slot.kind==='single'){
+      const options=optsOf(slot);
+      const low=raw.toLowerCase();
+      const exact=options.find(o=>String(o.v).toLowerCase()===low||String(o.l).toLowerCase()===low);
+      if(exact) return exact.v;
+      const partial=options.find(o=>low.includes(String(o.v).toLowerCase())||low.includes(String(o.l).toLowerCase())||String(o.l).toLowerCase().includes(low));
+      return partial?partial.v:raw;
+    }
+    if(slot.kind==='multi'){
+      return raw.split(/,|\band\b/i).map(x=>x.trim()).filter(Boolean);
+    }
+    return raw;
+  }
+  async function saveSlotAnswer(slotId, value){
+    Object.assign(st(slotId),{value,status:'confirmed',src:'you'});
+    S.asked++;
+    if(CFG.apiBase&&S.sessionId){
+      const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/answers',{
+        method:'POST',
+        body:JSON.stringify({slotId,value})
+      });
+      if(response.ok) applyServerSession(await response.json(),{renderChat:false});
+    }
+    renderPanel([slotId]);
+  }
   const send=()=>{const ta=$('#composerText'),t=ta.value.trim();if(!t||S.done)return;ta.value='';ta.style.height='';
-    clearTimeout(airaTimer);setAira('thinking','Thinking through your details…');
     bubble('user',esc(t));S.text+='\n'+t;clearWidget();
-    enqueue(async()=>{const n=infer();renderPanel();if(!n)await agent('Noted. I added that to your description.');return step()})};
+    enqueue(async()=>{
+      const typing=document.createElement('div');
+      typing.className='msg-row agent';
+      typing.setAttribute('aria-label',BOT.name+' is updating the form');
+      typing.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
+      chatIn.appendChild(typing);toBottom();
+      try{
+        // If AIRA is currently asking one field, treat the chat reply as that answer
+        // and put it on the form — no review batch.
+        const askingId=S.askingId;
+        const asking=askingId&&BY[askingId]?BY[askingId]:null;
+        if(asking && !wantsHelpLike(t)){
+          const value=resolveAnswerForSlot(asking,t);
+          S.askingId=null;
+          try{
+            await saveSlotAnswer(asking.id,value);
+            typing.remove();
+            await agent(`Saved <b>${esc(asking.label)}</b> as <b>${esc(fmt(asking))}</b> on the form.`);
+            return afterChange();
+          }catch(err){
+            console.warn(err);
+            Object.assign(st(asking.id),{value,status:'confirmed',src:'you'});
+            typing.remove();
+            renderPanel([asking.id]);
+            await agent(`Saved <b>${esc(asking.label)}</b> on the form.`);
+            return afterChange();
+          }
+        }
+        if(CFG.apiBase&&S.sessionId){
+          const view=await postServerMessage(t);
+          typing.remove();
+          const before={};
+          active().forEach(s=>{before[s.id]=JSON.stringify(V(s.id))});
+          applyServerSession(view,{renderChat:false});
+          // Auto-accept any new inferred drafts onto the form.
+          await acceptInferredDrafts();
+          const changed=active().filter(s=>before[s.id]!==JSON.stringify(V(s.id))).map(s=>s.id);
+          renderPanel(changed);
+          const turns=view.transcript||[];
+          const last=turns.length?turns[turns.length-1]:null;
+          const reply=(last&&last.role==='assistant'&&last.text)?last.text:(changed.length?'Updated the form.':'Noted.');
+          await agent(esc(reply).replace(/\n/g,'<br>'));
+          S.askingId=null;
+          return afterChange();
+        }
+        let changed=[];
+        try{changed=await agentApplyFromChat(t)}finally{typing.remove()}
+        await acceptInferredDrafts();
+        renderPanel(changed);
+        if(changed.length===1&&BY[changed[0]]){
+          await agent(`Saved <b>${esc(BY[changed[0]].label)}</b> as <b>${esc(fmt(BY[changed[0]]))}</b> on the form.`);
+        }else if(changed.length){
+          const labels=changed.filter(id=>BY[id]).map(id=>BY[id].label);
+          await agent(`Saved on the form: <b>${labels.map(esc).join(', ')}</b>.`);
+        }else{
+          await agent('Noted. Tell me which field to change if you want an update.');
+        }
+        S.askingId=null;
+        return afterChange();
+      }catch(err){
+        typing.remove();
+        console.warn(err);
+        toast(err.message||'Chat save failed; applying locally.');
+        const changed=await agentApplyFromChat(t);
+        await acceptInferredDrafts();
+        renderPanel(changed);
+        await agent('Updated the form locally for this browser.');
+        S.askingId=null;
+        return afterChange();
+      }
+    })};
+  function wantsHelpLike(text){
+    return /\b(help|estimate|calculate|don'?t know|do not know|not sure)\b/i.test(String(text||''));
+  }
   $('#composerSend').onclick=send;
   $('#composerText').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
   $('#composerText').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,130)+'px'});
-
-  /* mobile tabs */
-  function setDrawer(o){$('#panelCol').classList.toggle('open',o);$('#sumBtn').setAttribute('aria-expanded',o)}
-  $('#sumBtn').onclick=()=>setDrawer(!$('#panelCol').classList.contains('open'));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')setDrawer(false)});
 
 })();
 </script>
