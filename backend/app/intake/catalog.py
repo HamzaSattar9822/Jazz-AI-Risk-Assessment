@@ -667,12 +667,56 @@ def display_value(slot: Slot, value) -> str:
 
 
 def make_summary(description: str) -> str:
-    compact = re.sub(r"\s+", " ", description).strip()
-    if len(compact) <= 280:
-        return compact
-    cut = compact[:277]
-    cut = re.sub(r"\s+\S*$", "", cut)
-    return cut + "…"
+    """Offline concise summary — never paste the full user prompt verbatim."""
+    compact = re.sub(r"\s+", " ", (description or "")).strip()
+    if not compact:
+        return ""
+    stripped = re.sub(
+        r"^(?:we(?:'d| would)? like to|we want to|i want to|we(?:'re| are) (?:going to|planning to)|"
+        r"this (?:is|request is) (?:about|for)|looking to)\s+",
+        "",
+        compact,
+        flags=re.I,
+    ).strip() or compact
+    parts = [p.strip() for p in re.split(r"(?<=[.!?])\s+", stripped) if p.strip()]
+    chosen: list[str] = []
+    for part in parts:
+        trial = " ".join(chosen + [part]).strip()
+        if chosen and len(trial) > 200:
+            break
+        chosen.append(part)
+        if len(" ".join(chosen)) >= 90 and len(chosen) >= 1:
+            break
+        if len(chosen) >= 2:
+            break
+    summary = " ".join(chosen).strip() or stripped
+    if len(summary) > 220:
+        summary = re.sub(r"\s+\S*$", "", summary[:217]).rstrip(" ,;") + "…"
+    if summary and summary[0].islower():
+        summary = summary[0].upper() + summary[1:]
+    if summary and summary[-1] not in ".!?…":
+        summary = summary.rstrip(" ,;") + "."
+    # If we barely shortened a short prompt, still rephrase lightly by dropping filler clauses.
+    if summary.lower().rstrip(".") == compact.lower().rstrip(".") and len(compact) > 140:
+        summary = re.sub(r"\s+\S*$", "", compact[:160]).rstrip(" ,;") + "…"
+        if summary[0].islower():
+            summary = summary[0].upper() + summary[1:]
+    return summary[:280]
+
+
+def set_summary(state: dict, value: str, *, source: str = "llm", why: str = "") -> None:
+    """Write the auto summary slot (apply_extractions skips auto fields)."""
+    text = str(value or "").strip()
+    if not text:
+        return
+    if len(text) > 280:
+        text = re.sub(r"\s+\S*$", "", text[:277]).rstrip(" ,;") + "…"
+    state["slots"]["summary"] = {
+        "value": text,
+        "status": "confirmed",
+        "source": source,
+        "why": why or ("AI-generated concise summary" if source == "llm" else "concise summary of your description"),
+    }
 
 
 def empty_slot_state(slot: Slot) -> dict:

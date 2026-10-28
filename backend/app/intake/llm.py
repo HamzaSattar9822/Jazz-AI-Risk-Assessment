@@ -61,7 +61,10 @@ def _parse_content(content: str) -> dict:
 
 def _accept(slot_id: str, raw_value, why: str) -> dict | None:
     slot = SLOTS_BY_ID.get(slot_id)
-    if slot is None or slot.auto or slot.profile:
+    if slot is None or slot.profile:
+        return None
+    # Summary is auto-filled but we still accept an LLM-written concise version.
+    if slot.auto and slot.id != "summary":
         return None
     try:
         value = validate_answer(slot, raw_value)
@@ -86,8 +89,11 @@ def llm_extract(description: str, settings: Settings) -> dict[str, dict] | None:
                     "does not support it. Never invent a tool, a name, or a yes. "
                     "For choice fields, copy an allowed value exactly. "
                     "Decide category carefully - do NOT default to AI For Us. "
+                    "Always include a summary extraction: one or two short sentences that "
+                    "concisely restate the request in plain language. Do NOT copy the user's "
+                    "prompt verbatim or paste long excerpts. Max 200 characters for summary. "
                     "If the text is a short correction (e.g. change the name, set sensitive to No), "
-                    "extract only the fields being changed. "
+                    "extract only the fields being changed and omit summary unless the description grew. "
                     "Reply with a JSON object only, no prose. "
                     'Schema: {"extractions":[{"id":"...","value":"...","why":"short phrase"}]}.'
                 ),
@@ -97,8 +103,17 @@ def llm_extract(description: str, settings: Settings) -> dict[str, dict] | None:
                 "content": json.dumps(
                     {
                         "description": description[:8000],
-                        "fields": _slot_guide(),
+                        "fields": _slot_guide()
+                        + [
+                            {
+                                "id": "summary",
+                                "question": "Write a concise 1-2 sentence summary of this AI request.",
+                                "kind": "text",
+                                "maxChars": 200,
+                            }
+                        ],
                         "rules": [
+                            "summary: concise AI-written restatement, not a truncated copy of the prompt.",
                             "Treat short follow-up messages as corrections or additions; extract changed fields.",
                             "category has exactly three values: AI For Us, AI By Us, AI Against Us.",
                             "AI Against Us: assessing or defending against AI-enabled threats aimed at Jazz (deepfake, phishing, voice clone, prompt injection, adversarial fraud). Prefer this when the goal is threat/risk assessment, not deploying a product.",

@@ -155,9 +155,9 @@ textarea{resize:vertical;min-height:88px;line-height:1.5}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .check{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line-strong);padding:10px 12px;border-radius:10px;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
 .check:hover{border-color:#65505d}
-.check input{width:18px;height:18px;margin:2px 0 0;accent-color:#d52c66;flex:none}
+.check input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:#d52c66;flex:none}
 .check span{font-size:14px;line-height:1.4}
-.check:has(input:checked){border-color:#d52c66;background:#1b0e15}
+.check:has(input[type=checkbox]:checked){border-color:#d52c66;background:#1b0e15}
 .check:has(input:focus-visible){outline:2px solid var(--accent-ink);outline-offset:2px}
 .more{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:16px}
 .more summary{cursor:pointer;padding:15px 18px;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
@@ -349,18 +349,51 @@ body{overflow-x:hidden}
 .try span{font-size:13px;color:var(--muted)}
 .fine{font-size:13px;color:var(--faint);margin-top:18px;max-width:64ch}
 
-/* split shell */
-.shell{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);height:calc(100vh - 66px);height:calc(100dvh - 66px)}
-.chat-col{display:flex;flex-direction:column;min-height:0;min-width:0}
-.chat{flex:1;overflow-y:auto;padding:22px 22px 8px;scroll-behavior:smooth}
+/* split shell — form left, chat right */
+.shell{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);height:calc(100vh - 66px);height:calc(100dvh - 66px)}
+.chat-col{display:flex;flex-direction:column;min-height:0;min-width:0;border-left:1px solid var(--line)}
+.chat-head{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:rgba(9,9,11,.72);flex:none}
+.chat-head .bot-meta{min-width:0}
+.chat-head .bot-name{font-size:15px;font-weight:800;letter-spacing:.01em;line-height:1.2}
+.chat-head .bot-role{font-size:12px;color:var(--muted);margin-top:2px}
+.bot-avatar{
+  flex:none;width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(145deg,#e31b23 0%,#b40b48 55%,#72005e 100%);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 6px 16px rgba(180,11,72,.28);
+  display:grid;place-items:center;overflow:hidden;
+}
+.bot-avatar svg{width:22px;height:22px;display:block}
+.bot-avatar.sm{width:30px;height:30px;box-shadow:none}
+.bot-avatar.sm svg{width:16px;height:16px}
+.chat{flex:1;overflow-y:auto;padding:22px 22px 8px;scroll-behavior:smooth;min-height:0}
 .chat-inner{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
-.msg{max-width:88%;padding:12px 15px;border-radius:16px;font-size:15px;line-height:1.5;animation:pop .18s ease-out}
+.chat-widgets{flex:none;max-height:min(46vh,420px);overflow-y:auto;padding:10px 22px 12px;border-top:1px solid var(--line);background:rgba(9,9,11,.92);position:relative;z-index:5;pointer-events:auto;-webkit-overflow-scrolling:touch}
+.chat-widgets:empty{display:none;padding:0;border:0;max-height:0}
+.chat-widgets-inner{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.helper-q{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface-2)}
+.helper-q .hq-label{font-size:12.5px;color:var(--muted);line-height:1.35}
+.helper-q input[type=text]{
+  width:100%;min-height:42px;border:1px solid var(--line-strong);border-radius:10px;
+  background:#09090b;padding:10px 12px;font-size:15px;outline:none;color:inherit;
+  pointer-events:auto;cursor:text;
+}
+.helper-q input[type=text]:focus{border-color:#c64475;box-shadow:0 0 0 3px rgba(198,68,117,.18)}
+.helper-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.helper-opts .pill{padding:7px 12px;font-size:13px}
+.helper-opts .pill.on{border-color:#c64475;background:#2a101c;color:var(--accent-ink)}
+.msg-row{display:flex;align-items:flex-end;gap:8px;max-width:100%;animation:pop .18s ease-out}
+.msg-row.agent,.msg-row.coach{align-self:flex-start;max-width:92%}
+.msg-row.user{align-self:flex-end;flex-direction:row-reverse;max-width:88%}
+.msg{padding:12px 15px;border-radius:16px;font-size:15px;line-height:1.5;min-width:0}
 @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.msg.agent{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line);border-top-left-radius:4px}
-.msg.user{align-self:flex-end;background:#2a101c;border:1px solid var(--accent-line);border-top-right-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere}
-.msg.coach{align-self:flex-start;background:var(--warn-bg);border:1px solid var(--warn-line);border-top-left-radius:4px;color:#f5e7b0}
+.msg.agent{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.user{background:#2a101c;border:1px solid var(--accent-line);border-bottom-right-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.coach{background:var(--warn-bg);border:1px solid var(--warn-line);border-bottom-left-radius:4px;color:#f5e7b0}
 .msg.coach b{display:block;color:var(--warn);margin-bottom:2px}
 .msg .small{display:block;margin-top:6px}
+.msg .msg-from{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.msg.agent .msg-from{color:var(--accent-ink)}
 .msg.typing{display:flex;gap:5px;align-items:center;padding:14px 16px}
 .msg.typing i{width:7px;height:7px;border-radius:50%;background:var(--faint);animation:bl 1s infinite}
 .msg.typing i:nth-child(2){animation-delay:.15s}.msg.typing i:nth-child(3){animation-delay:.3s}
@@ -370,21 +403,23 @@ body{overflow-x:hidden}
 .batch .k{font-size:12px;color:var(--muted)}
 .batch .v{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .batch .w{font-size:12px;color:var(--faint)}
-.widget{align-self:flex-start;max-width:100%;display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px}
+.widget{align-self:flex-start;max-width:100%;display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 4px;position:relative;z-index:2;pointer-events:auto}
 .widget.col{flex-direction:column;align-items:stretch;width:min(460px,100%)}
-.pill{border:1px solid var(--line-strong);background:var(--surface-2);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:14px;transition:background .15s,border-color .15s;text-align:left}
+.pill{border:1px solid var(--line-strong);background:var(--surface-2);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:14px;transition:background .15s,border-color .15s;text-align:left;pointer-events:auto;-webkit-tap-highlight-color:transparent}
 .pill:hover{border-color:#c64475;background:var(--surface-3)}
 .pill.primary{background:var(--grad);border-color:#bc1743;color:#fff}
-.widget .check{width:100%}
-.widget .row-in{display:flex;gap:8px;width:100%}
-.widget input[type=text]{flex:1}
+.widget .check{width:100%;cursor:pointer;pointer-events:auto}
+.widget .check input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;flex:none}
+.widget .row-in{display:flex;gap:8px;width:100%;align-items:center}
+.widget input[type=text]{flex:1;min-height:42px;pointer-events:auto;cursor:text}
+.widget button,.widget input,.widget label,.helper-q,.helper-q *{pointer-events:auto}
 .composer{border-top:1px solid var(--line);background:rgba(5,5,6,.94);padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px))}
 .composer-in{max-width:640px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
 .composer textarea{min-height:46px;max-height:130px;resize:none;padding:11px 12px}
 .composer .hintline{max-width:640px;margin:6px auto 0;font-size:12px;color:var(--faint)}
 
-/* live summary */
-.panel-col{border-left:1px solid var(--line);overflow-y:auto;min-height:0;background:rgba(9,9,11,.6)}
+/* live summary (left column) */
+.panel-col{overflow-y:auto;min-height:0;background:rgba(9,9,11,.6)}
 .panel-in{padding:20px 20px 40px;max-width:620px;margin:0 auto}
 .panel-in h2{font-size:17px}
 .meter{margin:10px 0 4px;height:6px;background:#1d1a1f;border-radius:99px;overflow:hidden}
@@ -419,11 +454,12 @@ body{overflow-x:hidden}
 .tabs{display:none!important}
 @media(max-width:860px){
   .shell{grid-template-columns:1fr}
+  .chat-col{border-left:0}
   .panel-col{
-    position:fixed;top:66px;right:0;bottom:0;width:min(400px,100%);z-index:35;
-    background:var(--bg);border-left:1px solid var(--line-strong);
-    box-shadow:-24px 0 50px rgba(0,0,0,.55);
-    transform:translateX(102%);visibility:hidden;
+    position:fixed;top:66px;left:0;bottom:0;width:min(400px,100%);z-index:35;
+    background:var(--bg);border-right:1px solid var(--line-strong);
+    box-shadow:24px 0 50px rgba(0,0,0,.55);
+    transform:translateX(-102%);visibility:hidden;
     transition:transform .2s,visibility .2s;overflow-y:auto;
   }
   .panel-col.open{transform:none;visibility:visible}
@@ -529,12 +565,18 @@ body[data-theme="light"] .cv.hit{
 }
 body[data-theme="light"] .shell{background:transparent}
 body[data-theme="light"] .chat{background:transparent}
+body[data-theme="light"] .chat-head{
+  background:rgba(255,255,255,.92);
+  border-bottom-color:var(--line);
+}
+body[data-theme="light"] .chat-head .bot-name{color:var(--ink)}
 body[data-theme="light"] .msg.agent,
 body[data-theme="light"] .batch li{
   background:#fff;border-color:var(--line);
   box-shadow:0 2px 10px rgba(28,18,22,.05);
   color:var(--ink);
 }
+body[data-theme="light"] .msg.agent .msg-from{color:#8b1a3a}
 body[data-theme="light"] .msg.user{
   background:linear-gradient(160deg,#fff0f4,#ffe8ef);
   border-color:var(--accent-line);color:#3a1824;
@@ -666,12 +708,16 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
 .email-status-icon{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:var(--ok);color:#fff;font-size:19px;font-weight:900}
 .email-status b{display:block;font-size:15px;margin-bottom:3px}
 .email-status strong{color:var(--ok)}
-.duplicate-check{margin:14px 0;padding:15px;border:1px solid var(--line-strong);border-radius:13px;background:var(--surface)}
-.duplicate-check .match-score{font-size:26px;font-weight:800;letter-spacing:-.02em}
-.duplicate-check.blocked{border-color:var(--err-line);background:var(--err-bg)}
-.duplicate-check.clear{border-color:var(--ok-line);background:var(--ok-bg)}
-.duplicate-check .match-meta{font-size:13px;color:var(--muted);margin-top:5px}
-.duplicate-check .match-record{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-strong);font-size:14px;overflow-wrap:anywhere}
+.request-box{margin:14px 0;padding:16px 18px;border:1px solid var(--line-strong);border-radius:13px;background:var(--surface)}
+.request-box.blocked{border-color:var(--err-line);background:var(--err-bg)}
+.request-box h3{font-size:15px;margin:0 0 10px;font-weight:800}
+.request-box .req-row{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;padding:6px 0;border-top:1px solid var(--line);font-size:14px;align-items:start}
+.request-box .req-row:first-of-type{border-top:0;padding-top:0}
+.request-box .req-row .k{color:var(--muted);font-size:13px}
+.request-box .req-row .v{overflow-wrap:anywhere}
+.request-box .match-score{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
+.request-box .match-meta{font-size:13px;color:var(--muted);margin-top:6px}
+body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
 
 @media(max-width:600px){.theme-toggle{width:36px;height:36px;min-height:36px;flex-basis:36px;font-size:18px}.topbar-inner{gap:9px}.brand{font-size:13px}}
 
@@ -734,20 +780,35 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
   <p class="fine"><b>Guardrail:</b> Jazz Gemma may draft answers from your description. You must check, edit, and confirm every AI-generated answer before submit. You remain accountable for accuracy.</p>
 </section>
 
-<!-- CHAT + LIVE SUMMARY -->
+<!-- FORM LEFT + CHAT RIGHT -->
 <section id="view-shell" class="shell" hidden>
+  <aside class="panel-col" id="panelCol" aria-label="Live summary of your request"><div class="panel-in" id="panelIn"></div></aside>
   <div class="chat-col">
-    <div class="chat" id="chat" role="log" aria-live="polite" aria-label="Conversation"><div class="chat-inner" id="chatIn"></div></div>
+    <header class="chat-head" aria-label="AIRA assistant">
+      <div class="bot-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3.5 4.8 19h2.7l1.45-3.35h6.1L16.5 19H19.2L12 3.5Zm-2.2 9.7L12 7.4l2.2 5.8h-4.4Z" fill="#fff"/>
+          <circle cx="18.4" cy="6.2" r="1.6" fill="#fff" opacity=".9"/>
+        </svg>
+      </div>
+      <div class="bot-meta">
+        <div class="bot-name">AIRA</div>
+        <div class="bot-role">AI Risk Assistant · JazzWorld RAIO</div>
+      </div>
+    </header>
+    <div class="chat" id="chat" aria-label="Conversation with AIRA">
+      <div class="chat-inner" id="chatIn" role="log" aria-live="polite"></div>
+    </div>
+    <div class="chat-widgets" id="chatWidgets" aria-label="Answer options"><div class="chat-widgets-inner" id="chatWidgetsIn"></div></div>
     <div class="composer">
       <div class="composer-in">
-        <label for="composerText" class="sr-only">Add more detail</label>
-        <textarea id="composerText" rows="1" placeholder="Add more detail or correct something…"></textarea>
+        <label for="composerText" class="sr-only">Message AIRA</label>
+        <textarea id="composerText" rows="1" placeholder="Ask AIRA to help fill a field, or say “help me estimate”…"></textarea>
         <button type="button" class="btn primary" id="composerSend">Send</button>
       </div>
       <p class="hintline">Anything you add here is read again, and new details are shown for you to confirm.</p>
     </div>
   </div>
-  <aside class="panel-col" id="panelCol" aria-label="Live summary of your request"><div class="panel-in" id="panelIn"></div></aside>
 </section>
 
 <!-- DONE -->
@@ -1039,6 +1100,26 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
   const $$=(s,r=document)=>[...r.querySelectorAll(s)];
   const esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const sleep=ms=>new Promise(r=>setTimeout(r,(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)?0:ms));
+  /** Concise offline rewrite — never paste the full user prompt as the summary. */
+  function makeConciseSummary(description){
+    let compact=String(description||'').replace(/\s+/g,' ').trim();
+    if(!compact) return '';
+    let stripped=compact.replace(/^(?:we(?:'d| would)? like to|we want to|i want to|we(?:'re| are) (?:going to|planning to)|this (?:is|request is) (?:about|for)|looking to)\s+/i,'').trim()||compact;
+    const parts=stripped.split(/(?<=[.!?])\s+/).map(p=>p.trim()).filter(Boolean);
+    const chosen=[];
+    for(const part of parts){
+      const trial=[...chosen,part].join(' ').trim();
+      if(chosen.length&&trial.length>200) break;
+      chosen.push(part);
+      if(chosen.join(' ').length>=90) break;
+      if(chosen.length>=2) break;
+    }
+    let summary=(chosen.join(' ').trim()||stripped);
+    if(summary.length>220) summary=summary.slice(0,217).replace(/\s+\S*$/,'')+'…';
+    if(summary&&summary[0]===summary[0].toLowerCase()) summary=summary[0].toUpperCase()+summary.slice(1);
+    if(summary&&!/[.!?…]$/.test(summary)) summary=summary.replace(/[ ,;]+$/,'')+'.';
+    return summary.slice(0,280);
+  }
   const PROFILE={name:'Ayesha Khan',unit:'Technology'};
   let ACCESS_TOKEN='';
   let LAST_EXTRACTOR='keyword';
@@ -1081,9 +1162,69 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     }
     return response;
   }
+  /** Map server session slots into the live left-hand form. */
+  function applyServerSession(view,{renderChat=false}={}){
+    if(!view) return;
+    S.sessionId=view.id||S.sessionId;
+    if(view.description) S.text=view.description;
+    (view.slots||[]).forEach(slot=>{
+      const id=slot.id;if(!BY[id]) return;
+      const value=slot.value;
+      const empty=Array.isArray(value)?!value.length:!value;
+      Object.assign(st(id),{
+        value:empty?(isMulti(BY[id])?[]:''):value,
+        status:slot.status||(empty?'empty':'confirmed'),
+        src:slot.source||undefined,
+        why:slot.why||''
+      });
+    });
+    if(view.summary!=null&&String(view.summary).trim()){
+      const sumSrc=(view.slots||[]).find(s=>s.id==='summary');
+      Object.assign(st('summary'),{
+        value:String(view.summary).trim(),
+        status:'confirmed',
+        src:(sumSrc&&sumSrc.source)||(view.extractor==='llm'?'llm':'auto'),
+        why:(sumSrc&&sumSrc.why)||'AI-generated concise summary'
+      });
+    }
+    if(typeof view.progress?.questionsAsked==='number') S.asked=view.progress.questionsAsked;
+    if(renderChat&&Array.isArray(view.transcript)){
+      chatIn.innerHTML='';
+      view.transcript.forEach(turn=>{
+        const role=turn.role==='assistant'?'agent':(turn.role==='user'?'user':'agent');
+        bubble(role, esc(turn.text||''));
+      });
+    }
+    renderPanel();
+  }
+  async function openServerSession(description){
+    const response=await apiFetch('/intake/sessions',{
+      method:'POST',
+      body:JSON.stringify({description})
+    });
+    if(!response.ok){
+      let detail='Could not start saved chat session';
+      try{const err=await response.json();detail=err.detail?.message||err.detail||detail}catch(e){}
+      throw new Error(typeof detail==='string'?detail:JSON.stringify(detail));
+    }
+    return response.json();
+  }
+  async function postServerMessage(text){
+    if(!S.sessionId) throw new Error('No active session');
+    const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/messages',{
+      method:'POST',
+      body:JSON.stringify({text})
+    });
+    if(!response.ok){
+      let detail='Could not save message';
+      try{const err=await response.json();detail=err.detail?.message||err.detail||detail}catch(e){}
+      throw new Error(typeof detail==='string'?detail:JSON.stringify(detail));
+    }
+    return response.json();
+  }
   const BUS=['Compliance','CRA','Cybersecurity','Enterprise','Finance','GSM','Internal Audit','JazzCash','JLV','Legal','MMBL','P&O','Strategy','Technology','Teknosys'];
   const YNN=['Yes','No'];
-  const S={text:'',v:{},asked:0,announced:new Set(),done:false,editing:null};
+  const S={text:'',v:{},asked:0,announced:new Set(),done:false,editing:null,sessionId:null,batchShown:false};
   const TOOLS=[[/microsoft copilot|copilot/,'Microsoft Copilot'],[/chatgpt/,'ChatGPT'],[/gemini/,'Google Gemini'],[/azure openai/,'Azure OpenAI'],[/openai/,'OpenAI'],[/claude/,'Claude']];
 
   const first=(re,t)=>{const m=t.match(re);return m?m[0]:null};
@@ -1207,6 +1348,16 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     Object.entries(extractions||{}).forEach(([id,r])=>{
       if(!r)return;
       const useSrc=src||(r.source==='llm'?'llm':'description');
+      if(id==='summary'){
+        const text=String(r.value||'').trim();
+        if(!text) return;
+        const cur=st('summary');
+        if(!overwrite&&cur.status==='confirmed'&&cur.src==='llm'&&cur.value) return;
+        if(sameSlotValue(cur.value,text)) return;
+        Object.assign(cur,{value:text.slice(0,280),status:'confirmed',src:useSrc==='llm'?'llm':'auto',why:r.why||'AI-generated concise summary'});
+        changed.push('summary');
+        return;
+      }
       const got=applySlotUpdate(id,r.value,{src:useSrc,why:r.why||'from your description',status,overwrite});
       if(got&&BY[got]&&(!BY[got].when||BY[got].when())) changed.push(got);
     });
@@ -1319,12 +1470,11 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     const full=await extractFromText(S.text);
     if(full) push(applyRemoteExtractions(full.extractions,{overwrite:false,status:'inferred'}));
     else push(keywordInfer(S.text,{overwrite:false}));
-    // Keep summary in sync with the growing description.
+    // Keep offline summary as a concise rewrite, not a paste of the prompt.
     if(st('summary').src==='auto'){
-      const sm=S.text.replace(/\s+/g,' ');
-      const cut=sm.length>280?sm.slice(0,277).replace(/\s+\S*$/,'')+'…':sm;
+      const cut=makeConciseSummary(S.text);
       if(cut&&!sameSlotValue(V('summary'),cut)){
-        Object.assign(st('summary'),{value:cut,status:'confirmed',src:'auto'});
+        Object.assign(st('summary'),{value:cut,status:'confirmed',src:'auto',why:'concise summary of your description'});
         changed.push('summary');
       }
     }
@@ -1429,17 +1579,42 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
   }
 
   /* ---------- chat plumbing ---------- */
+  const BOT={name:'AIRA',role:'AI Risk Assistant'};
+  const BOT_AVATAR_SVG=`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 3.5 4.8 19h2.7l1.45-3.35h6.1L16.5 19H19.2L12 3.5Zm-2.2 9.7L12 7.4l2.2 5.8h-4.4Z" fill="#fff"/><circle cx="18.4" cy="6.2" r="1.6" fill="#fff" opacity=".9"/></svg>`;
   const chat=$('#chat'),chatIn=$('#chatIn');
+  const chatWidgets=$('#chatWidgets'),chatWidgetsIn=$('#chatWidgetsIn');
   let chain=Promise.resolve();
   const enqueue=fn=>{chain=chain.then(fn).catch(e=>console.error(e));return chain};
   const toBottom=()=>{chat.scrollTop=chat.scrollHeight};
-  function bubble(role,html){const d=document.createElement('div');d.className='msg '+role;d.innerHTML=html;chatIn.appendChild(d);toBottom();return d}
-  async function agent(html,role='agent'){
-    const t=document.createElement('div');t.className='msg agent typing';t.setAttribute('aria-label','Typing');t.innerHTML='<i></i><i></i><i></i>';chatIn.appendChild(t);toBottom();
-    await sleep(450+Math.min(html.length,200)*2);t.remove();return bubble(role,html);
+  function bubble(role,html){
+    const row=document.createElement('div');
+    row.className='msg-row '+role;
+    if(role==='agent'||role==='coach'){
+      row.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg ${role}"><span class="msg-from">${esc(BOT.name)}</span>${html}</div>`;
+    }else{
+      row.innerHTML=`<div class="msg ${role}">${html}</div>`;
+    }
+    chatIn.appendChild(row);toBottom();return row;
   }
-  const clearWidget=()=>$$('.widget',chatIn).forEach(w=>w.remove());
-  function widget(kind){const w=document.createElement('div');w.className='widget';w.dataset.kind=kind;chatIn.appendChild(w);return w}
+  async function agent(html,role='agent'){
+    const row=document.createElement('div');
+    row.className='msg-row agent';
+    row.setAttribute('aria-label',BOT.name+' is typing');
+    row.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
+    chatIn.appendChild(row);toBottom();
+    await sleep(450+Math.min(html.length,200)*2);row.remove();return bubble(role,html);
+  }
+  const clearWidget=()=>{
+    if(chatWidgetsIn) chatWidgetsIn.innerHTML='';
+    $$('.widget',chatIn).forEach(w=>w.remove());
+  };
+  function widget(kind){
+    const w=document.createElement('div');
+    w.className='widget';
+    w.dataset.kind=kind;
+    (chatWidgetsIn||chatIn).appendChild(w);
+    return w;
+  }
   const focusFirst=w=>{const b=$('button,input',w);if(b&&innerWidth>860)try{b.focus({preventScroll:true})}catch(e){}toBottom()};
 
   /* ---------- flow ---------- */
@@ -1469,26 +1644,182 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
         const id=c.dataset.id;inf.filter(s=>s.id!==id).forEach(s=>{const x=st(s.id);Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')})});Object.assign(st(id),{status:'empty',value:isMulti(BY[id])?[]:'',src:undefined});w.remove();bubble('user','Change: '+BY[id].label);enqueue(()=>{renderPanel();return step()})}}};
     focusFirst(w);
   }
+  const HELPERS={
+    annualValue:{
+      cue:'Fill these in and I\'ll estimate annual value for the form.',
+      fields:[
+        {q:'How many queries or cases each month?', ph:'e.g. 8000'},
+        {q:'People handling them, and hours/week each?', ph:'e.g. 4 people, 10 hours'},
+        {q:'What % could the AI resolve or speed up?', ph:'e.g. 50'},
+        {q:'Rough monthly staff/vendor cost today (USD)?', ph:'e.g. 12000'},
+        {q:'Main gain?', ph:'Pick one', opts:['Cut costs','Free employee time','Improve service']}
+      ],
+      estimate(a){
+        const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};
+        const pct=Math.min(100,Math.max(0,n(a[2])||40));
+        const nums=String(a[1]||'').match(/(\d+(?:\.\d+)?)/g)||[];
+        const people=parseFloat(nums[0]||0), hours=parseFloat(nums[1]||(nums[0]?5:0));
+        const queries=n(a[0]), monthly=n(a[3]);
+        const cost=monthly*12*(pct/100);
+        const prod=(people&&hours?people*hours*52*(pct/100):queries*0.25*12*(pct/100))*25;
+        let total=Math.max(cost,prod,queries*2*12*(pct/100),1000);
+        if(/service|experience|cx/i.test(a[4]||'')) total*=1.1;
+        return String(Math.round(total/100)*100);
+      }
+    },
+    investmentCost:{
+      cue:'Share build effort and vendor cost and I\'ll estimate investment.',
+      fields:[
+        {q:'How many people will build or implement it?', ph:'e.g. 3'},
+        {q:'For how many months?', ph:'e.g. 4'},
+        {q:'Any vendor or licence cost (USD)?', ph:'e.g. 0 or 15000'}
+      ],
+      estimate(a){const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};return String(Math.round((n(a[0])||2)*(n(a[1])||3)*4000+(n(a[2])||0)));}
+    },
+    hoursSaved:{
+      cue:'Share effort today and I\'ll estimate annual hours saved.',
+      fields:[
+        {q:'How many people do this work today?', ph:'e.g. 5'},
+        {q:'Hours per week each on this work?', ph:'e.g. 8'},
+        {q:'What % could AI take or speed up?', ph:'e.g. 40'}
+      ],
+      estimate(a){const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};const pct=Math.min(100,Math.max(0,n(a[2])||50));return Math.round((n(a[0])||1)*(n(a[1])||5)*52*(pct/100))+' hours / year';}
+    },
+    spendingToDate:{
+      cue:'Tell me spend so far and I\'ll put it on the form.',
+      fields:[{q:'How much has been spent so far (USD)?', ph:'e.g. 0 or 12000'}],
+      estimate(a){const n=t=>{const m=String(t||'').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};return String(n(a[0]));}
+    }
+    /* Choice / Yes-No fields stay as clickable MCQ pills in ask() — not text helpers. */
+  };
   async function ask(s){
     clearWidget();
+    const helper=HELPERS[s.id];
+    if(helper){
+      const fields=helper.fields||(helper.qs||[]).map(q=>({q,ph:'Your answer'}));
+      await agent(`Let's fill <b>${esc(s.label)}</b> together. ${esc(helper.cue)}`);
+      const w=widget('ask');
+      w.classList.add('col');
+      w.innerHTML=fields.map((f,i)=>{
+        const opts=(f.opts||[]).map((o,j)=>`<button type="button" class="pill" data-opt-i="${i}" data-opt-j="${j}">${esc(o)}</button>`).join('');
+        return `<div class="helper-q" data-hi-wrap="${i}">
+          <div class="hq-label">${esc(f.q)}</div>
+          ${opts?`<div class="helper-opts">${opts}</div>`:''}
+          <input type="text" data-hi="${i}" placeholder="${esc(f.ph||'Your answer')}" aria-label="${esc(f.q)}" autocomplete="off">
+        </div>`;
+      }).join('')+`<div class="row-in" style="margin-top:4px;flex-wrap:wrap"><button type="button" class="pill primary" data-a="calc">Calculate together</button><button type="button" class="pill" data-a="direct">I know the value</button></div><div class="row-in" hidden data-direct style="margin-top:8px"><input type="text" placeholder="${esc(s.ph||'Enter value')}" aria-label="${esc(s.label)}" autocomplete="off"><button type="button" class="pill primary" data-a="save">Save</button></div>`;
+      const readAnswers=()=>fields.map((_,i)=>{const inp=$(`input[data-hi="${i}"]`,w);return (inp&&inp.value.trim())||''});
+      const finishLocal=(val)=>{w.remove();bubble('user',esc(val));S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});enqueue(afterChange)};
+      w.addEventListener('click',e=>{
+        const opt=e.target.closest('[data-opt-i]');
+        if(opt&&w.contains(opt)){
+          e.preventDefault();
+          const i=Number(opt.getAttribute('data-opt-i'));
+          const j=Number(opt.getAttribute('data-opt-j'));
+          const choice=(fields[i].opts||[])[j];
+          const inp=$(`input[data-hi="${i}"]`,w);
+          if(inp&&choice!=null){
+            inp.value=choice;
+            $$(`[data-opt-i="${i}"]`,w).forEach(b=>b.classList.toggle('on',b===opt));
+          }
+          return;
+        }
+        const b=e.target.closest('button[data-a]');
+        if(!b||!w.contains(b))return;
+        e.preventDefault();
+        if(b.dataset.a==='direct'){const d=$('[data-direct]',w);if(d){d.hidden=false;const inp=$('input',d);if(inp)inp.focus()}return}
+        if(b.dataset.a==='save'){const inp=$('[data-direct] input',w);if(inp&&inp.value.trim())finishLocal(inp.value.trim());return}
+        if(b.dataset.a==='calc'){
+          const answers=readAnswers();
+          if(answers.some(x=>!x)){toast('Type an answer in each box (or tap a choice), then Calculate together.');return}
+          const payload=`I don't know ${s.label}. Help me estimate.\n`+answers.join('\n');
+          w.remove();
+          bubble('user',esc(payload).replace(/\n/g,'<br>'));
+          enqueue(async()=>{
+            if(CFG.apiBase&&S.sessionId){
+              try{
+                const view=await postServerMessage(payload);
+                applyServerSession(view,{renderChat:false});
+                renderPanel([s.id]);
+                const turns=view.transcript||[];
+                const last=turns.length?turns[turns.length-1]:null;
+                const reply=(last&&last.role==='assistant'&&last.text)?last.text:'Updated.';
+                await agent(esc(reply).replace(/\n/g,'<br>'));
+                return step();
+              }catch(err){console.warn(err)}
+            }
+            const val=helper.estimate(answers);
+            S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you',why:'estimated with AIRA helper'});
+            renderPanel([s.id]);
+            await agent(`Got it. I set <b>${esc(s.label)}</b> to <b>${esc(val)}</b> from your answers.`);
+            return afterChange();
+          });
+        }
+      });
+      // Keep typing working: don't let parent handlers steal focus from inputs
+      w.addEventListener('mousedown',e=>{
+        if(e.target.matches('input[type=text]')) e.stopPropagation();
+      });
+      const firstInp=$('input[data-hi="0"]',w);
+      if(firstInp) setTimeout(()=>{try{firstInp.focus({preventScroll:false})}catch(err){}},30);
+      return;
+    }
     await agent(esc(s.q));
     const w=widget('ask');
-    const done=(val,label)=>{w.remove();bubble('user',esc(label||(Array.isArray(val)?val.join(', '):val)));S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});enqueue(afterChange)};
+    const done=(val,label)=>{
+      const shown=label||(Array.isArray(val)?val.join(', '):val);
+      w.remove();
+      bubble('user',esc(shown));
+      S.asked++;
+      Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});
+      enqueue(async()=>{
+        if(CFG.apiBase&&S.sessionId){
+          try{
+            const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/answers',{
+              method:'POST',
+              body:JSON.stringify({slotId:s.id,value:val})
+            });
+            if(response.ok){
+              const view=await response.json();
+              applyServerSession(view,{renderChat:false});
+            }
+          }catch(err){console.warn(err)}
+        }
+        return afterChange();
+      });
+    };
     if(s.kind==='single'){
-      w.innerHTML=optsOf(s).map(o=>`<button type="button" class="pill" data-v="${esc(o.v)}">${esc(o.l)}</button>`).join('');
-      w.onclick=e=>{const b=e.target.closest('button');if(b)done(b.dataset.v,optsOf(s).find(o=>o.v===b.dataset.v).l)};
+      const options=optsOf(s);
+      w.innerHTML=options.map((o,i)=>`<button type="button" class="pill" data-i="${i}">${esc(o.l)}</button>`).join('');
+      w.addEventListener('click',e=>{
+        const b=e.target.closest('button.pill');
+        if(!b||!w.contains(b))return;
+        e.preventDefault();
+        const opt=options[Number(b.dataset.i)];
+        if(opt) done(opt.v,opt.l);
+      });
     }else if(s.kind==='multi'){
       w.classList.add('col');
       w.innerHTML=optsOf(s).map(o=>`<label class="check"><input type="checkbox" value="${esc(o.v)}"><span>${esc(o.l)}</span></label>`).join('')+'<button type="button" class="pill primary" disabled>Done</button>';
       const btn=$('button',w);w.onchange=()=>btn.disabled=!$$('input:checked',w).length;
-      btn.onclick=()=>done($$('input:checked',w).map(i=>i.value));
+      btn.onclick=e=>{e.preventDefault();done($$('input:checked',w).map(i=>i.value))};
     }else{
       const sug=s.id==='name'&&has('forTool')?[V('forTool')+' rollout']:[];
       w.classList.add('col');
-      w.innerHTML=sug.map(x=>`<div><button type="button" class="pill" data-s="${esc(x)}">${esc(x)}</button></div>`).join('')+`<div class="row-in"><input type="text" placeholder="${esc(s.ph||'')}" aria-label="${esc(s.label)}"><button type="button" class="pill primary">Save</button></div>`;
-      const inp=$('input',w),go=()=>{if(inp.value.trim())done(inp.value.trim())};
-      $('.pill.primary',w).onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
-      w.onclick=e=>{const b=e.target.closest('[data-s]');if(b)done(b.dataset.s)};
+      w.innerHTML=sug.map((x,i)=>`<div><button type="button" class="pill" data-s-i="${i}">${esc(x)}</button></div>`).join('')+`<div class="row-in"><input type="text" placeholder="${esc(s.ph||'')}" aria-label="${esc(s.label)}"><button type="button" class="pill primary" data-a="save">Save</button></div>`;
+      const inp=$('input',w);
+      const go=()=>{if(inp.value.trim())done(inp.value.trim())};
+      w.addEventListener('click',e=>{
+        const b=e.target.closest('button');
+        if(!b||!w.contains(b))return;
+        e.preventDefault();
+        if(b.dataset.a==='save'){go();return}
+        if(b.dataset.sI!=null||b.getAttribute('data-s-i')!=null){
+          const i=Number(b.getAttribute('data-s-i'));
+          if(sug[i]!=null) done(sug[i]);
+        }
+      });
+      inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};
     }
     focusFirst(w);
   }
@@ -1582,28 +1913,47 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
 
   /* ---------- review, submit, done ---------- */
   function sectionsHtml(){
-    const groups=GROUPS.map(([g,title])=>{
+    return GROUPS.map(([g,title])=>{
       const rows=SLOTS.filter(s=>s.g===g&&(!s.when||s.when())&&has(s.id));
       const body=rows.map(s=>`<div class="row"><div class="label">${esc(s.label)}</div><div class="val">${esc(fmt(s))}</div></div>`).join('');
       return `<details class="sec review-details"><summary class="sec-head"><h3>${title}</h3><span class="review-toggle-hint">Click to preview</span></summary><div class="sec-body">${body}</div></details>`;
     }).join('');
-    return similaritySectionHtml()+groups;
   }
-  function similaritySectionHtml(){
-    const {match}=findClosestSubmission();
-    const score=match?match.similarity:0;
-    const blocked=!!match&&score>=DUPLICATE_THRESHOLD;
-    const status=!match?'No previous submissions to compare'
-      :blocked?'Potential duplicate - at or above threshold'
-      :'Below threshold - not blocked';
-    const prior=match?`<div class="row"><div class="label">Closest prior reference</div><div class="val">${esc(match.referenceId||'N/A')}</div></div>
-      <div class="row"><div class="label">Closest prior name</div><div class="val">${esc((match.comparable&&(match.comparable.name||match.comparable.summary))||'Untitled request')}</div></div>`:'';
-    return `<details class="sec review-details" open><summary class="sec-head"><h3>Similarity index</h3><span class="review-toggle-hint">Click to preview</span></summary><div class="sec-body">
-      <div class="row"><div class="label">Similarity</div><div class="val">${score}%</div></div>
-      <div class="row"><div class="label">Threshold</div><div class="val">${DUPLICATE_THRESHOLD}%</div></div>
-      <div class="row"><div class="label">Status</div><div class="val">${esc(status)}</div></div>
-      ${prior}
-    </div></details>`;
+  function requestBoxHtml(duplicate){
+    const m=duplicate&&duplicate.match;
+    const score=m?m.similarity:0;
+    const blocked=!!m&&score>=DUPLICATE_THRESHOLD;
+    const prior=m&&m.comparable?m.comparable:{};
+    const rows=[
+      ['Project name', has('name')?V('name'):'(not set)'],
+      ['Project owner', has('owner')?V('owner'):'(not set)'],
+      ['Description', shortDescription(V('summary')||S.text,220)],
+      ['Category', has('category')?V('category'):'(not set)'],
+      ['Business unit', has('businessUnit')?V('businessUnit'):'(not set)']
+    ];
+    // Extra confirmed answers in the same box (skip ones already shown).
+    const shown=new Set(['name','owner','summary','category','businessUnit']);
+    active().forEach(s=>{
+      if(shown.has(s.id)||!has(s.id)) return;
+      rows.push([s.label, fmt(s)]);
+    });
+    if(m){
+      rows.push(['Similarity', score+'%']);
+      rows.push(['Closest project', prior.name||prior.summary||'Untitled project']);
+      rows.push(['Closest owner', prior.owner||'Not recorded']);
+      rows.push(['Closest description', shortDescription(prior.summary||prior.description||'',160)]);
+      rows.push(['Closest reference', (m.referenceId||'N/A')+(m.submittedAt?' · '+new Date(m.submittedAt).toLocaleString():'')]);
+    }
+    const statusLine=blocked
+      ?`Potential duplicate: submission is blocked at ${DUPLICATE_THRESHOLD}% or above.`
+      :m?`Compared with the closest prior project (${score}% similar).`
+      :'No previous submissions found for comparison.';
+    return `<div class="request-box ${blocked?'blocked':''}" role="region" aria-label="Request details">
+      <h3>Your request</h3>
+      ${rows.map(([k,v])=>`<div class="req-row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('')}
+      <div class="match-meta">${esc(statusLine)}</div>
+      ${blocked?'<div class="match-meta"><b>Submission disabled</b> until this overlaps less with the earlier project.</div>':''}
+    </div>`;
   }
   const DUPLICATE_STORE_KEY='jazzworld_aira_submissions_v1';
   const DUPLICATE_THRESHOLD=90;
@@ -1619,9 +1969,20 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     return (2*overlap)/(A.size+B.size);
   }
   function currentComparable(){
-    return {category:V('category'),name:V('name'),summary:V('summary'),description:S.text,
+    return {
+      category:V('category'),
+      name:V('name'),
+      owner:V('owner'),
+      summary:V('summary'),
+      description:S.text,
       requirements:active().map(slot=>`${slot.label}: ${fmt(slot)}`).join(' | '),
-      screening:[V('sensitive'),V('decision'),V('action')].join(' | ')};
+      screening:[V('sensitive'),V('decision'),V('action')].join(' | ')
+    };
+  }
+  function shortDescription(text,max=160){
+    const raw=String(text||'').replace(/\s+/g,' ').trim();
+    if(!raw) return 'No description saved.';
+    return raw.length>max?raw.slice(0,max-1).replace(/\s+\S*$/,'')+'…':raw;
   }
   function compareSubmissions(current,prior){
     const old=prior.comparable||{};
@@ -1641,14 +2002,8 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     return {current,match:matches[0]||null};
   }
   function duplicateCheckHtml(result){
-    const m=result.match,score=m?m.similarity:0,blocked=!!m&&score>=DUPLICATE_THRESHOLD;
-    return `<div class="duplicate-check ${blocked?'blocked':'clear'}" role="status" aria-live="polite">
-      <div class="match-score">${m?score:0}% similarity</div>
-      <b>${blocked?'Potential duplicate detected':m?'Similarity check complete':'No previous submissions found'}</b>
-      <div class="match-meta">${blocked?`Submission is blocked at ${DUPLICATE_THRESHOLD}% or above. Review the earlier request below.`:m?'Compared with the closest submission saved in this browser.':'This prototype has no saved submission history in this browser.'}</div>
-      ${m?`<div class="match-record"><b>Closest previous request</b><br>Reference: ${esc(m.referenceId||'N/A')}<br>Idea: ${esc(m.comparable?.name||m.comparable?.summary||'Untitled request')}<br>Submitted: ${esc(m.submittedAt?new Date(m.submittedAt).toLocaleString():'Unknown')}<br><span>${esc(m.comparable?.summary||m.comparable?.description||'No summary saved.')}</span></div>`:''}
-      ${blocked?'<div class="match-meta"><b>Submission disabled:</b> this idea is at least 90% similar to a previously submitted request.</div>':''}
-    </div>`;
+    // Kept for callers; review screen uses requestBoxHtml as the single request box.
+    return requestBoxHtml(result);
   }
   /* ---------- professional risk assessment PDF (for governance review) ---------- */
   const TIER_UI={
@@ -1761,27 +2116,6 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     kv('Affects decisions', has('decision')?V('decision'):'(not set)');
     kv('Interacts / acts', has('action')?V('action'):'(not set)');
     cardEnd(c1.top);
-    y-=4;
-
-    // ---- Similarity index (duplicate check) ----
-    sectionTitle('1b. Similarity index');
-    const dup=findClosestSubmission();
-    const dupMatch=dup.match;
-    const simScore=dupMatch?dupMatch.similarity:0;
-    const simBlocked=!!dupMatch&&simScore>=DUPLICATE_THRESHOLD;
-    const cSim=cardStart();
-    kv('Similarity index', simScore+'%');
-    kv('Threshold', DUPLICATE_THRESHOLD+'% (block at or above)');
-    kv('Status', !dupMatch?'No previous submissions to compare'
-      :simBlocked?'Potential duplicate - at or above threshold'
-      :'Below threshold - not blocked');
-    if(dupMatch){
-      kv('Closest prior reference', dupMatch.referenceId||'N/A');
-      kv('Closest prior name', (dupMatch.comparable&&(dupMatch.comparable.name||dupMatch.comparable.summary))||'Untitled request');
-      kv('Closest prior submitted', dupMatch.submittedAt?new Date(dupMatch.submittedAt).toLocaleString():'Unknown');
-    }
-    para('Similarity compares this request with the closest prior submission (description, summary, name, requirements, category, and screening).',8,muted);
-    cardEnd(cSim.top);
     y-=4;
 
     // ---- Critical snapshot ----
@@ -1923,8 +2257,7 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     <div class="guardrail" role="note"><b>Guardrail: review AI-generated answers</b><span>Any values drafted by Jazz Gemma must be checked by you. By submitting, you confirm you have reviewed the AI-assisted answers and they are correct to the best of your knowledge.</span></div>
     <div class="route-box route-one"><b>Who will review it:</b> ${esc(route().join(', '))}</div>
     ${riskAssessmentHtml('review')}
-    ${sectionsHtml()}
-    ${duplicateCheckHtml(duplicate)}
+    ${requestBoxHtml(duplicate)}
     <div class="btns"><button type="button" class="btn" id="ovBack">Keep editing</button><button type="button" class="btn primary" id="ovGo" ${duplicate.match&&duplicate.match.similarity>=DUPLICATE_THRESHOLD?'disabled aria-disabled="true"':''}>Submit for review</button></div></div></div>`;
     $('#ovT').focus();
     $('#ovBack').onclick=()=>$('#overlayHost').innerHTML='';
@@ -2065,24 +2398,31 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     S.text=intro.value.trim();
     go.disabled=true;
     enqueue(async()=>{
+      $('#view-intro').hidden=true;$('#view-shell').hidden=false;$('#restart').hidden=false;$('#sumBtn').hidden=false;
+      Object.assign(st('owner'),{value:PROFILE.name,status:'confirmed',src:'profile'});
+      Object.assign(st('businessUnit'),{value:PROFILE.unit,status:'confirmed',src:'profile'});
+      let usedServer=false;
       try{
         if(CFG.apiBase){
-          await agent('Reading your description with Jazz Gemma…');
           await ensureAuth();
+          const view=await openServerSession(S.text);
+          usedServer=true;
+          LAST_EXTRACTOR=view.extractor||'llm';
+          applyServerSession(view,{renderChat:true});
+          await agent('<b>Guardrail:</b> treat AI-filled answers as drafts you must confirm. For value, cost, or hours you don\'t know, use <b>Calculate together</b> — short questions, then I fill the field.');
+          return step();
         }
       }catch(err){
         console.warn(err);
-        toast('Could not reach the AI service. Using offline extraction.');
+        toast(err.message||'Could not reach the AI service. Using offline mode.');
       }
-      Object.assign(st('owner'),{value:PROFILE.name,status:'confirmed',src:'profile'});
-      Object.assign(st('businessUnit'),{value:PROFILE.unit,status:'confirmed',src:'profile'});
-      const sm=S.text.replace(/\s+/g,' ');const cut=sm.length>280?sm.slice(0,277).replace(/\s+\S*$/,'')+'…':sm;
-      Object.assign(st('summary'),{value:cut,status:'confirmed',src:'auto'});
-      $('#view-intro').hidden=true;$('#view-shell').hidden=false;$('#restart').hidden=false;$('#sumBtn').hidden=false;
-      bubble('user',esc(S.text));renderPanel();
-      const n=await infer();renderPanel();
-      const via=LAST_EXTRACTOR==='llm'?'Jazz Gemma':'a quick read of your text';
-      await agent(n?`I read that with <b>${via}</b>. Signed in as <b>${esc(PROFILE.name)}</b> (${esc(PROFILE.unit)}), so I've filled in the owner and business unit. <b>Guardrail:</b> treat every AI-filled answer as a draft. Review and confirm each one before you submit.`:`Thanks. I couldn't pick out much from that, so I'll ask a few short questions. Signed in as <b>${esc(PROFILE.name)}</b> (${esc(PROFILE.unit)}), so I've filled in the owner and business unit.`);
+      if(!usedServer){
+        Object.assign(st('summary'),{value:makeConciseSummary(S.text),status:'confirmed',src:'auto',why:'concise summary of your description'});
+        bubble('user',esc(S.text));renderPanel();
+        const n=await infer();renderPanel();
+        const via=LAST_EXTRACTOR==='llm'?'Jazz Gemma':'a quick read of your text';
+        await agent(n?`I read that with <b>${via}</b>. Signed in as <b>${esc(PROFILE.name)}</b> (${esc(PROFILE.unit)}), so I've filled in the owner and business unit. <b>Guardrail:</b> treat every AI-filled answer as a draft.`:`Thanks. I couldn't pick out much from that, so I'll ask a few short questions.`);
+      }
       return step();
     });
   };
@@ -2098,16 +2438,41 @@ body[data-theme="light"] .cat input:checked+.cat-body{background:linear-gradient
     bubble('user',esc(t));S.text+='\n'+t;clearWidget();
     enqueue(async()=>{
       const typing=document.createElement('div');
-      typing.className='msg agent typing';typing.setAttribute('aria-label','Updating form');
-      typing.innerHTML='<i></i><i></i><i></i>';chatIn.appendChild(typing);toBottom();
-      let changed=[];
-      try{changed=await agentApplyFromChat(t)}finally{typing.remove()}
-      renderPanel(changed);
-      if(changed.length){
-        const labels=changed.filter(id=>BY[id]).map(id=>BY[id].label);
-        await agent(`Updated the form from your message: <b>${labels.map(esc).join(', ')}</b>. Check the summary on the right.`);
-      }else{
-        await agent('Noted. I added that to your description. Tell me what to change if you want a field updated.');
+      typing.className='msg-row agent';
+      typing.setAttribute('aria-label',BOT.name+' is updating the form');
+      typing.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
+      chatIn.appendChild(typing);toBottom();
+      try{
+        if(CFG.apiBase&&S.sessionId){
+          const view=await postServerMessage(t);
+          typing.remove();
+          const before={};
+          active().forEach(s=>{before[s.id]=JSON.stringify(V(s.id))});
+          applyServerSession(view,{renderChat:false});
+          const changed=active().filter(s=>before[s.id]!==JSON.stringify(V(s.id))).map(s=>s.id);
+          renderPanel(changed);
+          const turns=view.transcript||[];
+          const last=turns.length?turns[turns.length-1]:null;
+          const reply=(last&&last.role==='assistant'&&last.text)?last.text:'Noted. I saved that in our conversation.';
+          await agent(esc(reply).replace(/\n/g,'<br>'));
+          return step();
+        }
+        let changed=[];
+        try{changed=await agentApplyFromChat(t)}finally{typing.remove()}
+        renderPanel(changed);
+        if(changed.length){
+          const labels=changed.filter(id=>BY[id]).map(id=>BY[id].label);
+          await agent(`Updated the form from your message: <b>${labels.map(esc).join(', ')}</b>. Check the summary panel.`);
+        }else{
+          await agent('Noted. I added that to your description. Tell me what to change if you want a field updated.');
+        }
+      }catch(err){
+        typing.remove();
+        console.warn(err);
+        toast(err.message||'Chat save failed; applying locally.');
+        const changed=await agentApplyFromChat(t);
+        renderPanel(changed);
+        await agent('I could not reach the saved session, so I updated the form locally for this browser only.');
       }
       return step();
     })};

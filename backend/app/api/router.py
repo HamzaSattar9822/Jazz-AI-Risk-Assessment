@@ -24,11 +24,13 @@ from app.services.intake_flow import (
     IntakeError,
     add_message,
     answer_slot,
+    build_user_memory,
     confirm_slots,
     create_session,
     examples,
     extract_description,
     get_owned,
+    list_sessions_for,
     reset_slot,
     view_session,
 )
@@ -104,6 +106,18 @@ def extract_fields(body: SessionCreate, user: User = Depends(current_user)):
         return extract_description(body.description, get_settings())
     except IntakeError as exc:
         _raise_intake(exc)
+
+
+@router.get("/intake/sessions")
+def list_sessions(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """List this user's saved intake chats (full transcripts live on each session)."""
+    return {"sessions": list_sessions_for(db, user)}
+
+
+@router.get("/intake/memory")
+def intake_memory(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Prior sessions + submissions AIRA can reuse when the user refers to past data."""
+    return build_user_memory(db, user)
 
 
 @router.post("/intake/sessions", status_code=201)
