@@ -57,15 +57,39 @@ class IntakeError(Exception):
         self.status_code = status_code
 
 
+def _merge_extractions(keyword: dict, model: dict | None) -> dict:
+    """Keyword fill-in, then LLM — but never let N/A placeholders wipe real finds."""
+    from app.intake.llm import is_placeholder_value
+
+    found = dict(keyword or {})
+    if not model:
+        return found
+    for slot_id, guess in model.items():
+        if not isinstance(guess, dict):
+            continue
+        value = guess.get("value")
+        if is_placeholder_value(value):
+            continue
+        # Keep richer keyword hours text if the model returns a bare number.
+        if (
+            slot_id == "hoursSaved"
+            and slot_id in found
+            and re.fullmatch(r"\d[\d,]*", str(value or "").strip())
+            and re.search(r"hour|fte", str(found[slot_id].get("value") or ""), re.I)
+        ):
+            continue
+        found[slot_id] = guess
+    return found
+
+
 def _extract(description: str, settings: Settings) -> tuple[dict, str]:
     keyword = keyword_extract(description)
     model = llm_extract(description, settings)
     if not model:
-        found = dict(keyword)
+        found = _merge_extractions(keyword, None)
         extractor = "keyword"
     else:
-        found = dict(keyword)
-        found.update(model)
+        found = _merge_extractions(keyword, model)
         extractor = "llm"
     # Category is a governance fork — never let a biased LLM default wipe By Us / Against Us.
     classified = classify_category(description)
@@ -81,6 +105,14 @@ def _extract(description: str, settings: Settings) -> tuple[dict, str]:
             "why": classified["why"],
             "source": source,
         }
+    # Drop category-gated fields the model sometimes invents outside their route.
+    cat = (found.get("category") or {}).get("value")
+    if cat != "AI For Us":
+        found.pop("forTool", None)
+        found.pop("forAccess", None)
+    if cat != "AI Against Us":
+        found.pop("threatTypes", None)
+
     # Prefer model summary; otherwise a concise offline rewrite — never the raw prompt paste.
     summary_hit = (model or {}).get("summary") if model else None
     if summary_hit and summary_hit.get("value"):

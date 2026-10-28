@@ -406,10 +406,26 @@ def _infer_name(_text, raw):
         r"(?:called|named)\s+[\"“']([^\"”']+)[\"”']",
         raw,
         re.IGNORECASE,
+    ) or re.search(
+        r"(?:called|named)\s+([A-Z][\w][\w .-]{1,48}?)(?=\s+(?:that|which|for|to|on|in)\b|[.,;]|$)",
+        raw,
     ) or re.search(r"[\"“]([^\"”]{4,50})[\"”]", raw)
     if not match:
+        # "roll out Microsoft Copilot for …" / "building Credit Line Recommender that …"
+        match = re.search(
+            r"(?:roll\s*out|adopting|adopt|deploying|deploy|building|build|developing)\s+"
+            r"(?:a\s+|an\s+|our\s+|the\s+)?"
+            r"(?:model\s+|system\s+|chatbot\s+|tool\s+|assistant\s+)?"
+            r"([A-Z][\w](?:[\w .-]{0,40}[\w])?)"
+            r"(?=\s+(?:for|that|to|on|which)\b|[.,;])",
+            raw,
+        )
+    if not match:
         return None
-    return {"value": match.group(1), "why": "you named it"}
+    name = re.sub(r"\s+", " ", match.group(1)).strip(" .-")
+    if len(name) < 3 or name.lower() in {"ai", "the", "our", "a", "an"}:
+        return None
+    return {"value": name, "why": "you named it"}
 
 
 def _infer_sensitive(text, _raw):
@@ -517,25 +533,35 @@ def _infer_autonomy(text, _raw):
 
 
 def _infer_segment(text, _raw):
-    if re.search(r"consumer[- ]facing|customer[- ]facing|customer care|b2c|end[- ]user", text):
+    if re.search(r"consumer[- ]facing|customer[- ]facing|customer care|b2c|end[- ]user|subscribers?", text):
         return {"value": "Consumer-Facing AI", "why": "mentions consumer or customer-facing use"}
-    if re.search(r"enterprise ai|b2b|organisation[- ]wide|organization[- ]wide", text):
+    if re.search(r"enterprise (?:ai|accounts?)|b2b|organisation[- ]wide|organization[- ]wide", text):
         return {"value": "Enterprise AI", "why": "mentions enterprise use"}
-    if re.search(r"corporate ai|employees?|internal staff|back[- ]office", text):
-        return {"value": "Corporate AI", "why": "mentions corporate or employee use"}
-    if re.search(r"internal operations|ops team|operations team|non[- ]customer", text):
+    if re.search(
+        r"internal operations|ops team|operations team|non[- ]customer|jazzcash agents?|internal agents?",
+        text,
+    ):
         return {"value": "Internal Operations", "why": "mentions internal operations"}
+    if re.search(
+        r"corporate ai|employees?|internal staff|back[- ]office|finance team|hr team|our (?:team|staff)",
+        text,
+    ):
+        return {"value": "Corporate AI", "why": "mentions corporate or employee use"}
     return None
 
 
 def _infer_value_driver(text, _raw):
     pairs = [
         (r"revenue uplift|increase revenue|upsell|cross[- ]sell|arpu", "Revenue Uplift"),
-        (r"cost reduction|reduce cost|save cost|cost saving", "Cost Reduction"),
-        (r"customer experience|cx\b|nps|satisfaction", "Customer Experience"),
+        (r"cost reduction|reduce cost|save cost|cost saving|cut costs?", "Cost Reduction"),
+        (r"customer experience|cx\b|nps|satisfaction|improve service", "Customer Experience"),
         (r"\bgovernance\b|compliance oversight|control framework", "Governance"),
-        (r"\befficiency\b", "Efficiency"),
-        (r"productivity|hours saved|automate(s|d)? work|analyst effort", "Productivity"),
+        (r"\befficiency\b|faster|throughput", "Efficiency"),
+        (
+            r"productivity|hours saved|automate(s|d)? work|analyst effort|"
+            r"summaris|summariz|draft\w*|free (?:up )?employee|save time",
+            "Productivity",
+        ),
     ]
     for pattern, label in pairs:
         if re.search(pattern, text):
@@ -546,14 +572,14 @@ def _infer_value_driver(text, _raw):
 def _money_near(text: str, labels: str):
     """Pull a money/ROI phrase only when a value label is nearby."""
     match = re.search(
-        rf"(?:{labels}).{{0,40}}?((?:usd\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*(?:usd|%|percent))?)",
+        rf"(?:{labels}).{{0,48}}?((?:usd\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*(?:usd|%|percent))?)",
         text,
         re.IGNORECASE,
     )
     if match:
         return re.sub(r"\s+", " ", match.group(1)).strip(" ,.")
     match = re.search(
-        rf"((?:usd\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*(?:usd|%|percent))?).{{0,40}}?(?:{labels})",
+        rf"((?:usd\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*(?:usd|%|percent))?).{{0,48}}?(?:{labels})",
         text,
         re.IGNORECASE,
     )
@@ -563,43 +589,63 @@ def _money_near(text: str, labels: str):
 
 
 def _infer_annual_value(text, _raw):
-    value = _money_near(text, r"annual value|roi|return on investment|benefit(?:s)?|save(?:s|d)?")
+    value = _money_near(
+        text,
+        r"annual value|estimated annual|roi|return on investment|benefit(?:s)?|"
+        r"annual (?:savings?|benefit)|save(?:s|d)?\s+(?:about\s+|roughly\s+)?(?:usd|\$)",
+    )
     if value:
         return {"value": value, "why": "value or ROI amount found in the description"}
     return None
 
 
 def _infer_investment_cost(text, _raw):
-    value = _money_near(text, r"investment|capex|budget|project cost|estimated cost|total cost")
+    value = _money_near(
+        text,
+        r"investment|capex|budget|project cost|estimated (?:investment\s*)?cost|total cost|"
+        r"build cost|implementation cost",
+    )
     if value:
         return {"value": value, "why": "investment or cost amount found in the description"}
     return None
 
 
 def _infer_spending_to_date(text, _raw):
-    value = _money_near(text, r"spent to date|spending to date|spent so far|already spent|opex to date")
+    value = _money_near(
+        text,
+        r"spent to date|spending to date|spent so far|already spent|opex to date|"
+        r"spending done|spent\s+\d",
+    )
     if value:
         return {"value": value, "why": "spending-to-date amount found in the description"}
     return None
 
 
 def _infer_hours_saved(text, raw):
-    match = re.search(
-        r"(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*(?:hours?|hrs?)(?:\s*(?:per|/)\s*(?:year|yr|month|week|day))?)",
-        text,
-        re.IGNORECASE,
-    )
-    if match and re.search(r"save|saving|saved|fte|effort", text):
-        return {"value": match.group(1).strip(), "why": "hours-saved figure found in the description"}
-    # Keep original casing from raw when possible
+    if not re.search(r"save|saving|saved|fte|effort", text):
+        return None
     match_raw = re.search(
-        r"(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*(?:hours?|hrs?)(?:\s*(?:per|/)\s*(?:year|yr|month|week|day))?)",
+        r"(?:save[sd]?|saving|fte).{0,40}?"
+        r"(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*(?:hours?|hrs?)(?:\s*(?:per|/)\s*(?:year|yr|month|week|day))?)"
+        r"|"
+        r"(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*(?:hours?|hrs?)(?:\s*(?:per|/)\s*(?:year|yr|month|week|day))?)"
+        r".{0,40}?(?:save|saving|saved|fte|effort)",
         raw,
         re.IGNORECASE,
     )
-    if match_raw and re.search(r"save|saving|saved|fte|effort", text):
-        return {"value": match_raw.group(1).strip(), "why": "hours-saved figure found in the description"}
-    return None
+    if not match_raw:
+        match_raw = re.search(
+            r"(\d[\d,]*(?:\s*-\s*\d[\d,]*)?\s*(?:hours?|hrs?)"
+            r"(?:\s*(?:per|/)\s*(?:year|yr|month|week|day))?)",
+            raw,
+            re.IGNORECASE,
+        )
+    if not match_raw:
+        return None
+    value = next((g for g in match_raw.groups() if g), None)
+    if not value:
+        return None
+    return {"value": value.strip(), "why": "hours-saved figure found in the description"}
 
 
 _INFER = {
