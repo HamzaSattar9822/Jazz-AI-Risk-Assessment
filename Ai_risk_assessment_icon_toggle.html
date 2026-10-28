@@ -777,7 +777,6 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     <button type="button" class="try" data-try="1"><b>AI By Us</b><span>Building or deploying an AI solution internally</span></button>
     <button type="button" class="try" data-try="2"><b>AI Against Us</b><span>Assessing AI-enabled threats and risks</span></button>
   </div>
-  <p class="fine"><b>Guardrail:</b> Jazz Gemma may draft answers from your description. You must check, edit, and confirm every AI-generated answer before submit. You remain accountable for accuracy.</p>
 </section>
 
 <!-- FORM LEFT + CHAT RIGHT -->
@@ -1502,55 +1501,17 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     if(!result||!result.complete) return null;
     return {triage,result,weights:result.weights||AIRA_ENGINE.getWeightProfile(triage)};
   }
-  function earlyFlagsUnderRiskHtml(){
-    const fl=flags();
-    if(!fl.length) return `<div class="risk-flags"><div class="rf-h">Early flags</div><p class="rf-none">No early flags from your answers.</p></div>`;
-    return `<div class="risk-flags"><div class="rf-h">Early flags</div>${fl.map(f=>`<div class="rf ${f.level}"><i></i><div><b>${esc(f.title)}</b><span>${esc(f.why)}</span></div></div>`).join('')}</div>`;
-  }
   function riskAssessmentHtml(mode){
     const title=mode==='review'?'h2':'h3';
     const preview=runIndicativeRisk();
-    if(mode==='review'){
-      if(!preview){
-        return `<div class="risk-box pending review-score"><div class="risk-score-top"><div><${title}>Risk assessment</${title}><p class="sub">Complete the three screening answers to see an indicative score. Official scoring is done by RAIO.</p></div><button type="button" class="btn small risk-dl" id="dlRiskPdf" disabled aria-disabled="true">Download detailed PDF</button></div>
-          <div class="risk-metrics"><div class="risk-metric residual"><b>-</b><span>Residual risk</span></div><div class="risk-metric"><b>-</b><span>Inherent risk</span></div></div>
-          <div class="risk-detail"><div><span class="k">Status</span><span class="v">Pending screening</span></div><div><span class="k">Methodology</span><span class="v">${esc(AIRA_ENGINE.methodologyVersion)}</span></div></div>${earlyFlagsUnderRiskHtml()}</div>`;
-      }
-      const r=preview.result,g=r.residualRiskGovernance||{};
-      return `<div class="risk-box review-score"><div class="risk-score-top"><div><${title}>Risk assessment</${title}><p class="sub">Indicative score only. Download the PDF for the full factor breakdown. Not the official RAIO score.</p></div><button type="button" class="btn small risk-dl" id="dlRiskPdf">Download detailed PDF</button></div>
-        <div class="risk-metrics">
-          <div class="risk-metric residual"><b>${esc(r.residualRiskScore)}</b><span>Residual risk (1-100)</span></div>
-          <div class="risk-metric"><b>${esc(r.inherentRiskScore)}</b><span>Inherent risk (1-100)</span></div>
-        </div>
-        <div class="risk-detail">
-          <div><span class="k">Severity / tier</span><span class="v">${esc((g.severity||'-')+' / '+(g.tier||'-'))}</span></div>
-          <div><span class="k">Methodology</span><span class="v">${esc(r.methodologyVersion||AIRA_ENGINE.methodologyVersion)}</span></div>
-        </div>${earlyFlagsUnderRiskHtml()}</div>`;
-    }
     if(!preview){
-      return `<div class="risk-box pending"><${title}>Risk assessment</${title}><p class="sub">Placeholder for AIRA residual / inherent risk. Complete the three screening answers (sensitive data, decisions, actions) to see an indicative preview. Official score still needs a reviewer to confirm all factor scores.</p>
-        <div class="risk-metrics"><div class="risk-metric residual"><b>-</b><span>Residual risk</span></div><div class="risk-metric"><b>-</b><span>Inherent risk</span></div></div>
-        <div class="risk-detail"><div><span class="k">Severity / tier</span><span class="v">Pending</span></div><div><span class="k">Approval</span><span class="v">Pending</span></div><div><span class="k">Methodology</span><span class="v">${esc(AIRA_ENGINE.methodologyVersion)}</span></div></div></div>`;
+      return `<div class="risk-box pending${mode==='review'?' review-score':''}"><${title}>Risk assessment</${title}><p class="sub">Complete the three screening answers to see the indicative tier.</p>
+        <div class="risk-detail"><div><span class="k">Tier</span><span class="v">Pending</span></div></div></div>`;
     }
-    const r=preview.result,g=r.residualRiskGovernance||{},c=r.components||{};
-    const scr=preview.weights.screening||{};
-    return `<div class="risk-box"><${title}>Risk assessment</${title}><p class="sub">Indicative AIRA preview using your screening flags and provisional factor scores of <b>3</b> across all 40 sub-factors. Not the official score. A reviewer must confirm each factor.</p>
-      <div class="risk-metrics">
-        <div class="risk-metric residual"><b>${esc(r.residualRiskScore)}</b><span>Residual risk (1-100)</span></div>
-        <div class="risk-metric"><b>${esc(r.inherentRiskScore)}</b><span>Inherent risk (1-100)</span></div>
-      </div>
-      <div class="risk-detail">
-        <div><span class="k">Severity / tier</span><span class="v">${esc((g.severity||'-')+' / '+(g.tier||'-'))}</span></div>
-        <div><span class="k">Approval</span><span class="v">${esc(g.approval||'-')}</span></div>
-        <div><span class="k">Manager level</span><span class="v">${esc(g.managerLevel||'-')}</span></div>
-        <div><span class="k">Impact (3-15)</span><span class="v">${esc(r.impactScore)}</span></div>
-        <div><span class="k">Inherent likelihood</span><span class="v">${esc(r.inherentLikelihood)}</span></div>
-        <div><span class="k">Residual likelihood</span><span class="v">${esc(r.residualLikelihood)}</span></div>
-        <div><span class="k">Control strength (1-5)</span><span class="v">${esc((c.existingControlStrength!=null?c.existingControlStrength:'-'))}</span></div>
-        <div><span class="k">Control multiplier</span><span class="v">${esc((c.controlMultiplier!=null?c.controlMultiplier:'-'))}</span></div>
-        <div><span class="k">Screening D / D / A</span><span class="v">${esc((scr.data?'Y':'N')+' / '+(scr.decision?'Y':'N')+' / '+(scr.action?'Y':'N'))}</span></div>
-        <div><span class="k">Methodology</span><span class="v">${esc(r.methodologyVersion||AIRA_ENGINE.methodologyVersion)}</span></div>
-      </div></div>`;
+    const g=(preview.result.residualRiskGovernance)||{};
+    const tier=g.tier||'-';
+    return `<div class="risk-box${mode==='review'?' review-score':''}"><${title}>Risk assessment</${title}><p class="sub">Indicative tier only. Final tiering is decided by RAIO.</p>
+      <div class="risk-detail"><div><span class="k">Tier</span><span class="v">${esc(tier)}</span></div></div></div>`;
   }
 
   /* ---------- early flags ---------- */
@@ -1631,7 +1592,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     clearWidget();
     const intro=S.batchShown?'I picked up a few more details from your description:':'Thanks. Here is what I drafted from your description using AI. These are suggestions only.';
     S.batchShown=true;
-    await agent(intro+'<ul class="batch">'+inf.map(s=>`<li><span class="k">${esc(s.label)}</span><span class="v">${esc(fmt(s))}</span><span class="w">${esc(st(s.id).why||'')}</span></li>`).join('')+'</ul><div class="guardrail" role="note"><b>Please review AI-generated answers</b><span>Check each value below. Edit anything that is wrong or incomplete before you confirm. Do not accept AI drafts without reading them.</span></div>');
+    await agent(intro+'<ul class="batch">'+inf.map(s=>`<li><span class="k">${esc(s.label)}</span><span class="v">${esc(fmt(s))}</span><span class="w">${esc(st(s.id).why||'')}</span></li>`).join('')+'</ul>');
     const w=widget('batch');
     w.innerHTML='<button type="button" class="pill primary" data-a="ok">Looks right - I checked these</button><button type="button" class="pill" data-a="fix">Change something</button>';
     w.onclick=e=>{const b=e.target.closest('button');if(!b)return;
@@ -1857,16 +1818,12 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     if(Array.isArray(flashIds)) PANEL_FLASH=flashIds.slice();
     const act=active(),conf=act.filter(s=>st(s.id).status==='confirmed').length,pct=Math.round(conf/act.length*100);
     const sumBtn=$('#sumBtn');if(sumBtn) sumBtn.textContent=`Summary ${conf}/${act.length}`;
-    const needsReview=act.some(s=>{const x=st(s.id);return x.status==='inferred'||((x.src==='llm'||x.src==='description')&&x.status!=='confirmed')});
-    const hasAiDraft=act.some(s=>{const x=st(s.id);return x.src==='llm'||x.src==='description'||x.status==='inferred'});
     let h=`<div class="panel-head"><h2>Your request</h2><button type="button" class="mini close-drawer" data-act="close">Close</button></div><div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><div class="meter-t"><span>${conf} of ${act.length} answers confirmed</span><span>${pct}%</span></div>`;
-    if(hasAiDraft) h+=`<div class="panel-guard" role="note"><b>Guardrail:</b> ${needsReview?'Some answers were drafted by AI and still need your review.':'AI-drafted answers are included. You confirmed them, but you can still edit anything that looks wrong.'} You are responsible for the final values.</div>`;
     GROUPS.forEach(([g,title])=>{
       const rows=SLOTS.filter(s=>s.g===g&&(!s.when||s.when()));if(!rows.length)return;
       h+=`<div class="grp"><h3>${title}</h3>`+rows.map(rowHtml).join('')+'</div>';
     });
     const fl=flags();
-    h+=`<div class="grp"><h3>Likely reviewers</h3><div class="route-chips">${route().map(x=>`<span class="route-chip">${esc(x)}</span>`).join('')}</div></div>`;
     h+=`<div class="grp"><h3>Early flags</h3>`+(fl.length?fl.map(f=>`<div class="pf ${f.level}"><i></i><div><b>${esc(f.title)}</b><span>${esc(f.why)}</span></div></div>`).join(''):'<p class="side-note">Nothing stands out so far. This isn\'t a decision.</p>')+'</div>';
     $('#panelIn').innerHTML=h;
     if(PANEL_FLASH.length){
@@ -2254,15 +2211,12 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
   function openReview(){
     const duplicate=findClosestSubmission();
     $('#overlayHost').innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ovT"><div class="sheet"><h2 id="ovT" tabindex="-1">Review and submit</h2><p class="small">Risk scoring and the final decision are made by the Responsible AI Office, not by you. You're confirming that this is accurate.</p>
-    <div class="guardrail" role="note"><b>Guardrail: review AI-generated answers</b><span>Any values drafted by Jazz Gemma must be checked by you. By submitting, you confirm you have reviewed the AI-assisted answers and they are correct to the best of your knowledge.</span></div>
-    <div class="route-box route-one"><b>Who will review it:</b> ${esc(route().join(', '))}</div>
     ${riskAssessmentHtml('review')}
     ${requestBoxHtml(duplicate)}
     <div class="btns"><button type="button" class="btn" id="ovBack">Keep editing</button><button type="button" class="btn primary" id="ovGo" ${duplicate.match&&duplicate.match.similarity>=DUPLICATE_THRESHOLD?'disabled aria-disabled="true"':''}>Submit for review</button></div></div></div>`;
     $('#ovT').focus();
     $('#ovBack').onclick=()=>$('#overlayHost').innerHTML='';
     $('#ovGo').onclick=submit;
-    const dl=$('#dlRiskPdf');if(dl&&!dl.disabled) dl.onclick=downloadRiskAssessmentPdf;
     document.onkeydown=e=>{if(e.key==='Escape')$('#overlayHost').innerHTML=''};
   }
   const sel=(id,k)=>has(id)?V(id):'';
@@ -2409,7 +2363,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
           usedServer=true;
           LAST_EXTRACTOR=view.extractor||'llm';
           applyServerSession(view,{renderChat:true});
-          await agent('<b>Guardrail:</b> treat AI-filled answers as drafts you must confirm. For value, cost, or hours you don\'t know, use <b>Calculate together</b> — short questions, then I fill the field.');
+          await agent('For value, cost, or hours you don\'t know, use <b>Calculate together</b> — short questions, then I fill the field.');
           return step();
         }
       }catch(err){
@@ -2421,7 +2375,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
         bubble('user',esc(S.text));renderPanel();
         const n=await infer();renderPanel();
         const via=LAST_EXTRACTOR==='llm'?'Jazz Gemma':'a quick read of your text';
-        await agent(n?`I read that with <b>${via}</b>. Signed in as <b>${esc(PROFILE.name)}</b> (${esc(PROFILE.unit)}), so I've filled in the owner and business unit. <b>Guardrail:</b> treat every AI-filled answer as a draft.`:`Thanks. I couldn't pick out much from that, so I'll ask a few short questions.`);
+        await agent(n?`I read that with <b>${via}</b>. Signed in as <b>${esc(PROFILE.name)}</b> (${esc(PROFILE.unit)}), so I've filled in the owner and business unit.`:`Thanks. I couldn't pick out much from that, so I'll ask a few short questions.`);
       }
       return step();
     });
