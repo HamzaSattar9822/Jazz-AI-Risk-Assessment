@@ -83,7 +83,8 @@ def llm_agent_turn(
         "priorMemory": memory,
         "fields": _slot_guide(),
         "rules": [
-            "Keep reply under 60 words. Bullet short questions when helping estimate a value.",
+            "Keep reply under 40 words. Mention only the field(s) changed in this turn — never restate the whole form.",
+            "If the user discusses one field, extract and confirm only that field.",
             "If user says don't know / help estimate a helper field, set startHelper and keep reply minimal.",
             "Update only fields clearly supported by latestMessage or recalled prior data.",
             "category: AI For Us | AI By Us | AI Against Us only.",
@@ -206,6 +207,74 @@ def offline_intent_extractions(message: str) -> dict[str, dict]:
         out["category"] = {"value": "AI By Us", "why": "category from your chat", "source": "you"}
     if re.search(r"\b(change|set|update|category|type)\b", t) and re.search(r"\bagainst\s+us\b", t):
         out["category"] = {"value": "AI Against Us", "why": "category from your chat", "source": "you"}
+
+    # Single-field clarifications: map explicit chat updates without reopening the form.
+    segment_map = [
+        (r"consumer(?:[-\s]?facing)?(?:\s+ai)?", "Consumer-Facing AI"),
+        (r"corporate(?:\s+ai)?", "Corporate AI"),
+        (r"enterprise(?:\s+ai)?", "Enterprise AI"),
+        (r"internal(?:\s+operations?)?", "Internal Operations"),
+        (r"\bother\b", "Other"),
+    ]
+    if re.search(r"\bsegment\b", t):
+        for pattern, value in segment_map:
+            if re.search(pattern, t, re.I):
+                out["segment"] = {
+                    "value": value,
+                    "why": "segment from your chat message",
+                    "source": "you",
+                }
+                break
+
+    driver_map = [
+        (r"productivity", "Productivity"),
+        (r"revenue", "Revenue Uplift"),
+        (r"cost\s*reduction|cut costs|saving cost", "Cost Reduction"),
+        (r"customer experience|cx\b", "Customer Experience"),
+        (r"efficiency", "Efficiency"),
+        (r"governance", "Governance"),
+    ]
+    if re.search(r"value\s*driver|driver", t):
+        for pattern, value in driver_map:
+            if re.search(pattern, t, re.I):
+                out["valueDriver"] = {
+                    "value": value,
+                    "why": "value driver from your chat message",
+                    "source": "you",
+                }
+                break
+
+    def money_field(slot_id: str, labels: str) -> None:
+        m_money = re.search(
+            rf"(?:(?:change|update|set)\s+)?(?:the\s+)?(?:{labels})\s*(?:to|as|:|=)\s*"
+            rf"((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*USD)?)",
+            raw,
+            re.I,
+        )
+        if m_money:
+            out[slot_id] = {
+                "value": m_money.group(1).replace(" ", "").strip(),
+                "why": f"{slot_id} from your chat message",
+                "source": "you",
+            }
+
+    money_field("annualValue", r"annual value|roi|value|benefit")
+    money_field("investmentCost", r"investment(?:\s+cost)?|capex|budget|project cost|total cost")
+    money_field("spendingToDate", r"spending(?:\s+to\s+date)?|spent(?:\s+to\s+date|\s+so\s+far)?")
+
+    m_hours = re.search(
+        r"(?:(?:change|update|set)\s+)?(?:the\s+)?(?:hours?\s*saved|time\s*saved)\s*(?:to|as|:|=)\s*"
+        r"([^\n.]+)",
+        raw,
+        re.I,
+    )
+    if m_hours:
+        out["hoursSaved"] = {
+            "value": m_hours.group(1).strip(),
+            "why": "hours saved from your chat message",
+            "source": "you",
+        }
+
     return out
 
 

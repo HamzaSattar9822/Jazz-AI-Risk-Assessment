@@ -385,14 +385,24 @@ def create_session(db: Session, user: User, description: str, settings: Settings
     found, extractor = _extract(description, settings)
     state["extractor"] = extractor
     apply_extractions(state, found)
+    # Put description drafts straight on the form; chat only asks what's still empty.
+    for slot_id, entry in state["slots"].items():
+        slot = SLOTS_BY_ID.get(slot_id)
+        if (
+            slot
+            and entry.get("status") == "inferred"
+            and has_value(slot, entry.get("value"))
+        ):
+            entry["status"] = "confirmed"
     _apply_summary(state, found)
     values = values_of(state)
     unit = user.business_unit
     if found:
         intro = (
-            f"I read that. Signed in as {user.name} ({unit}) — owner and unit are set. "
-            "I'll help fill the rest with short questions. "
-            "If you don't know a number, say \"help me estimate\" and we'll work it out."
+            f"I filled what I could from your description onto the form. "
+            f"Signed in as {user.name} ({unit}). "
+            "I'll ask only what's still missing — answers go straight onto the form. "
+            "If you don't know a number, say \"help me estimate\"."
         )
     else:
         intro = (
@@ -443,7 +453,6 @@ def confirm_slots(db: Session, draft: IntakeSession, slot_ids: list[str] | None)
         if entry["status"] == "empty" or not has_value(SLOTS_BY_ID[slot_id], entry["value"]):
             raise IntakeError(f"'{active[slot_id].label}' has no value to confirm.", 422)
         entry["status"] = "confirmed"
-    _say(state, "user", "Looks right")
     _after_change(state)
     _touch(draft, state)
     db.commit()
@@ -550,31 +559,43 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
         current_values = _slot_snapshot(state)
         empty_ids = empty_helper_ids(state)
 
-        agent = llm_agent_turn(
-            latest_message=text,
-            transcript=transcript[:-1],
-            current_values=current_values,
-            memory=memory,
-            settings=settings,
-            empty_helper_ids=empty_ids,
-        )
+        # Prefer an explicit single-field chat intent so Gemma cannot reopen the
+        # whole form when the user only clarified one answer.
+        intent = offline_intent_extractions(text)
+        if intent:
+            applied = apply_extractions(
+                state,
+                intent,
+                allow_update=True,
+                mark_confirmed=True,
+            )
 
-        if agent:
-            reply = (agent.get("reply") or "").strip()
-            if agent.get("recallNote"):
-                recall_meta = {"recallNote": agent["recallNote"]}
-            if agent.get("startHelper") and agent["startHelper"] in HELPERS:
-                reply = start_helper(state, agent["startHelper"])
-                helper_handled = True
-                recall_meta = {**(recall_meta or {}), "helper": agent["startHelper"]}
-            elif agent.get("extractions"):
-                applied = apply_extractions(
-                    state,
-                    agent["extractions"],
-                    allow_update=True,
-                    mark_confirmed=True,
-                )
-                state["extractor"] = "llm"
+        if not applied:
+            agent = llm_agent_turn(
+                latest_message=text,
+                transcript=transcript[:-1],
+                current_values=current_values,
+                memory=memory,
+                settings=settings,
+                empty_helper_ids=empty_ids,
+            )
+
+            if agent:
+                reply = (agent.get("reply") or "").strip()
+                if agent.get("recallNote"):
+                    recall_meta = {"recallNote": agent["recallNote"]}
+                if agent.get("startHelper") and agent["startHelper"] in HELPERS:
+                    reply = start_helper(state, agent["startHelper"])
+                    helper_handled = True
+                    recall_meta = {**(recall_meta or {}), "helper": agent["startHelper"]}
+                elif agent.get("extractions"):
+                    applied = apply_extractions(
+                        state,
+                        agent["extractions"],
+                        allow_update=True,
+                        mark_confirmed=True,
+                    )
+                    state["extractor"] = "llm"
 
         if not helper_handled and not applied:
             reused = match_prior_for_reuse(text, memory) if wants_recall(text) else None
@@ -605,15 +626,15 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                     "reusedFrom": reused.get("referenceId") or reused.get("sessionId"),
                 }
             else:
-                intent = offline_intent_extractions(text)
-                if intent:
-                    applied = apply_extractions(
-                        state,
-                        intent,
-                        allow_update=True,
-                        mark_confirmed=True,
-                    )
+                # Chat turns: extract only from this message — never re-scan the full
+                # description (that re-discusses every field again).
                 from_message, msg_extractor = _extract(text, settings)
+                if intent:
+                    from_message = {
+                        key: value
+                        for key, value in (from_message or {}).items()
+                        if key in intent
+                    }
                 for slot_id in apply_extractions(
                     state,
                     from_message,
@@ -622,30 +643,29 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                 ):
                     if slot_id not in applied:
                         applied.append(slot_id)
-                found, extractor = _extract(draft.description, settings)
-                state["extractor"] = msg_extractor if applied else extractor
-                for slot_id in apply_extractions(state, found, allow_update=False):
-                    if slot_id not in applied:
-                        applied.append(slot_id)
+                if applied:
+                    state["extractor"] = msg_extractor
 
         if not reply:
             if applied:
-                labels = ", ".join(SLOTS_BY_ID[slot_id].label for slot_id in applied)
-                reply = f"Updated: {labels}."
-                nxt = next_empty_helper_slot(empty_helper_ids(state))
-                if nxt and nxt in HELPERS:
-                    reply += f" Next we can fill {HELPERS[nxt]['label']} — say \"help me estimate\" if you don't know it yet."
+                if len(applied) == 1:
+                    slot = SLOTS_BY_ID[applied[0]]
+                    entry = state["slots"][applied[0]]
+                    reply = (
+                        f"Updated {slot.label} to "
+                        f"{display_value(slot, entry.get('value'))}."
+                    )
+                else:
+                    labels = ", ".join(SLOTS_BY_ID[slot_id].label for slot_id in applied)
+                    reply = f"Updated: {labels}."
             else:
                 nxt = next_empty_helper_slot(empty_helper_ids(state))
                 if nxt and wants_help(text):
                     reply = start_helper(state, nxt)
-                elif nxt:
-                    reply = (
-                        f"Noted. For {HELPERS[nxt]['label']}, tell me the value "
-                        f"or say \"help me estimate\" and I'll ask a few short questions."
-                    )
                 else:
-                    reply = "Noted — saved to the conversation and your description."
+                    reply = (
+                        "Noted — saved. Tell me which field to change if you want an update."
+                    )
 
     _say(state, "assistant", reply, meta=recall_meta)
     _after_change(state)

@@ -1223,7 +1223,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
   }
   const BUS=['Compliance','CRA','Cybersecurity','Enterprise','Finance','GSM','Internal Audit','JazzCash','JLV','Legal','MMBL','P&O','Strategy','Technology','Teknosys'];
   const YNN=['Yes','No'];
-  const S={text:'',v:{},asked:0,announced:new Set(),done:false,editing:null,sessionId:null,batchShown:false};
+  const S={text:'',v:{},asked:0,announced:new Set(),done:false,editing:null,sessionId:null,batchShown:false,askingId:null};
   const TOOLS=[[/microsoft copilot|copilot/,'Microsoft Copilot'],[/chatgpt/,'ChatGPT'],[/gemini/,'Google Gemini'],[/azure openai/,'Azure OpenAI'],[/openai/,'OpenAI'],[/claude/,'Claude']];
 
   const first=(re,t)=>{const m=t.match(re);return m?m[0]:null};
@@ -1465,16 +1465,13 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     }else{
       push(keywordInfer(message,{overwrite:true,status:'confirmed',src:'you'}));
     }
-    // Fill any still-empty slots from the full running description.
-    const full=await extractFromText(S.text);
-    if(full) push(applyRemoteExtractions(full.extractions,{overwrite:false,status:'inferred'}));
-    else push(keywordInfer(S.text,{overwrite:false}));
+    // Chat corrections: do not re-scan the full description (that reopens every field).
     // Keep offline summary as a concise rewrite, not a paste of the prompt.
     if(st('summary').src==='auto'){
       const cut=makeConciseSummary(S.text);
       if(cut&&!sameSlotValue(V('summary'),cut)){
         Object.assign(st('summary'),{value:cut,status:'confirmed',src:'auto',why:'concise summary of your description'});
-        changed.push('summary');
+        // Don't treat summary refresh as a user-facing field confirmation.
       }
     }
     return changed;
@@ -1579,31 +1576,41 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
   const focusFirst=w=>{const b=$('button,input',w);if(b&&innerWidth>860)try{b.focus({preventScroll:true})}catch(e){}toBottom()};
 
   /* ---------- flow ---------- */
-  async function step(){
-    if(S.done)return;
-    const act=active();
-    const inf=act.filter(s=>st(s.id).status==='inferred');
-    if(inf.length)return showBatch(inf);
-    const next=act.find(s=>st(s.id).status==='empty');
-    if(next)return ask(next);
-    return complete();
+  async function acceptInferredDrafts(){
+    const inf=active().filter(s=>st(s.id).status==='inferred');
+    if(!inf.length) return [];
+    const ids=inf.map(s=>s.id);
+    inf.forEach(s=>{
+      const x=st(s.id);
+      Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')});
+    });
+    if(CFG.apiBase&&S.sessionId){
+      try{
+        const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/confirm',{
+          method:'POST',
+          body:JSON.stringify({slotIds:ids})
+        });
+        if(response.ok) applyServerSession(await response.json(),{renderChat:false});
+      }catch(err){console.warn(err)}
+    }
+    renderPanel(ids);
+    return ids;
   }
-  async function showBatch(inf){
-    clearWidget();
-    const intro=S.batchShown?'I picked up a few more details from your description:':'Thanks. Here is what I drafted from your description using AI. These are suggestions only.';
-    S.batchShown=true;
-    await agent(intro+'<ul class="batch">'+inf.map(s=>`<li><span class="k">${esc(s.label)}</span><span class="v">${esc(fmt(s))}</span><span class="w">${esc(st(s.id).why||'')}</span></li>`).join('')+'</ul>');
-    const w=widget('batch');
-    w.innerHTML='<button type="button" class="pill primary" data-a="ok">Looks right - I checked these</button><button type="button" class="pill" data-a="fix">Change something</button>';
-    w.onclick=e=>{const b=e.target.closest('button');if(!b)return;
-      if(b.dataset.a==='ok'){
-        // Confirm only - keep llm/description provenance so filled-from-description counts stay correct.
-        inf.forEach(s=>{const x=st(s.id);Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')})});
-        w.remove();bubble('user','Looks right');enqueue(afterChange);
+  async function step(opts={}){
+    if(S.done)return;
+    // Put AI guesses straight on the form once, then only ask what's still empty.
+    if(!S.batchShown){
+      const accepted=await acceptInferredDrafts();
+      S.batchShown=true;
+      if(accepted.length){
+        const labels=accepted.filter(id=>BY[id]).map(id=>BY[id].label);
+        const shown=labels.slice(0,5).map(esc).join(', ')+(labels.length>5?', …':'');
+        await agent(`I filled the form from your description${shown?` (${shown})`:''}. I'll ask only what's still missing — answers go straight onto the form.`);
       }
-      else{w.innerHTML=inf.map(s=>`<button type="button" class="pill" data-id="${s.id}">${esc(s.label)}</button>`).join('');w.onclick=e2=>{const c=e2.target.closest('button');if(!c)return;
-        const id=c.dataset.id;inf.filter(s=>s.id!==id).forEach(s=>{const x=st(s.id);Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')})});Object.assign(st(id),{status:'empty',value:isMulti(BY[id])?[]:'',src:undefined});w.remove();bubble('user','Change: '+BY[id].label);enqueue(()=>{renderPanel();return step()})}}};
-    focusFirst(w);
+    }
+    const next=active().find(s=>st(s.id).status==='empty');
+    if(next) return ask(next);
+    return complete();
   }
   const HELPERS={
     annualValue:{
@@ -1655,6 +1662,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
   };
   async function ask(s){
     clearWidget();
+    S.askingId=s.id;
     const helper=HELPERS[s.id];
     if(helper){
       const fields=helper.fields||(helper.qs||[]).map(q=>({q,ph:'Your answer'}));
@@ -1670,7 +1678,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
         </div>`;
       }).join('')+`<div class="row-in" style="margin-top:4px;flex-wrap:wrap"><button type="button" class="pill primary" data-a="calc">Calculate together</button><button type="button" class="pill" data-a="direct">I know the value</button></div><div class="row-in" hidden data-direct style="margin-top:8px"><input type="text" placeholder="${esc(s.ph||'Enter value')}" aria-label="${esc(s.label)}" autocomplete="off"><button type="button" class="pill primary" data-a="save">Save</button></div>`;
       const readAnswers=()=>fields.map((_,i)=>{const inp=$(`input[data-hi="${i}"]`,w);return (inp&&inp.value.trim())||''});
-      const finishLocal=(val)=>{w.remove();bubble('user',esc(val));S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});enqueue(afterChange)};
+      const finishLocal=(val)=>{S.askingId=null;w.remove();bubble('user',esc(val));S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you'});enqueue(afterChange)};
       w.addEventListener('click',e=>{
         const opt=e.target.closest('[data-opt-i]');
         if(opt&&w.contains(opt)){
@@ -1694,6 +1702,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
           const answers=readAnswers();
           if(answers.some(x=>!x)){toast('Type an answer in each box (or tap a choice), then Calculate together.');return}
           const payload=`I don't know ${s.label}. Help me estimate.\n`+answers.join('\n');
+          S.askingId=null;
           w.remove();
           bubble('user',esc(payload).replace(/\n/g,'<br>'));
           enqueue(async()=>{
@@ -1701,18 +1710,23 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
               try{
                 const view=await postServerMessage(payload);
                 applyServerSession(view,{renderChat:false});
+                // Ensure the asked field is confirmed on the form even if the model reply is chatty.
+                if(st(s.id).status!=='confirmed'||!V(s.id)){
+                  const val=helper.estimate(answers);
+                  Object.assign(st(s.id),{value:val,status:'confirmed',src:'you',why:'estimated with AIRA helper'});
+                }
                 renderPanel([s.id]);
                 const turns=view.transcript||[];
                 const last=turns.length?turns[turns.length-1]:null;
-                const reply=(last&&last.role==='assistant'&&last.text)?last.text:'Updated.';
+                const reply=(last&&last.role==='assistant'&&last.text)?last.text:`Got it — ${s.label} is on the form.`;
                 await agent(esc(reply).replace(/\n/g,'<br>'));
-                return step();
+                return afterChange();
               }catch(err){console.warn(err)}
             }
             const val=helper.estimate(answers);
             S.asked++;Object.assign(st(s.id),{value:val,status:'confirmed',src:'you',why:'estimated with AIRA helper'});
             renderPanel([s.id]);
-            await agent(`Got it. I set <b>${esc(s.label)}</b> to <b>${esc(val)}</b> from your answers.`);
+            await agent(`Got it. I put <b>${esc(val)}</b> into <b>${esc(s.label)}</b> on the form.`);
             return afterChange();
           });
         }
@@ -1729,6 +1743,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     const w=widget('ask');
     const done=(val,label)=>{
       const shown=label||(Array.isArray(val)?val.join(', '):val);
+      S.askingId=null;
       w.remove();
       bubble('user',esc(shown));
       S.asked++;
@@ -1746,6 +1761,7 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
             }
           }catch(err){console.warn(err)}
         }
+        renderPanel([s.id]);
         return afterChange();
       });
     };
@@ -2388,6 +2404,34 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
     else setDrawer(true);
   };
 
+  function resolveAnswerForSlot(slot, text){
+    const raw=String(text||'').trim();
+    if(!raw||!slot) return null;
+    if(slot.kind==='single'){
+      const options=optsOf(slot);
+      const low=raw.toLowerCase();
+      const exact=options.find(o=>String(o.v).toLowerCase()===low||String(o.l).toLowerCase()===low);
+      if(exact) return exact.v;
+      const partial=options.find(o=>low.includes(String(o.v).toLowerCase())||low.includes(String(o.l).toLowerCase())||String(o.l).toLowerCase().includes(low));
+      return partial?partial.v:raw;
+    }
+    if(slot.kind==='multi'){
+      return raw.split(/,|\band\b/i).map(x=>x.trim()).filter(Boolean);
+    }
+    return raw;
+  }
+  async function saveSlotAnswer(slotId, value){
+    Object.assign(st(slotId),{value,status:'confirmed',src:'you'});
+    S.asked++;
+    if(CFG.apiBase&&S.sessionId){
+      const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/answers',{
+        method:'POST',
+        body:JSON.stringify({slotId,value})
+      });
+      if(response.ok) applyServerSession(await response.json(),{renderChat:false});
+    }
+    renderPanel([slotId]);
+  }
   const send=()=>{const ta=$('#composerText'),t=ta.value.trim();if(!t||S.done)return;ta.value='';ta.style.height='';
     bubble('user',esc(t));S.text+='\n'+t;clearWidget();
     enqueue(async()=>{
@@ -2397,39 +2441,73 @@ body[data-theme="light"] .request-box{background:#fff;border-color:var(--line)}
       typing.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
       chatIn.appendChild(typing);toBottom();
       try{
+        // If AIRA is currently asking one field, treat the chat reply as that answer
+        // and put it on the form — no review batch.
+        const askingId=S.askingId;
+        const asking=askingId&&BY[askingId]?BY[askingId]:null;
+        if(asking && !wantsHelpLike(t)){
+          const value=resolveAnswerForSlot(asking,t);
+          S.askingId=null;
+          try{
+            await saveSlotAnswer(asking.id,value);
+            typing.remove();
+            await agent(`Saved <b>${esc(asking.label)}</b> as <b>${esc(fmt(asking))}</b> on the form.`);
+            return afterChange();
+          }catch(err){
+            console.warn(err);
+            Object.assign(st(asking.id),{value,status:'confirmed',src:'you'});
+            typing.remove();
+            renderPanel([asking.id]);
+            await agent(`Saved <b>${esc(asking.label)}</b> on the form.`);
+            return afterChange();
+          }
+        }
         if(CFG.apiBase&&S.sessionId){
           const view=await postServerMessage(t);
           typing.remove();
           const before={};
           active().forEach(s=>{before[s.id]=JSON.stringify(V(s.id))});
           applyServerSession(view,{renderChat:false});
+          // Auto-accept any new inferred drafts onto the form.
+          await acceptInferredDrafts();
           const changed=active().filter(s=>before[s.id]!==JSON.stringify(V(s.id))).map(s=>s.id);
           renderPanel(changed);
           const turns=view.transcript||[];
           const last=turns.length?turns[turns.length-1]:null;
-          const reply=(last&&last.role==='assistant'&&last.text)?last.text:'Noted. I saved that in our conversation.';
+          const reply=(last&&last.role==='assistant'&&last.text)?last.text:(changed.length?'Updated the form.':'Noted.');
           await agent(esc(reply).replace(/\n/g,'<br>'));
-          return step();
+          S.askingId=null;
+          return afterChange();
         }
         let changed=[];
         try{changed=await agentApplyFromChat(t)}finally{typing.remove()}
+        await acceptInferredDrafts();
         renderPanel(changed);
-        if(changed.length){
+        if(changed.length===1&&BY[changed[0]]){
+          await agent(`Saved <b>${esc(BY[changed[0]].label)}</b> as <b>${esc(fmt(BY[changed[0]]))}</b> on the form.`);
+        }else if(changed.length){
           const labels=changed.filter(id=>BY[id]).map(id=>BY[id].label);
-          await agent(`Updated the form from your message: <b>${labels.map(esc).join(', ')}</b>. Check the summary panel.`);
+          await agent(`Saved on the form: <b>${labels.map(esc).join(', ')}</b>.`);
         }else{
-          await agent('Noted. I added that to your description. Tell me what to change if you want a field updated.');
+          await agent('Noted. Tell me which field to change if you want an update.');
         }
+        S.askingId=null;
+        return afterChange();
       }catch(err){
         typing.remove();
         console.warn(err);
         toast(err.message||'Chat save failed; applying locally.');
         const changed=await agentApplyFromChat(t);
+        await acceptInferredDrafts();
         renderPanel(changed);
-        await agent('I could not reach the saved session, so I updated the form locally for this browser only.');
+        await agent('Updated the form locally for this browser.');
+        S.askingId=null;
+        return afterChange();
       }
-      return step();
     })};
+  function wantsHelpLike(text){
+    return /\b(help|estimate|calculate|don'?t know|do not know|not sure)\b/i.test(String(text||''));
+  }
   $('#composerSend').onclick=send;
   $('#composerText').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
   $('#composerText').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,130)+'px'});
