@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 _PORTAL_CANDIDATES = [
     Path("/app/static/index.html"),
     Path(__file__).resolve().parents[1] / "static" / "index.html",
-    Path(__file__).resolve().parents[2] / "DDA.html",
     Path(__file__).resolve().parents[2] / "Ai_risk_assessment_icon_toggle.html",
+    Path(__file__).resolve().parents[2] / "DDA.html",
 ]
 
 
