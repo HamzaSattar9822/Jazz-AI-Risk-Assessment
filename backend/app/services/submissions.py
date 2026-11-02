@@ -228,7 +228,10 @@ def submit_state(db: Session, user: User, state: dict, description: str, setting
     _require_complete(state)
     comparable = comparable_from(state, description)
     match = _closest(db, comparable, settings)
-    _block_if_duplicate(match)
+    # Similarity is returned for awareness only — do not block submit.
+    if match:
+        match = dict(match)
+        match["blocked"] = False
     reference = _new_reference(db, reference)
     payload = build_payload(state, description, reference, utcnow(), mode)
     return _store(db, user, payload, comparable, settings, match)

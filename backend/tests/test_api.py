@@ -67,7 +67,7 @@ def test_health(client):
     assert response.json()["llmConfigured"] is False
 
 
-def test_conversational_submit_review_and_duplicate_block(client):
+def test_conversational_submit_review_and_duplicate_warns_but_allows(client):
     headers = login(client, "ayesha.khan@jazz.example")
     opened = client.post(
         "/api/v1/intake/sessions",
@@ -143,11 +143,12 @@ def test_conversational_submit_review_and_duplicate_block(client):
     )
     second_id = again.json()["id"]
     _finish(client, headers, second_id)
-    blocked = client.post(f"/api/v1/intake/sessions/{second_id}/submit", headers=headers)
-    assert blocked.status_code == 409, blocked.text
-    assert blocked.json()["detail"]["code"] == "duplicate"
-    assert blocked.json()["detail"]["match"]["referenceId"] == reference
-    assert blocked.json()["detail"]["match"]["similarity"] >= 90
+    allowed = client.post(f"/api/v1/intake/sessions/{second_id}/submit", headers=headers)
+    assert allowed.status_code == 201, allowed.text
+    match = allowed.json().get("duplicateCheck") or {}
+    assert match.get("referenceId") == reference
+    assert match.get("similarity") >= 90
+    assert match.get("blocked") is False
 
 
 def test_portal_payload_is_accepted(client):
@@ -183,5 +184,7 @@ def test_portal_payload_is_accepted(client):
         headers=headers,
         json={**payload, "referenceId": "AIRA-20261005-PORT2"},
     )
-    assert replay.status_code == 409
-    assert replay.json()["detail"]["code"] == "duplicate"
+    assert replay.status_code == 201, replay.text
+    match = replay.json().get("duplicateCheck") or {}
+    assert match.get("similarity") >= 90
+    assert match.get("blocked") is False

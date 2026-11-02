@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jazz-ai-risk-assessment
+  namespace: ai-risk
+  labels:
+    app: jazz-ai-risk-assessment
+spec:
+  selector:
+    app: jazz-ai-risk-assessment
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+  type: ClusterIP

@@ -891,6 +891,13 @@ body.aira-compact .chat-head{padding:10px}
 #view-done .aira-risk-label{font-size:21px}
 .risk-oneliner{font-size:14px;color:var(--muted);line-height:1.5;margin:7px 0 0}
 .submission-note{color:var(--muted);font-size:13px;margin:18px 0}
+.done-sim{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.done-sim h2{font-size:18px;margin:0 0 10px}
+.done-sim-rows{display:grid;gap:8px}
+.done-sim-rows .req-row{display:grid;grid-template-columns:minmax(120px,160px) 1fr;gap:8px 14px;font-size:14px}
+.done-sim-rows .k{color:var(--muted)}
+.done-sim-rows .v{font-weight:600}
+.done-sim .done-empty{font-size:14px;color:var(--muted);margin:6px 0 0;line-height:1.45}
 @media(max-width:500px){#view-done .aira-risk-face .bot-avatar{width:82px;height:74px;flex-basis:82px}#view-done .aira-risk-label{font-size:18px}}
 </style>
 </head>
@@ -2118,7 +2125,7 @@ body.aira-compact .chat-head{padding:10px}
   function requestBoxHtml(duplicate){
     const m=duplicate&&duplicate.match;
     const score=m?m.similarity:0;
-    const blocked=!!m&&score>=DUPLICATE_THRESHOLD;
+    const highOverlap=!!m&&score>=DUPLICATE_THRESHOLD;
     const prior=m&&m.comparable?m.comparable:{};
     const rows=[
       ['Project name', has('name')?V('name'):'(not set)'],
@@ -2140,15 +2147,14 @@ body.aira-compact .chat-head{padding:10px}
       rows.push(['Closest description', shortDescription(prior.summary||prior.description||'',160)]);
       rows.push(['Closest reference', (m.referenceId||'N/A')+(m.submittedAt?' · '+new Date(m.submittedAt).toLocaleString():'')]);
     }
-    const statusLine=blocked
-      ?`Potential duplicate: submission is blocked at ${DUPLICATE_THRESHOLD}% or above.`
+    const statusLine=highOverlap
+      ?`High overlap with a prior project (${score}%). You can still submit — reach out to that owner if useful.`
       :m?`Compared with the closest prior project (${score}% similar).`
       :'No previous submissions found for comparison.';
-    return `<div class="request-box ${blocked?'blocked':''}" role="region" aria-label="Request details">
+    return `<div class="request-box" role="region" aria-label="Request details">
       <h3>Your request</h3>
       ${rows.map(([k,v])=>`<div class="req-row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('')}
       <div class="match-meta">${esc(statusLine)}</div>
-      ${blocked?'<div class="match-meta"><b>Submission disabled</b> until this overlaps less with the earlier project.</div>':''}
     </div>`;
   }
   const DUPLICATE_STORE_KEY='jazzworld_aira_submissions_v1';
@@ -2169,11 +2175,31 @@ body.aira-compact .chat-head{padding:10px}
       category:V('category'),
       name:V('name'),
       owner:V('owner'),
+      businessUnit:V('businessUnit'),
       summary:V('summary'),
       description:S.text,
       requirements:active().map(slot=>`${slot.label}: ${fmt(slot)}`).join(' | '),
       screening:[V('sensitive'),V('decision'),V('action')].join(' | ')
     };
+  }
+  function similarityDoneHtml(duplicate){
+    const m=duplicate&&duplicate.match&&duplicate.match.similarity>0?duplicate.match:null;
+    const prior=m&&m.comparable?m.comparable:{};
+    if(!m){
+      return `<div class="done-sim"><h2>Similarity · Who to reach out to</h2>
+        <p class="done-empty">No close match found — you’re not overlapping a prior request.</p></div>`;
+    }
+    const owner=prior.owner||'Not recorded';
+    const unit=prior.businessUnit?` (${prior.businessUnit})`:'';
+    return `<div class="done-sim"><h2>Similarity · Who to reach out to</h2>
+      <div class="done-sim-rows">
+        <div class="req-row"><div class="k">Similarity</div><div class="v">${esc(String(m.similarity))}%</div></div>
+        <div class="req-row"><div class="k">Closest use case</div><div class="v">${esc(prior.name||prior.summary||'Untitled use case')}</div></div>
+        <div class="req-row"><div class="k">Business owner</div><div class="v">${esc(owner)}${esc(unit)}</div></div>
+        ${m.referenceId?`<div class="req-row"><div class="k">Their reference</div><div class="v">${esc(m.referenceId)}</div></div>`:''}
+      </div>
+      <p class="done-empty">Reach out to this business owner if you want to align before RAIO review.</p>
+    </div>`;
   }
   function shortDescription(text,max=160){
     const raw=String(text||'').replace(/\s+/g,' ').trim();
@@ -2359,6 +2385,23 @@ body.aira-compact .chat-head{padding:10px}
     }
     cardEnd(cFlags.top);
 
+    // ---- Similarity index ----
+    sectionTitle('2c. Similarity index');
+    const dupPdf=findClosestSubmission();
+    const simMatch=dupPdf&&dupPdf.match&&dupPdf.match.similarity>0?dupPdf.match:null;
+    const cSim=cardStart();
+    if(!simMatch){
+      para('No close match found among prior submissions. Similarity index: n/a.',9,ink);
+    }else{
+      const prior=simMatch.comparable||{};
+      kv('Similarity index', String(simMatch.similarity)+'%');
+      kv('Closest use case', prior.name||prior.summary||'Untitled use case');
+      kv('Business owner', (prior.owner||'Not recorded')+(prior.businessUnit?' ('+prior.businessUnit+')':''));
+      if(simMatch.referenceId) kv('Their reference', simMatch.referenceId+(simMatch.submittedAt?' · '+new Date(simMatch.submittedAt).toLocaleString():''));
+      para('Informational only — high overlap does not block submission. Reach out to this owner if you want to align before RAIO review.',9,muted);
+    }
+    cardEnd(cSim.top);
+
     // ---- Executive summary ----
     sectionTitle('3. Executive summary');
     const c3=cardStart();
@@ -2479,10 +2522,7 @@ body.aira-compact .chat-head{padding:10px}
   const SUBMISSION_ENDPOINT=CFG.submissionEndpoint||(CFG.apiBase?CFG.apiBase.replace(/\/$/,'')+'/submissions':'');
   async function submit(){
     const duplicate=findClosestSubmission();
-    if(duplicate.match&&duplicate.match.similarity>=DUPLICATE_THRESHOLD){
-      toast(`Submission blocked: ${duplicate.match.similarity}% similar to ${duplicate.match.referenceId||'a previous request'}.`);
-      setDrawer(true);return;
-    }
+    // Similarity is informational only — never block submit.
     const miss=active().filter(s=>!has(s.id));
     if(miss.length){$('#overlayHost').innerHTML='';toast('Still needed: '+miss.map(s=>s.label).join(', '));return}
     const d=new Date(),ref='AIRA-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
@@ -2523,14 +2563,20 @@ body.aira-compact .chat-head{padding:10px}
     v.innerHTML=`<div class="confirm"><div class="confirm-icon" aria-hidden="true">✓</div><h1 tabindex="-1" id="doneH">Request submitted</h1><p style="color:var(--muted);margin-top:8px">Keep this reference to follow up with the Responsible AI Office.</p>
       ${riskAssessmentHtml('submitted')}
       <div class="ref-row"><span class="ref">${finalRef}</span><button type="button" class="btn small no-print" id="copyRef">Copy reference</button></div>
-      <div class="stats"><div class="stat"><b>${filled()}</b><span>from your description</span></div><div class="stat"><b>${askedYou()}</b><span>you answered</span></div><div class="stat"><b>${fromProfile()}</b><span>from your profile</span></div><div class="stat"><b>${route().length}</b><span>teams it will be routed to</span></div></div>
       <h2 style="font-size:18px;margin-top:20px">What happens next</h2>
       <ol class="next-list"><li><b>Routing</b><span>RAIO will route your request to the relevant teams.</span></li><li><b>Questions, if any</b><span>Reviewers will contact you if more details are needed.</span></li><li><b>Decision</b><span>You’ll receive the decision and any required conditions.</span></li></ol>
+      ${similarityDoneHtml(duplicate)}
       <p class="submission-note">Use your reference number for any follow-up with RAIO.</p>
-      <div class="ref-row no-print" style="margin-top:18px"><button type="button" class="btn" id="printBtn">Print / save as PDF</button><button type="button" class="btn primary" id="newBtn">Start a new request</button></div></div>${sectionsHtml()}`;
+      <div class="ref-row no-print" style="margin-top:18px">
+        <button type="button" class="btn primary" id="pdfBtn">Download detailed PDF report</button>
+        <button type="button" class="btn" id="printBtn">Print this page</button>
+        <button type="button" class="btn" id="newBtn">Start a new request</button>
+      </div></div>`;
     $('#doneH').focus();window.scrollTo(0,0);
     $('#copyRef').onclick=async()=>{try{await navigator.clipboard.writeText(finalRef);toast('Reference copied')}catch(e){toast('Copy it manually')}};
-    $('#printBtn').onclick=()=>window.print();$('#newBtn').onclick=()=>location.reload();
+    $('#pdfBtn').onclick=()=>downloadRiskAssessmentPdf();
+    $('#printBtn').onclick=()=>window.print();
+    $('#newBtn').onclick=()=>location.reload();
     $('#restart').hidden=true;
   }
 

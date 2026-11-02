@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "a1ra-fetch-aims-2026-11-02",
+    "name": "AIRA-Fetch-For-AIMS",
+    "description": "APIs for AIMS / ServiceNow to **fetch** AI Risk Assessment (AIRA) data from JazzWorld.\n\nFlow:\n1. POST /auth/login → get Bearer token\n2. GET /submissions → list requests\n3. GET /submissions/{referenceId} → full record for one request\n\nBase URL (live demo): https://jazz-ai-risk-assessment.onrender.com\nAPI prefix: /api/v1\n\nAuth: JWT Bearer (from login). Demo reviewer: rahim.qureshi@jazz.example / JazzDemo-2026\n\nNote: This is the **fetch** direction (AIMS pulls from AIRA). CreateAIMSRITM is the opposite direction (AIRA pushes into ServiceNow).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://jazz-ai-risk-assessment.onrender.com"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "referenceId",
+      "value": "AIRA-20261021-00001"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Login (get Bearer token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json.accessToken) {",
+              "    pm.collectionVariables.set('accessToken', json.accessToken);",
+              "  }",
+              "} catch (e) {}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"rahim.qureshi@jazz.example\",\n  \"password\": \"JazzDemo-2026\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "login"]
+        },
+        "description": "Returns JWT accessToken. Collection auto-saves it to {{accessToken}}."
+      },
+      "response": []
+    },
+    {
+      "name": "2. List submissions (fetch all visible)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            { "key": "token", "value": "{{accessToken}}", "type": "string" }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/submissions",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "submissions"],
+          "query": [
+            {
+              "key": "status",
+              "value": "submitted",
+              "description": "Optional filter",
+              "disabled": true
+            },
+            {
+              "key": "category",
+              "value": "AI For Us",
+              "description": "Optional: AI For Us | AI By Us | AI Against Us",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Returns a list of AIRA requests the caller can see (reviewers see all; requesters see their own).\n\nExample item fields: referenceId, status, category, name, businessUnit, submittedAt, routing, residualRiskScore."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get submission by referenceId (fetch one)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            { "key": "token", "value": "{{accessToken}}", "type": "string" }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/submissions/{{referenceId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "submissions", "{{referenceId}}"]
+        },
+        "description": "Full AIRA record for one request. Use this to build / map into the AIMS payload shape.\n\nMap to AIMS CreateAIMSRITM fields roughly as:\n- referenceId → referenceId\n- payload.aiSystem → aiSystem (owner may be string; AIMS expects {name, email})\n- requester.email → requestor.email\n- payload.screening → screening (Yes/No)\n- residualRiskScore + residualRiskGovernance → riskAssessment\n- assessment + decision → raiAssessment (when RAIO has completed)\n- assessmentUrl → deep link to AIRA portal for that referenceId"
+      },
+      "response": [
+        {
+          "name": "Example AIMS-shaped mapping (illustrative)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/submissions/{{referenceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "submissions", "{{referenceId}}"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"referenceId\": \"AIRA-20261021-00001\",\n  \"aiSystem\": {\n    \"name\": \"AI-Powered Customer Support Assistant\",\n    \"businessOwner\": {\n      \"name\": \"Ayesha Khan\",\n      \"email\": \"ayesha.khan@jazz.example\"\n    },\n    \"businessUnit\": \"Technology\"\n  },\n  \"requestor\": {\n    \"email\": \"ayesha.khan@jazz.example\"\n  },\n  \"screening\": {\n    \"data\": \"Yes\",\n    \"decision\": \"No\",\n    \"action\": \"Yes\"\n  },\n  \"riskAssessment\": {\n    \"residualRiskScore\": 72,\n    \"severity\": \"High\",\n    \"tier\": \"Tier 3\",\n    \"baseApprovalLevel\": \"HoD\"\n  },\n  \"raiAssessment\": {\n    \"validationStatus\": \"Yes\",\n    \"assessedBy\": \"rahim.qureshi@jazz.example\",\n    \"assessedAt\": \"2026-10-20T09:00:00Z\"\n  },\n  \"assessmentUrl\": \"https://jazz-ai-risk-assessment.onrender.com/?ref=AIRA-20261021-00001\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "4. Health check",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "No auth. Confirms the AIRA service is up."
+      },
+      "response": []
+    }
+  ]
+}

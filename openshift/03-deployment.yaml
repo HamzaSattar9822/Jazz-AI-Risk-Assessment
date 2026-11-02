@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jazz-ai-risk-assessment
+  namespace: ai-risk
+  labels:
+    app: jazz-ai-risk-assessment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jazz-ai-risk-assessment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jazz-ai-risk-assessment
+    spec:
+      containers:
+        - name: aira
+          # Replaced by deploy.sh with the pushed image reference.
+          image: image-registry.openshift-image-registry.svc:5000/ai-risk/jazz-ai-risk-assessment:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: PORT
+              value: "8000"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: DATABASE_URL
+              value: sqlite:////data/aira.db
+            - name: JWT_EXPIRE_MINUTES
+              value: "720"
+            - name: MAIL_PROVIDER
+              value: log
+            - name: DUPLICATE_THRESHOLD
+              value: "90"
+            - name: GOVERNANCE_EMAIL
+              value: sana.malik@jazz.example
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aira-secrets
+                  key: JWT_SECRET
+            # CORS is set at deploy time to the Route host (see deploy.sh).
+            - name: CORS_ORIGINS
+              value: https://jazz-ai-risk-assessment-ai-risk.apps.ocpv2.jazz.com.pk
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: aira-db
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: aira-db
+          persistentVolumeClaim:
+            claimName: aira-db
+      securityContext:
+        fsGroup: 1000

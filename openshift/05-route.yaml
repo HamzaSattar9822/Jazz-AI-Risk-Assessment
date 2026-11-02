@@ -1,0 +1,21 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: jazz-ai-risk-assessment
+  namespace: ai-risk
+  labels:
+    app: jazz-ai-risk-assessment
+spec:
+  # Host is optional — OpenShift assigns one if omitted.
+  # Expected pattern on this cluster:
+  #   jazz-ai-risk-assessment-ai-risk.apps.ocpv2.jazz.com.pk
+  to:
+    kind: Service
+    name: jazz-ai-risk-assessment
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
