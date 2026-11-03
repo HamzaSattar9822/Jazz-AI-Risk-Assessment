@@ -907,6 +907,24 @@ body.aira-compact .chat-head{padding:10px}
   #sumBtn[aria-expanded="true"]{position:fixed;z-index:36;top:calc(var(--app-header-height,66px) + 10px);left:calc(min(400px,100vw) - 50px)}
   .panel-head{padding-right:44px}
 }
+
+/* One source of truth for the avatar column */
+#chatIn{--av-w:40px;--av-gap:8px}
+@media(max-width:500px){#chatIn{--av-w:34px}}
+
+#chatIn .msg-row > .bot-avatar.sm{width:var(--av-w);flex:none}
+
+/* Avatar only on the latest assistant bubble; older ones keep an invisible spacer */
+.msg-row.agent:not(.aira-latest) > .bot-avatar,
+.msg-row.coach:not(.aira-latest) > .bot-avatar{
+  visibility:hidden;
+}
+
+/* In-chat question widgets line up exactly with the bubble text column, at every breakpoint */
+#chatIn > .widget{
+  margin-left:calc(var(--av-w) + var(--av-gap));
+  max-width:calc(100% - var(--av-w) - var(--av-gap));
+}
 </style>
 </head>
 <body data-theme="light">
@@ -1782,6 +1800,8 @@ body.aira-compact .chat-head{padding:10px}
   async function agent(html,role='agent'){
     const row=document.createElement('div');
     row.className='msg-row agent';
+    $$('#chatIn .aira-latest').forEach(el=>el.classList.remove('aira-latest'));
+    row.classList.add('aira-latest');
     row.setAttribute('aria-label',BOT.name+' is typing');
     row.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
     chatIn.appendChild(row);toBottom();
@@ -2745,6 +2765,8 @@ body.aira-compact .chat-head{padding:10px}
     enqueue(async()=>{
       const typing=document.createElement('div');
       typing.className='msg-row agent';
+      $$('#chatIn .aira-latest').forEach(el=>el.classList.remove('aira-latest'));
+      row.classList.add('aira-latest');
       typing.setAttribute('aria-label',BOT.name+' is updating the form');
       typing.innerHTML=`<div class="bot-avatar sm" aria-hidden="true">${BOT_AVATAR_SVG}</div><div class="msg agent typing"><i></i><i></i><i></i></div>`;
       markAiraMessage(typing,'thinking');
