@@ -1,0 +1,96 @@
+{
+  "document": {
+    "title": "JazzWorld AIRA Risk Scoring & Tier Classification Framework",
+    "methodology": "AIRA-DDA-1.0",
+    "documentType": "Risk Assessment & Governance Framework",
+    "source": "JazzWorld AIRA-DDA-1.0 Engine (backend/app/methodology)",
+    "version": "1.0",
+    "classification": "Internal Use",
+    "status": "Methodology Overview"
+  },
+  "overview": {
+    "purpose": "The JazzWorld AI Risk Assessment (AIRA) framework establishes a standardized methodology for evaluating, scoring, and classifying risks associated with AI initiatives, systems, and use cases. It assesses potential risks based on impact, likelihood of occurrence, and the effectiveness of existing controls.",
+    "calculation": "The framework calculates both Inherent Risk and Residual Risk to provide reviewers and decision-makers with a consistent basis for risk evaluation and governance. Official risk scores and tier classifications are determined exclusively by the fixed AIRA-DDA-1.0 calculation engine, not by the AI chatbot.",
+    "governingPrinciple": "Residual Risk is the sole determinant of the final risk tier and corresponding approval authority. Inherent Risk is shown for context and comparison."
+  },
+  "scoring": {
+    "factorScale": {
+      "description": "Reviewers evaluate individual risk factors using a five-point scale. Screening responses concerning sensitive data, automated decisions, and AI-driven actions determine the relative weighting assigned to different assessment areas.",
+      "levels": [
+        {
+          "score": 1,
+          "classification": "Best",
+          "description": "Lowest risk"
+        },
+        {
+          "score": 2,
+          "classification": "Low",
+          "description": "Relatively low risk"
+        },
+        {
+          "score": 3,
+          "classification": "Moderate",
+          "description": "Moderate risk"
+        },
+        {
+          "score": 4,
+          "classification": "High",
+          "description": "Elevated risk"
+        },
+        {
+          "score": 5,
+          "classification": "Worst",
+          "description": "Highest risk"
+        }
+      ]
+    },
+    "impactAssessment": {
+      "description": "Impact is evaluated across three primary categories.",
+      "categories": [
+        {
+          "name": "Business Impact",
+          "description": "Potential consequences for business operations, financial performance, service delivery, and organizational objectives."
+        },
+        {
+          "name": "People & Data Impact",
+          "description": "Potential consequences for individuals, personal information, privacy, and data protection."
+        },
+        {
+          "name": "AI Impact",
+          "description": "Potential consequences arising from AI system behavior, reliability, transparency, and misuse."
+        }
+      ],
+      "method": "Individual factors are rated from 1 to 5. Group averages are combined using screening-based weights.",
+      "output": {
+        "name": "Impact Score",
+        "min": 3,
+        "max": 15
+      }
+    },
+    "inherentLikelihoodAssessment": {
+      "description": "Inherent likelihood measures the probability of a risk occurring before considering the effectiveness of existing controls.",
+      "components": [
+        {
+          "name": "Occurrence",
+          "description": "How frequently the risk could arise or how exposed the system is to the relevant risk."
+        },
+        {
+          "name": "Feasibility",
+          "description": "How easily the risk could be triggered, exploited, or result in potential harm or misuse."
+        }
+      ],
+      "method": "Both components are rated from 1 to 5, averaged, and scaled to the methodology's 3-15 range.",
+      "output": {
+        "name": "Inherent Likelihood",
+        "min": 3,
+        "max": 15
+      }
+    },
+    "controlEffectiveness": {
+      "description": "Control effectiveness evaluates the strength of controls implemented to prevent, detect, manage, and mitigate identified risks.",
+      "controlTypes": [
+        "Preventive Controls",
+        "Detective Controls",
+        "Oversight Controls",
+        "Governance Controls",
+        "Validation Controls"
