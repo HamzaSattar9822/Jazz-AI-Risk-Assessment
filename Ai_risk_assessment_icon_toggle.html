@@ -2525,185 +2525,82 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
     words.forEach(w=>{
       const next=line?line+' '+w:w;
       if(next.length<=maxChars) line=next;
-      else{if(line) out.push(line);line=w.length<=maxChars?w:w.slice(0,maxChars)}
+      else{if(line) out.push(line);line=w;while(line.length>maxChars){out.push(line.slice(0,maxChars));line=line.slice(maxChars)}}
     });
     if(line) out.push(line);
     return out.length?out:[''];
   }
   function buildGovernanceRiskPdf(){
     const preview=runIndicativeRisk();
-    const pageW=595,pageH=842,margin=36; // A4
-    const brand=[198,17,53],ink=[28,28,32],muted=[95,95,105],line=[220,220,226],white=[255,255,255];
+    const pageW=595,pageH=842,margin=48,contentW=499;
+    const brand=[153,0,64],ink=[43,24,55],muted=[103,99,108],line=[218,209,222];
     const pages=[];let ops=[],y=0;
-    const newPage=()=>{ops=[];y=pageH-margin;pages.push(ops)};
-    const ensure=(need)=>{if(y-need<margin+28){newPage()}};
-    const rgb=(c)=>`${(c[0]/255).toFixed(3)} ${(c[1]/255).toFixed(3)} ${(c[2]/255).toFixed(3)}`;
-    const fillRect=(x,yy,w,h,c)=>{ops.push(`${rgb(c)} rg ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f`)};
-    const strokeRect=(x,yy,w,h,c,sw)=>{ops.push(`${rgb(c)} RG ${sw||1} w ${x.toFixed(1)} ${yy.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`)};
-    const textAt=(str,x,yy,size,c,bold)=>{
-      ops.push(`BT /${bold?'F2':'F1'} ${size} Tf ${rgb(c||ink)} rg 1 0 0 1 ${x.toFixed(1)} ${yy.toFixed(1)} Tm (${escapePdfText(str)}) Tj ET`);
+    const rgb=c=>c.map(v=>(v/255).toFixed(3)).join(' ');
+    const fillRect=(x,yy,w,h,c)=>ops.push(`${rgb(c)} rg ${x} ${yy} ${w} ${h} re f`);
+    const textAt=(str,x,yy,size,c=ink,bold=false)=>ops.push(`BT /${bold?'F2':'F1'} ${size} Tf ${rgb(c)} rg 1 0 0 1 ${x} ${yy} Tm (${escapePdfText(str)}) Tj ET`);
+    const reference=document.querySelector('#view-done .ref')?.textContent||'Not yet submitted';
+    const newPage=()=>{
+      ops=[];pages.push(ops);fillRect(0,823,595,19,brand);
+      textAt('JAZZWORLD AIMS',margin,799,11,ink,true);
+      textAt('AI Risk Assessment - Governance Review Report',margin,784,8,muted);
+      textAt('Ref: '+reference,350,799,7,muted);
+      textAt(new Date().toLocaleDateString('en-GB'),350,784,7,muted);
+      y=745;
     };
-    const contentW=pageW-margin*2;
-    let textX=margin, valueX=margin+130, wrapCols=92, valueCols=68;
-    const rule=()=>{ensure(10);fillRect(margin,y-2,contentW,0.6,line);y-=12};
-    const sectionTitle=(title)=>{
-      ensure(36);
-      fillRect(margin,y-4,4,16,brand);
-      textAt(title,margin+12,y,12,ink,true);
-      y-=24;
+    const ensure=height=>{if(y-height<65)newPage()};
+    const lines=(text,width,size)=>wrapPdfWords(text,Math.max(8,Math.floor(width/(size*.57))));
+    const para=(text,size=10,color=ink,width=contentW,x=margin)=>{
+      for(const ln of lines(text,width,size)){ensure(size+6);textAt(ln,x,y,size,color);y-=size+6;}
     };
-    const para=(str,size,color,maxChars)=>{
-      const lines=wrapPdfWords(str,maxChars||wrapCols);
-      lines.forEach(ln=>{ensure(size+8);textAt(ln,textX,y,size,color||ink,false);y-=(size+6)});
+    const section=title=>{ensure(42);textAt(title,margin,y,10,brand,true);fillRect(margin,y-8,contentW,.7,brand);y-=28};
+    const value=id=>has(id)?fmt(BY[id]):'Not provided';
+    const money=id=>{const v=value(id);return /^[\d,]+(?:\.\d+)?$/.test(v)?'USD '+v:v};
+    const grid=cells=>{
+      const width=contentW/cells.length;
+      const wrapped=cells.map(c=>lines(c[1],width-16,9));
+      const height=25+Math.max(...wrapped.map(a=>a.length))*14;
+      ensure(height+8);
+      cells.forEach((c,i)=>{const x=margin+i*width;textAt(c[0],x,y,7,muted,true);wrapped[i].forEach((ln,j)=>textAt(ln,x,y-17-j*14,9,ink));});
+      y-=height+8;
     };
-    const kv=(label,value)=>{
-      ensure(18);
-      textAt(label,textX,y,9,muted,true);
-      const vals=wrapPdfWords(value,valueCols);
-      textAt(vals[0],valueX,y,9,ink,false);
-      y-=14;
-      vals.slice(1).forEach(ln=>{ensure(15);textAt(ln,valueX,y,9,ink,false);y-=13});
-    };
-    // Card with comfortable inner padding so text never touches borders.
-    const cardStart=()=>{
-      const top=y+2;
-      textX=margin+14;
-      valueX=margin+144;
-      wrapCols=86;
-      valueCols=62;
-      y-=18; // top padding before first baseline
-      return {top};
-    };
-    const cardEnd=(top)=>{
-      y-=14; // bottom padding below last line
-      const bottom=y;
-      const h=top-bottom;
-      if(h>10) strokeRect(margin-2,bottom,contentW+4,h,line,1);
-      textX=margin;valueX=margin+130;wrapCols=92;valueCols=68;
-      y=bottom-16;
-    };
-
     newPage();
-    // Header band
-    fillRect(0,pageH-78,pageW,78,brand);
-    textAt('JazzWorld Responsible AI Office',margin,pageH-32,11,white,false);
-    textAt('AI Risk Assessment Report',margin,pageH-52,18,white,true);
-    textAt('For governance review  |  '+(AIRA_ENGINE.methodologyVersion||'AIRA-DDA-1.0'),margin,pageH-68,8,[255,220,230],false);
-    y=pageH-96;
-    textAt('Generated '+new Date().toLocaleString()+'  |  Indicative preview (provisional factor scores = 3)',margin,y,8,muted,false);
-    y-=18;
-
-    // ---- 1. Basic details ----
-    sectionTitle('1. Basic details');
-    const c1=cardStart();
-    kv('Request name', has('name')?V('name'):'(not set)');
-    kv('Category', has('category')?V('category'):'(not set)');
-    kv('Business owner', has('owner')?V('owner'):'(not set)');
-    kv('Business unit', has('businessUnit')?V('businessUnit'):'(not set)');
-    kv('Summary', has('summary')?V('summary'):'(not set)');
-    kv('Sensitive data', has('sensitive')?V('sensitive'):'(not set)');
-    kv('Affects decisions', has('decision')?V('decision'):'(not set)');
-    kv('Interacts / acts', has('action')?V('action'):'(not set)');
-    cardEnd(c1.top);
-    y-=4;
-
-    // ---- Critical snapshot ----
-    sectionTitle('2. Critical risk snapshot');
-    if(!preview){
-      const c2=cardStart();
-      para('Screening is incomplete. An indicative residual risk score cannot be calculated yet.',10,muted);
-      cardEnd(c2.top);
-    }else{
-      const r=preview.result,g=r.residualRiskGovernance||{};
-      const tier=g.tier||'Tier 1';
-      const ui=TIER_UI[tier]||TIER_UI['Tier 1'];
-      const gov=TIER_GOV[tier]||TIER_GOV['Tier 1'];
-      ensure(110);
-      // highlight panel
-      fillRect(margin,y-88,contentW,96,ui.bg);
-      strokeRect(margin,y-88,contentW,96,ui.accent,1.5);
-      // tier badge
-      fillRect(margin+12,y-28,118,24,ui.fill);
-      textAt((g.tier||'Tier')+'  |  '+(g.severity||ui.severity),margin+20,y-12,10,white,true);
-      textAt('RESIDUAL RISK',margin+150,y-8,8,muted,true);
-      textAt(String(r.residualRiskScore),margin+150,y-32,26,ui.fill,true);
-      textAt('of 100',margin+210,y-28,9,muted,false);
-      textAt('INHERENT RISK',margin+280,y-8,8,muted,true);
-      textAt(String(r.inherentRiskScore),margin+280,y-32,22,ink,true);
-      textAt('of 100',margin+340,y-28,9,muted,false);
-      textAt('Approval: '+(g.approval||gov.approval),margin+12,y-52,9,ink,true);
-      textAt('Manager level: '+(g.managerLevel||gov.manager),margin+12,y-68,9,ink,false);
-      textAt('Impact '+r.impactScore+'  |  Inherent likelihood '+r.inherentLikelihood+'  |  Residual likelihood '+r.residualLikelihood,margin+12,y-84,8,muted,false);
-      y-=110;
+    para(value('name'),21,ink);y-=2;
+    para('Use case approval request',9,muted);y-=19;
+    section('THE REQUEST');
+    para(has('summary')?V('summary'):(S.text||'No description provided.'));y-=15;
+    grid([['BUSINESS OWNER',value('owner')],['BUSINESS UNIT',value('businessUnit')],['CATEGORY',value('category')]]);
+    grid([['PLATFORM',has('forTool')?value('forTool'):'Not specified'],['DATA PROCESSED',has('dataTypes')?value('dataTypes'):'Sensitive data: '+value('sensitive')],['EXPECTED BENEFIT',value('hoursSaved')+' (annual)']]);
+    fillRect(margin,y+5,contentW,.6,line);y-=12;
+    grid([['ESTIMATED ANNUAL VALUE / ROI',money('annualValue')],['INVESTMENT',money('investmentCost')],['SPEND TO DATE',money('spendingToDate')]]);
+    para('Requester screening: Data - '+value('sensitive')+'. Decision - '+value('decision')+'. Action - '+value('action')+'.',8,muted);y-=26;
+    ensure(165);section('RISK POSITION');
+    const r=preview?.result,g=r?.residualRiskGovernance||{};
+    const metrics=[['INHERENT RISK',r?r.inherentRiskScore+' / 100':'Pending','Before existing controls'],['RESIDUAL RISK',r?r.residualRiskScore+' / 100':'Pending','After existing controls'],['SEVERITY',g.severity||'Pending','Indicative severity'],['RISK TIER',g.tier||'Pending','RAIO review required']];
+    metrics.forEach((m,i)=>{const x=margin+i*contentW/4;fillRect(x,y+4,contentW/4-10,2,brand);textAt(m[0],x,y-10,7,muted,true);textAt(m[1],x,y-37,17,ink,true);textAt(m[2],x,y-55,7,muted);});y-=80;
+    para('Indicative - pending RAIO review. Scores use provisional factor inputs; any reduction is not evidence that controls have been verified.',8,muted);
+    newPage();section('WHAT COULD GO WRONG');
+    const risks=flags();
+    if(!risks.length)para('No early flags were triggered by the current answers. A full assessment is still required.',10);
+    for(const risk of risks){
+      const a=lines(risk.title,145,9),b=lines(risk.why||'',330,10),height=Math.max(a.length*14,b.length*16)+18;
+      ensure(height);a.forEach((t,i)=>textAt(t,margin,y-i*14,9,ink,true));b.forEach((t,i)=>textAt(t,margin+169,y-i*16,10,ink));y-=height;
     }
-
-    // ---- Early flags (under risk) ----
-    sectionTitle('2b. Early flags');
-    const flPdf=flags();
-    const cFlags=cardStart();
-    if(!flPdf.length){
-      para('No early flags from the intake answers.',9,ink);
-    }else{
-      flPdf.forEach(f=>{
-        ensure(16); textAt((f.level||'info').toUpperCase()+': '+f.title,textX,y,9,ink,true); y-=12;
-        para(f.why||'',9,muted);
-        y-=2;
-      });
-    }
-    cardEnd(cFlags.top);
-
-    // ---- Executive summary ----
-    sectionTitle('3. Executive summary');
-    const c3=cardStart();
-    if(!preview){
-      para('No indicative score is available until sensitive data, decision, and action screening answers are confirmed.',10,ink);
-    }else{
-      const r=preview.result,g=r.residualRiskGovernance||{},scr=(preview.weights||{}).screening||{};
-      const tier=g.tier||'Tier 1',gov=TIER_GOV[tier]||TIER_GOV['Tier 1'];
-      const name=has('name')?V('name'):'This request';
-      const cat=has('category')?V('category'):'the proposed AI use';
-      const flags=[scr.data&&'sensitive data',scr.decision&&'decision influence',scr.action&&'system actions'].filter(Boolean);
-      const flagText=flags.length?flags.join(', '):'no elevated screening flags';
-      para(name+' ('+cat+') has an indicative residual risk of '+r.residualRiskScore+'/100, classifying it as '+ (g.severity||'')+' / '+(g.tier||'')+'.',10,ink);
-      para('Screening indicates: '+flagText+'. Likely routing includes: '+route().join(', ')+'.',10,ink);
-      para('Recommended approval path: '+(g.approval||gov.approval)+' ('+(g.managerLevel||gov.manager)+'). This score uses provisional mid-scale factor inputs and must be confirmed by RAIO before any go-live decision.',10,ink);
-    }
-    cardEnd(c3.top);
-
-    // ---- Detailed summary (moderate) ----
-    sectionTitle('4. Detailed summary');
-    const c4=cardStart();
-    ensure(16); textAt('Purpose of assessment',textX,y,9,muted,true); y-=14;
-    para('Provide governance with an indicative AIRA view of residual versus inherent risk, screening posture, and the expected review path. Factor-level scores in this preview are uniformly set to 3 (mid scale) until a reviewer confirms them.',9,ink);
-    y-=4;
-    ensure(16); textAt('What was assessed',textX,y,9,muted,true); y-=14;
-    const desc=S.text.trim();
-    para(desc?desc.slice(0,520)+(desc.length>520?'...':''):'No description provided.',9,ink);
-    y-=4;
-    if(preview){
-      const r=preview.result,c=r.components||{},imp=c.impact||{},lik=c.likelihood||{};
-      ensure(16); textAt('Score composition',textX,y,9,muted,true); y-=14;
-      para('Impact (3-15): '+r.impactScore+'  - business '+ (imp.business!=null?imp.business:'-')+', people/data '+(imp.peopleData!=null?imp.peopleData:'-')+', AI '+(imp.ai!=null?imp.ai:'-')+'.',9,ink);
-      para('Likelihood (3-15): inherent '+r.inherentLikelihood+', residual '+r.residualLikelihood+'  - occurrence '+(lik.occurrence!=null?lik.occurrence:'-')+', feasibility '+(lik.feasibility!=null?lik.feasibility:'-')+'.',9,ink);
-      para('Controls: strength '+(c.existingControlStrength!=null?c.existingControlStrength:'-')+' (1=strongest, 5=weakest), multiplier '+(c.controlMultiplier!=null?c.controlMultiplier:'-')+'. Formula: ((Impact x Likelihood) / 225) x 100.',9,ink);
-      y-=4;
-      ensure(16); textAt('Governance expectations for this tier',textX,y,9,muted,true); y-=14;
-      const tier=(r.residualRiskGovernance||{}).tier||'Tier 1';
-      const gov=TIER_GOV[tier]||TIER_GOV['Tier 1'];
-      (gov.needs||[]).forEach(n=>{ensure(15);textAt('- '+n,textX+8,y,9,ink,false);y-=13});
-    }
-    y-=4;
-    ensure(16); textAt('Reviewer focus',textX,y,9,muted,true); y-=14;
-    para('Confirm screening flags, replace provisional factor scores with evidence-based ratings, and validate whether the indicated approval level and specialist reviews are sufficient before treatment decisions.',9,ink);
-    cardEnd(c4.top);
-
-    // Disclaimer
-    ensure(50);
-    rule();
-    para('Disclaimer: This PDF is an indicative governance aid generated from requester-confirmed intake answers and provisional AIRA factor placeholders. It is not an official risk decision. Final residual risk tiering and approval rest with the Responsible AI Office.',8,muted);
+    y-=15;section('PROPOSED CONDITIONS OF APPROVAL');
+    para('Suggested safeguards for reviewer agreement. These are not approved conditions or confirmation that controls are in place.',9,muted);y-=12;
+    const conditions=[];
+    if(has('forTool'))conditions.push(['Use an approved enterprise account and confirm provider access, retention and training settings.','Business Owner / IT','Before rollout']);
+    if(on('sensitive'))conditions.push(['Minimise or mask sensitive information and confirm permitted data use and provider protections.','Business Owner / Privacy','Before processing']);
+    if(on('decision'))conditions.push(['Require human review of consequential outputs and provide a way to challenge errors.','Business Owner','Before decisions']);
+    if(on('action'))conditions.push(['Use least privilege, approval for high-impact actions, monitoring and an emergency stop.','Technical Owner / Cybersecurity','Before production']);
+    conditions.push(['Validate outputs in UAT, document material errors and agree monitoring and escalation thresholds.','Business / Technical Owner','Before rollout']);
+    conditions.forEach((c,i)=>{
+      const body=lines(c[0],320,9),owner=lines(c[1]+' - '+c[2],135,8),height=Math.max(body.length*14,owner.length*12)+22;
+      ensure(height);fillRect(margin,y+10,contentW,.5,line);textAt(String(i+1),margin,y-8,11,brand,true);body.forEach((t,j)=>textAt(t,margin+25,y-8-j*14,9,ink));owner.forEach((t,j)=>textAt(t,margin+365,y-8-j*12,8,muted));y-=height;
+    });
+    y-=10;para('Residual risk. Some risk may remain despite safeguards. Reassess if the use, data, provider, integrations or autonomy change. RAIO confirms the final assessment and approval conditions.',9,muted);
 
     // Build PDF objects
-    const offsets=[];const out=[];
+    const offsets=[];const out=['%PDF-1.4\n'];
     const writeObj=(n,body)=>{offsets[n]=out.join('').length;out.push(n+' 0 obj\n'+body+'\nendobj\n')};
     const fontReg=3,fontBold=4;
     const pageObjIds=[],contentObjIds=[];let nextId=5;
@@ -2723,7 +2620,7 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
     const xrefPos=out.join('').length;
     let xref='xref\n0 '+nextId+'\n0000000000 65535 f \n';
     for(let i=1;i<nextId;i++) xref+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
-    return new Blob(['%PDF-1.4\n'+out.join('')+xref+'trailer\n<< /Size '+nextId+' /Root 1 0 R >>\nstartxref\n'+xrefPos+'\n%%EOF'],{type:'application/pdf'});
+    return new Blob([out.join('')+xref+'trailer\n<< /Size '+nextId+' /Root 1 0 R >>\nstartxref\n'+xrefPos+'\n%%EOF'],{type:'application/pdf'});
   }
   function downloadRiskAssessmentPdf(){
     try{
@@ -2820,10 +2717,10 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
       <h2 style="font-size:18px;margin-top:20px">What happens next</h2>
       <ol class="next-list"><li><b>Routing</b><span>RAIO will route your request to the relevant teams.</span></li><li><b>Questions, if any</b><span>Reviewers will contact you if more details are needed.</span></li><li><b>Decision</b><span>You’ll receive the decision and any required conditions.</span></li></ol>
       <p class="submission-note">Use your reference number for any follow-up with RAIO.</p>
-      <div class="ref-row no-print" style="margin-top:18px"><button type="button" class="btn" id="printBtn">Print / save as PDF</button><button type="button" class="btn primary" id="newBtn">Start a new request</button></div></div>${sectionsHtml()}`;
+      <div class="ref-row no-print" style="margin-top:18px"><button type="button" class="btn" id="printBtn">Download report PDF</button><button type="button" class="btn primary" id="newBtn">Start a new request</button></div></div>${sectionsHtml()}`;
     $('#doneH').focus();window.scrollTo(0,0);
     $('#copyRef').onclick=async()=>{try{await navigator.clipboard.writeText(finalRef);toast('Reference copied')}catch(e){toast('Copy it manually')}};
-    $('#printBtn').onclick=()=>window.print();$('#newBtn').onclick=()=>location.reload();
+    $('#printBtn').onclick=async()=>{await AIRA_FRAMEWORK_READY;downloadRiskAssessmentPdf()};$('#newBtn').onclick=()=>location.reload();
     $('#restart').hidden=true;
   }
 
