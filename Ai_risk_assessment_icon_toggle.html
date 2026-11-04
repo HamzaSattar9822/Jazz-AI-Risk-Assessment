@@ -955,6 +955,38 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
 @media(prefers-reduced-motion:reduce){.aira-first-message-avatar *{animation:none!important}}
 @media(max-width:600px){.aira-first-message-avatar{width:52px;height:48px;flex-basis:52px}}
 
+
+/* Read-only pre-submission review */
+.aira-review-form{width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line-strong);border-radius:20px;background:var(--surface);color:var(--ink);box-shadow:0 24px 80px #0005;overflow:auto}
+.aira-review-form::backdrop{background:#100b1b99}
+.aira-review-form header,.aira-review-form footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;background:var(--surface)}
+.aira-review-form header{border-bottom:1px solid var(--line)}.aira-review-form footer{border-top:1px solid var(--line);position:sticky;bottom:0}
+.aira-review-form h2{margin:0;font-size:22px}.aira-review-form h3{font-size:16px;margin:0 0 10px}.aira-review-form h4{font-size:13px;margin:14px 0 4px;color:var(--accent-ink)}
+.review-risk-body{padding:22px}.review-risk-body p{font-size:14px;line-height:1.55;margin:6px 0;color:var(--muted);overflow-wrap:anywhere}.review-risk-card{padding:16px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.review-risk-body .review-risk-note{font-size:12px;margin:14px 0}.review-risk-similarity{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+@media(max-width:480px){.aira-review-form header,.aira-review-form footer,.review-risk-body{padding:16px}}
+
+/* Structured review layout */
+.aira-review-form{width:min(850px,calc(100vw - 32px));border-radius:24px}
+.aira-review-form header{align-items:flex-start;padding:24px 28px 20px}.aira-review-form h2{font-size:26px;letter-spacing:-.5px;margin-top:16px}
+.aira-review-form .review-subtitle{font-size:13px;line-height:1.5;color:var(--muted);margin:6px 0 0}
+.review-progress{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}.review-progress span{padding:7px 12px;border-radius:20px;border:1px solid var(--line)}.review-progress .current{background:var(--accent-ink);color:#fff;border-color:var(--accent-ink);font-weight:700}.review-progress .done{color:var(--ink);background:var(--surface-2)}
+.review-risk-body{padding:24px 28px}.review-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.aira-review-form .review-section-title h3{margin:0;font-size:15px}.review-count{font-size:11px;white-space:nowrap;color:var(--muted);background:var(--surface-2);padding:5px 9px;border-radius:20px}
+.review-risk-card{padding:0;margin:12px 0 16px;background:var(--surface);overflow:hidden;border-radius:14px}.review-card-head{display:flex;gap:10px;align-items:center;padding:14px 16px;background:var(--surface-2);border-bottom:1px solid var(--line)}.aira-review-form .review-card-head h3{font-size:14px;line-height:1.45;margin:0;flex:1}.review-flag-number{display:grid;place-items:center;width:26px;height:26px;flex:none;border:1px solid var(--line-strong);border-radius:8px;font-size:12px;font-weight:700}.review-attention{font-size:10px;font-weight:700;color:var(--accent-ink);padding:4px 7px;border:1px solid var(--line-strong);border-radius:6px}
+.review-card-grid{display:grid;grid-template-columns:1fr 1fr}.review-card-grid>div{padding:16px}.review-measure{border-left:1px solid var(--line)}.review-field-label{display:block;font-size:10px;letter-spacing:.6px;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:8px}.review-measure .review-field-label{color:var(--accent-ink)}.review-risk-body .review-card-grid p{font-size:13px;margin:0;line-height:1.65;color:var(--ink)}
+.review-risk-similarity{border:0;padding-top:0;margin-top:26px}.review-similarity-result,.review-empty{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);font-size:13px;line-height:1.6}.review-risk-body .review-similarity-result p{font-size:13px;margin:0}.aira-review-form footer{padding:16px 28px}.aira-review-form footer .btn{min-height:44px}
+@media(max-width:600px){.aira-review-form header,.review-risk-body{padding:18px}.aira-review-form footer{padding:14px 18px}.review-card-grid{grid-template-columns:1fr}.review-measure{border-left:0;border-top:1px solid var(--line)}.review-attention{display:none}.review-section-title{align-items:flex-start}.review-progress span{padding:6px 9px}.aira-review-form h2{font-size:23px}}
+
+.review-filled-form{border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow:hidden}
+.review-filled-form>summary{cursor:pointer;padding:18px;background:var(--surface-2);font-weight:700}
+.review-filled-form>summary:focus-visible{outline:2px solid var(--brand);outline-offset:-3px}
+.review-filled-form .review-count{margin-left:10px;font-weight:400}
+.review-filled-content{padding:0 18px 18px}.review-filled-content h4{margin:22px 0 10px}
+.review-field-list{margin:0}.review-field-list>div{display:grid;grid-template-columns:minmax(140px,1fr) 2fr;gap:18px;padding:12px 0;border-bottom:1px solid var(--line)}
+.review-field-list dt{font-size:13px;color:var(--muted)}.review-field-list dd{margin:0;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.review-match-details{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+@media(max-width:600px){.review-field-list>div{grid-template-columns:1fr;gap:5px}.review-filled-form .review-count{display:inline-block;margin:6px 0 0}}
+.aira-filled-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;line-height:1.4}.srow .acts{flex-wrap:wrap}
 </style>
 </head>
 <body data-theme="light">
@@ -1000,7 +1032,7 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
         <div class="bot-role">AI Risk Assistant · JazzWorld RAIO</div><div id="airaChatStatus" role="status">Ready to help with your use case.</div>
       </div>
     </header>
-    <button type="button" class="btn small" id="expandAira">Expand to full workspace ↗</button><nav id="journeySteps" class="journey-steps" aria-label="Request progress"><span class="current">1 · Answer</span><span>2 · Submit</span></nav>
+    <button type="button" class="btn small" id="expandAira">Expand to full workspace ↗</button><nav id="journeySteps" class="journey-steps" aria-label="Request progress"><span class="current">1 · Answer</span><span>2 · Review</span><span>3 · Submit</span></nav>
     <div class="chat" id="chat" aria-label="Conversation with AIRA">
       <div class="chat-inner" id="chatIn" role="log" aria-live="polite"></div>
     </div>
@@ -1885,7 +1917,7 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
     const ids=inf.map(s=>s.id);
     inf.forEach(s=>{
       const x=st(s.id);
-      Object.assign(x,{status:'confirmed',src:x.src==='llm'?'llm':(x.src||'description')});
+      Object.assign(x,{status:'confirmed',aiConfirmedValue:JSON.stringify(x.value),src:x.src==='llm'?'llm':(x.src||'description')});
     });
     if(CFG.apiBase&&S.sessionId){
       try{
@@ -2197,8 +2229,89 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
     S.askingId=null;clearWidget();renderPanel();
     markAiraMessage(await agent('Your use case is ready to submit. '+completeSummary()),'ready');
     airaSetRest('ready','Your use case is ready to submit.');
-    const w=widget('submit');w.innerHTML='<button type="button" class="pill primary">Submit →</button>';
-    $('button',w).onclick=async()=>{const button=$('button',w);button.disabled=true;try{await submit()}finally{if(button.isConnected)button.disabled=false}};focusFirst(w);
+    const w=widget('submit');w.innerHTML='<button type="button" class="pill primary">Review form →</button>';
+    $('button',w).onclick=async()=>{const button=$('button',w);button.disabled=true;try{await openReviewForm()}finally{if(button.isConnected)button.disabled=false}};focusFirst(w);
+  }
+
+  // Read-only pre-submission review; existing flags, calculations and submit remain authoritative.
+  async function openReviewForm(){
+    if(S.done)return;
+    const previous=document.getElementById('airaReviewForm');if(previous)previous.remove();
+    const dialog=document.createElement('dialog');dialog.id='airaReviewForm';dialog.className='aira-review-form';
+    dialog.setAttribute('aria-labelledby','airaReviewTitle');
+    const suggestions={
+      'Sensitive information in a public or personal AI account':'Use an approved enterprise account and avoid entering sensitive information into public or personal tools.',
+      'Sensitive information goes to an outside provider':'Minimise or mask sensitive data and confirm the provider’s access, retention and contractual protections.',
+      'No person checks the output before decisions are made':'Add human review before consequential decisions and provide a way to challenge incorrect outcomes.',
+      'It can act automatically across a workflow':'Limit permissions, require approval for high-impact actions and add monitoring with an emergency stop.'
+    };
+    const reviewFields=active();
+    const filledCount=reviewFields.filter(slot=>has(slot.id)).length;
+    const filledGroups=GROUPS.map(([group,title])=>{
+      const fields=reviewFields.filter(slot=>slot.g===group);
+      if(!fields.length)return '';
+      return `<section><h4>${esc(title)}</h4><dl class="review-field-list">${fields.map(slot=>`<div><dt>${esc(slot.label)}</dt><dd>${has(slot.id)?esc(fmt(slot)):'Not filled'}</dd></div>`).join('')}</dl></section>`;
+    }).join('');
+    const filledPreview=`<details class="review-filled-form"><summary>View filled form <span class="review-count">${filledCount} of ${reviewFields.length} fields filled · Optional</span></summary><div class="review-filled-content">${filledGroups}</div></details>`;
+    const early=flags();
+    const cards=early.map((f,i)=>`<article class="review-risk-card"><div class="review-card-head"><span class="review-flag-number">${i+1}</span><h3>${esc(f.title)}</h3><span class="review-attention">Attention</span></div><div class="review-card-grid"><div><span class="review-field-label">What to review</span><p>${esc(f.why)}</p></div><div class="review-measure"><span class="review-field-label">Suggested preventive measure</span><p>${esc(suggestions[f.title]||'Agree suitable safeguards with the relevant reviewer and document who will maintain them.')}</p></div></div></article>`).join('');
+    dialog.innerHTML=`<header><div><nav class="review-progress" aria-label="Request progress"><span class="done">1. Answer</span><span class="current" aria-current="step">2. Review</span><span>3. Submit</span></nav><h2 id="airaReviewTitle">Review form</h2><p class="review-subtitle">Check the early flags and suggested safeguards before submitting.</p></div><button type="button" class="btn small ghost" data-review-close aria-label="Close review form">✕</button></header><div class="review-risk-body">${filledPreview}<section><div class="review-section-title"><h3>Early flags &amp; preventive measures</h3><span class="review-count">${early.length} ${early.length===1?'flag':'flags'}</span></div>${cards||'<div class="review-empty">No early flags were triggered by your current answers. This does not replace the full risk assessment.</div>'}<p class="review-risk-note">Suggested measures still need to be assessed and implemented.</p></section><section class="review-risk-similarity"><div class="review-section-title"><h3>Similarity check</h3><span class="review-count">Prior submissions</span></div><div class="review-similarity-result"><span class="review-field-label">Similarity score</span><p data-review-similarity role="status">Checking for similar submissions…</p><dl class="review-field-list review-match-details" data-review-match hidden></dl></div></section></div><footer><button type="button" class="btn ghost" data-review-close>← Back to answers</button><button type="button" class="btn primary" data-review-submit disabled>Submit →</button></footer>`;
+    document.body.append(dialog);dialog.showModal();
+    dialog.querySelectorAll('[data-review-close]').forEach(b=>b.onclick=()=>dialog.close());
+    dialog.addEventListener('close',()=>{dialog.remove();const b=document.querySelector('.widget[data-kind="submit"] button');if(b)b.focus()},{once:true});
+    const status=dialog.querySelector('[data-review-similarity]'),button=dialog.querySelector('[data-review-submit]');
+    const local=findClosestSubmission();
+    async function showMatch(match,portal=false){
+      const container=dialog.querySelector('[data-review-match]');
+      if(!match){container.hidden=true;return}
+      const saved=portal&&match.referenceId?readPriorSubmissions().find(record=>record.referenceId===match.referenceId):match;
+      let name=match.name||(saved&&saved.comparable&&saved.comparable.name)||'';
+      let owner=(saved&&saved.comparable&&saved.comparable.owner)||'';
+      const render=()=>{
+        container.hidden=false;
+        container.innerHTML=`<div><dt>Similar use case</dt><dd>${esc(name||'Name unavailable')}</dd></div><div><dt>Business owner</dt><dd>${esc(owner||'Unavailable')}</dd></div>`;
+      };
+      render();
+      if(portal&&match.referenceId){
+        try{
+          const response=await apiFetch('/submissions/'+encodeURIComponent(match.referenceId));
+          if(response.ok){
+            const detail=await response.json();
+            if(detail.referenceId===match.referenceId){
+              const system=detail.payload&&detail.payload.aiSystem||{};
+              name=system.name||detail.name||name;
+              owner=system.businessOwner||owner;
+              if(container.isConnected)render();
+            }
+          }
+        }catch(error){/* Keep available match metadata when details cannot be read. */}
+      }
+    }
+    function describe(match,scope){
+      const score=match&&Number(match.similarity);
+      if(!match)return `No matching submission was found ${scope}. No comparison score is available.`;
+      if(!Number.isFinite(score)||score<0||score>100)return `Similarity score unavailable ${scope}.`;
+      return `${score}% similar to ${match.referenceId||'the closest prior submission'} ${scope}. Similarity is not a risk score.`;
+    }
+    try{
+      if(CFG.apiBase&&S.sessionId){
+        const response=await apiFetch('/intake/sessions/'+encodeURIComponent(S.sessionId)+'/duplicate-check',{method:'POST'});
+        if(!response.ok)throw new Error('Similarity check unavailable');
+        const result=await response.json();
+        if(!Object.prototype.hasOwnProperty.call(result,'match'))throw new Error('Unexpected similarity response');
+        status.textContent=describe(result.match,'in the portal, using your saved draft');
+        void showMatch(result.match,true);
+        if(result.blocked)status.textContent+=' The portal flags this as a duplicate; submission may be blocked by the existing rules.';
+      }else {status.textContent=describe(local.match,'in this browser’s saved history');void showMatch(local.match)}
+    }catch(err){
+      status.textContent='The portal similarity check is unavailable. '+describe(local.match,'in this browser’s saved history only');
+      void showMatch(local.match);
+    }finally{if(button.isConnected)button.disabled=false}
+    button.onclick=async()=>{
+      if(button.disabled)return;button.disabled=true;
+      try{await submit();if(S.done&&dialog.open)dialog.close()}
+      finally{if(button.isConnected)button.disabled=false}
+    };
   }
 
   /* ---------- live summary panel ---------- */
@@ -2226,7 +2339,7 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
     const fl=flags();
     h+=`<div class="grp"><h3>Early flags</h3>`+(fl.length?fl.map(f=>`<div class="pf ${f.level}"><i></i><div><b>${esc(f.title)}</b><span>${esc(f.why)}</span></div></div>`).join(''):'<p class="side-note">Nothing stands out so far. This isn\'t a decision.</p>')+'</div>';
     $('#panelIn').innerHTML=h;
-    let steps=$('#journeySteps');if(steps){steps.dataset.stage=conf===act.length?'submit':'answer';steps.innerHTML=`<span class="${conf===act.length?'done':'current'}">1 · Answer</span><span class="${conf===act.length?'current':''}">2 · Submit</span>`}
+    let steps=$('#journeySteps');if(steps){steps.dataset.stage=conf===act.length?'review':'answer';steps.innerHTML=`<span class="${conf===act.length?'done':'current'}">1 · Answer</span><span class="${conf===act.length?'current':''}">2 · Review</span><span>3 · Submit</span>`}
     clearTimeout(flashTimer);flashTimer=setTimeout(()=>$$('#panelIn .flash').forEach(el=>el.classList.remove('flash')),2400);
     if(PANEL_FLASH.length){
       const ids=PANEL_FLASH.slice();
@@ -2243,10 +2356,10 @@ body[data-theme="light"] .aira-filled .aira-svg .aira-brows{stroke:#8e2456}
   function rowHtml(s){
     const x=st(s.id),status=x.status;
     const airaFilled=status==='inferred'||(status==='confirmed'&&['description','llm','auto'].includes(x.src));
-    const tag=airaFilled?`<span class="aira-filled" role="img" aria-label="Filled by AIRA" title="Filled by AIRA">${BOT_AVATAR_SVG}</span>`:status==='confirmed'?(x.src==='profile'?'From your profile':x.src==='you'?'Updated from chat':'You confirmed'):'';
+    const tag=airaFilled?`<span class="aira-filled-label">Filled by AI <span class="aira-filled" aria-hidden="true">${BOT_AVATAR_SVG}</span></span>`:status==='confirmed'?(x.src==='profile'?'From your profile':x.src==='you'?'Updated from chat':'You confirmed'):'';
     const val=has(s.id)?esc(fmt(s)):'<em>Still needed</em>';
     let acts='';
-    if(status==='inferred')acts+=`<button type="button" class="mini" data-act="confirm" data-id="${s.id}">Confirm</button>`;
+    if(status==='inferred'||(airaFilled&&x.aiConfirmedValue!==JSON.stringify(x.value)))acts+=`<button type="button" class="mini" data-act="confirm" data-id="${s.id}">Confirm</button>`;
     acts+=`<button type="button" class="mini" data-act="edit" data-id="${s.id}">${has(s.id)?'Edit':'Add'}</button>`;
     let ed='';
     if(S.editing===s.id){
