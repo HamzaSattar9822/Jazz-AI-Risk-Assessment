@@ -39,14 +39,15 @@ oc -n "${NAMESPACE}" get imagestream "${IMAGE_NAME}" >/dev/null 2>&1 || \
   oc -n "${NAMESPACE}" create imagestream "${IMAGE_NAME}"
 
 echo "==> Logging Docker into the OpenShift image registry"
-oc registry login
-
 REG_HOST="$(oc registry info)"
+# oc registry login writes podman auth; Docker needs an explicit login.
+echo "$(oc whoami -t)" | docker login -u "$(oc whoami)" --password-stdin "${REG_HOST}"
+
 FULL_IMAGE="${REG_HOST}/${NAMESPACE}/${IMAGE_NAME}:${TAG}"
 INTERNAL_IMAGE="image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/${IMAGE_NAME}:${TAG}"
 
-echo "==> Building ${FULL_IMAGE}"
-docker build -t "${FULL_IMAGE}" "${ROOT}"
+echo "==> Building ${FULL_IMAGE} (linux/amd64 for cluster nodes)"
+docker build --platform linux/amd64 -t "${FULL_IMAGE}" "${ROOT}"
 
 echo "==> Pushing ${FULL_IMAGE}"
 docker push "${FULL_IMAGE}"

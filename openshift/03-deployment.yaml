@@ -30,8 +30,10 @@ spec:
               value: "8000"
             - name: PYTHONUNBUFFERED
               value: "1"
+            # /tmp until PVC fs permissions are confirmed writable under restricted-v2.
+            # Prefer sqlite:////data/aira.db once the volume is writable by the pod UID.
             - name: DATABASE_URL
-              value: sqlite:////data/aira.db
+              value: sqlite:////tmp/aira.db
             - name: JWT_EXPIRE_MINUTES
               value: "720"
             - name: MAIL_PROVIDER
@@ -74,9 +76,16 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
       volumes:
         - name: aira-db
           persistentVolumeClaim:
             claimName: aira-db
       securityContext:
-        fsGroup: 1000
+        runAsNonRoot: true
+        # Must be inside the project supplemental-groups range (ai-risk: 1001480000/10000).
+        fsGroup: 1001480000
+        seccompProfile:
+          type: RuntimeDefault

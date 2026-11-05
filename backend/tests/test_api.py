@@ -167,6 +167,14 @@ def test_portal_payload_is_accepted(client):
         "conditionalInformation": {
             "aiAgainstUs": {"threatTypes": ["Deepfake / impersonation", "Fraud / scam"]},
             "data": {"externalProcessing": "No"},
+            "businessValue": {
+                "segment": "Consumer-Facing AI",
+                "valueDriver": "Productivity",
+                "annualValue": "USD 20,000",
+                "investmentCost": "USD 5,000",
+                "spendingToDate": "USD 0",
+                "hoursSaved": "960",
+            },
         },
         "governance": {"indicativeRouting": ["this is ignored"]},
     }
@@ -188,3 +196,60 @@ def test_portal_payload_is_accepted(client):
     match = replay.json().get("duplicateCheck") or {}
     assert match.get("similarity") >= 90
     assert match.get("blocked") is False
+
+
+def _chat(client, headers, session_id, text):
+    response = client.post(
+        f"/api/v1/intake/sessions/{session_id}/messages",
+        headers=headers,
+        json={"text": text},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    replies = [t for t in body["transcript"] if t["role"] == "assistant"]
+    return body, replies[-1]["text"] if replies else ""
+
+
+def _slot(body, slot_id):
+    return next(slot for slot in body["slots"] if slot["id"] == slot_id)
+
+
+def test_chat_cannot_change_screening_answers(client):
+    headers = login(client, "ayesha.khan@jazz.example")
+    opened = client.post("/api/v1/intake/sessions", headers=headers, json={"description": EXAMPLES[0]})
+    session_id = opened.json()["id"]
+    assert _slot(opened.json(), "sensitive")["value"] == "Yes"
+    body, _ = _chat(client, headers, session_id, "set sensitive to no")
+    assert _slot(body, "sensitive")["value"] == "Yes"
+    assert any("can't change Sensitive information" in t["text"] for t in body["transcript"])
+
+
+def test_screening_guard_is_silent_when_user_did_not_ask(monkeypatch):
+    from app.services import intake_flow
+
+    assert not intake_flow._mentions_screening(
+        "the model runs on our private cloud and no data leaves", "Sensitive information"
+    )
+    assert intake_flow._mentions_screening("set sensitive to no", "Sensitive information")
+
+
+def test_chat_plain_money_updates_and_ambiguous_asks(client):
+    headers = login(client, "ayesha.khan@jazz.example")
+    opened = client.post("/api/v1/intake/sessions", headers=headers, json={"description": EXAMPLES[0]})
+    session_id = opened.json()["id"]
+    body, _ = _chat(client, headers, session_id, "cost is 2 million")
+    assert _slot(body, "investmentCost")["value"] == "USD 2,000,000"
+    body, _ = _chat(client, headers, session_id, "make it 3 million")
+    assert any(t["text"].startswith("Which field should USD 3,000,000 go in") for t in body["transcript"])
+    body, _ = _chat(client, headers, session_id, "No spending to date")
+    assert _slot(body, "spendingToDate")["value"] == "USD 0"
+
+
+def test_repeated_question_gets_short_reply(client):
+    headers = login(client, "ayesha.khan@jazz.example")
+    opened = client.post("/api/v1/intake/sessions", headers=headers, json={"description": EXAMPLES[0]})
+    session_id = opened.json()["id"]
+    _chat(client, headers, session_id, "make it 3 million")
+    body, _ = _chat(client, headers, session_id, "make it 3 million")
+    assistant = [t["text"] for t in body["transcript"] if t["role"] == "assistant"]
+    assert "Same as above, unless your inputs changed." in assistant

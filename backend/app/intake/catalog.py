@@ -207,17 +207,17 @@ SLOTS: list[Slot] = [
     Slot(
         "annualValue",
         "value",
-        "Estimated annual value / ROI",
+        "Estimated annual value",
         "text",
-        question="What is the estimated annual value or ROI (USD)?",
-        placeholder="e.g. 20000 or 10% ROI",
+        question="What is the estimated annual value in USD?",
+        placeholder="e.g. USD 20,000",
     ),
     Slot(
         "investmentCost",
         "value",
         "Estimated investment / cost",
         "text",
-        question="What is the estimated investment or cost (USD)?",
+        question="What is the estimated total investment or build cost in USD?",
         placeholder="e.g. 50000",
     ),
     Slot(
@@ -225,7 +225,7 @@ SLOTS: list[Slot] = [
         "value",
         "Spending done to date",
         "text",
-        question="How much has been spent to date (USD)?",
+        question="How much has already been spent in USD? Enter 0 if nothing yet.",
         placeholder="e.g. 0 or 12000",
     ),
     Slot(
@@ -233,7 +233,7 @@ SLOTS: list[Slot] = [
         "value",
         "Estimated hours saved (annual)",
         "text",
-        question="How many hours do you expect to save each year?",
+        question="How many people would use this?",
         placeholder="e.g. 500 hours / year",
     ),
     Slot(
@@ -497,13 +497,44 @@ def _infer_threats(text, _raw):
     return {"value": found, "why": "from the threats you described"}
 
 
+# Outside-provider Yes only with a clear leave-Jazz / third-party processing signal.
+_DATA_EXTERNAL_YES = re.compile(
+    r"hosted\s+on\s+(azure|aws|gcp|google\s+cloud|openai)|"
+    r"\b(azure|aws|gcp|google\s+cloud|openai)\b.{0,40}\b(host(?:ed|ing)?|cloud|process(?:es|ed|ing)?)\b|"
+    r"\b(data|information|records?|pii)\b.{0,50}\b(sent|sends?|send|processed|processing|hosted)\b.{0,40}\b"
+    r"(to|by|via|on|with)\b.{0,40}\b(azure|aws|gcp|openai|microsoft|google|vendor|third[- ]party|saas|outside|external)|"
+    r"\b(third[- ]party|outside\s+provider|external\s+(provider|vendor|cloud|service)|saas)\b|"
+    r"\b(microsoft\s+)?copilot\b|\bchatgpt\b|\bopenai\b|\bgemini\b",
+    re.I,
+)
+_DATA_EXTERNAL_NO = re.compile(
+    r"on-?prem|self-hosted|in-house\s+servers?|jazzworld[- ]managed|jazzworld'?s?\s+private\s+cloud|"
+    r"private\s+cloud|no\s+data\s+leaves?|stays?\s+(in[- ]house|internal)|"
+    r"(data|information).{0,40}(does\s+not|doesn'?t|never|won'?t)\s+(leave|go\s+outside|sent\s+outside)",
+    re.I,
+)
+
+
+def supports_data_external_yes(text: str) -> bool:
+    """True only when the text clearly supports outside-provider processing."""
+    return bool(_DATA_EXTERNAL_YES.search(text or ""))
+
+
+def supports_data_external_no(text: str) -> bool:
+    return bool(_DATA_EXTERNAL_NO.search(text or ""))
+
+
 def _infer_external(text, _raw):
-    if re.search(r"on-?prem|self-hosted|in-house servers|jazzworld-managed", text):
+    if supports_data_external_no(text):
         return {"value": "No", "why": "you said it stays in-house"}
-    match = _first(r"openai|chatgpt|azure|aws|google|gemini|copilot|vendor|third-party|saas|external", text)
-    if match:
-        return {"value": "Yes", "why": f"mentions “{match}”"}
-    return None
+    if not supports_data_external_yes(text):
+        return None
+    match = _first(
+        r"hosted on azure|hosted on aws|azure|aws|openai|chatgpt|copilot|gemini|"
+        r"third-party|third party|saas|outside provider|external provider|external cloud",
+        text,
+    )
+    return {"value": "Yes", "why": f"mentions “{match or 'outside processing'}”"}
 
 
 def _infer_review(text, _raw):
@@ -798,6 +829,72 @@ def initial_state(owner: str, business_unit: str, description: str) -> dict:
     return {"asked": 0, "announced": [], "slots": slots}
 
 
+MONEY_SLOTS = ("annualValue", "investmentCost", "spendingToDate")
+
+
+def format_usd(amount: float, currency: str = "USD") -> str:
+    n = float(amount)
+    return f"{currency} {n:,.0f}" if n == int(n) else f"{currency} {n:,.2f}"
+
+
+_MULTIPLIERS = {
+    "k": 1_000,
+    "thousand": 1_000,
+    "lakh": 100_000,
+    "lac": 100_000,
+    "m": 1_000_000,
+    "mn": 1_000_000,
+    "million": 1_000_000,
+    "crore": 10_000_000,
+    "b": 1_000_000_000,
+    "bn": 1_000_000_000,
+    "billion": 1_000_000_000,
+}
+MONEY_AMOUNT_RE = (
+    r"(?:(?:USD|US\$|\$|PKR|Rs\.?)\s*)?\d[\d,]*(?:\.\d+)?"
+    r"(?:\s*(?:k|thousand|lakh|lac|mn|m|million|crore|bn|b|billion)\b)?"
+    r"(?:\s*(?:USD|PKR|rupees|dollars?))?"
+)
+_MONEY_FULL_RE = re.compile(
+    r"(?P<pre>USD|US\$|\$|PKR|Rs\.?)?\s*(?P<num>\d[\d,]*(?:\.\d+)?)\s*"
+    r"(?P<mult>k|thousand|lakh|lac|mn|m|million|crore|bn|b|billion)?\s*"
+    r"(?P<post>USD|PKR|rupees|dollars?)?",
+    re.I,
+)
+_ZERO_RE = re.compile(
+    r"^(?:none|nil|nothing(?: yet)?|zero|no(?:thing)? spent|no spending(?: yet)?|n/?a|not yet)$",
+    re.I,
+)
+
+
+def parse_money(raw) -> tuple[float, str] | None:
+    """Return (amount, currency) for a stated amount, or None if it is not one."""
+    m = _MONEY_FULL_RE.fullmatch(str(raw or "").strip())
+    if not m:
+        return None
+    try:
+        n = float(m.group("num").replace(",", ""))
+    except ValueError:
+        return None
+    mult = (m.group("mult") or "").lower()
+    if mult:
+        n *= _MULTIPLIERS[mult]
+    marker = f"{m.group('pre') or ''} {m.group('post') or ''}".lower()
+    currency = "PKR" if re.search(r"pkr|rs|rupee", marker) else "USD"
+    return n, currency
+
+
+def format_money_value(raw) -> str:
+    """Normalise an amount to 'USD 12,345' (or PKR when stated); leave other text unchanged."""
+    text = str(raw or "").strip()
+    if _ZERO_RE.match(text):
+        return format_usd(0)
+    parsed = parse_money(text)
+    if parsed is None:
+        return text
+    return format_usd(*parsed)
+
+
 def _values_equal(left, right) -> bool:
     if isinstance(left, list) or isinstance(right, list):
         a = left if isinstance(left, list) else ([] if left in (None, "") else [left])
@@ -828,6 +925,8 @@ def apply_extractions(
             continue
         if current["status"] != "empty" and not allow_update:
             continue
+        if slot.id in MONEY_SLOTS:
+            guess = {**guess, "value": format_money_value(guess["value"])}
         if current["status"] != "empty" and _values_equal(current.get("value"), guess["value"]):
             continue
         current["value"] = guess["value"]
@@ -842,6 +941,14 @@ def apply_extractions(
         if slot_active(slot, values):
             applied.append(slot.id)
     return applied
+
+
+_FINANCIAL_RE = re.compile(
+    r"\b(financ\w*|payments?|billing|salar\w*|transactions?|account balances?|bank\w*|"
+    r"credit|invoices?|contracts?|revenue figures?)\b"
+)
+_CUSTOMER_RE = re.compile(r"\b(customers?|subscribers?|clients?|consumers?)\b")
+_OUTPUT_RE = re.compile(r"\b(drafts?|repl\w*|messages?|chatbot|emails?|sms|responds?|responses?)\b")
 
 
 def flags_for(values: dict) -> list[dict]:
@@ -877,6 +984,29 @@ def flags_for(values: dict) -> list[dict]:
             "attention",
             "It can act automatically across a workflow",
             "Reviewers will look at limits, monitoring, and how to stop it.",
+        )
+    context = " ".join(
+        str(values.get(key) or "") for key in ("name", "summary", "forTool", "segment")
+    ).lower()
+    if is_on(values.get("sensitive")):
+        add(
+            "attention",
+            "Uses personal or sensitive data",
+            "Privacy reviewers will check what data is used, who can see it, and how long it is kept.",
+        )
+        if _FINANCIAL_RE.search(context):
+            add(
+                "attention",
+                "Uses financial data",
+                "Reviewers will check access controls and that figures are verified before anyone relies on them.",
+            )
+    if _CUSTOMER_RE.search(context) and (
+        is_on(values.get("action")) or _OUTPUT_RE.search(context)
+    ) or (values.get("segment") == "Consumer-Facing AI" and is_on(values.get("action"))):
+        add(
+            "attention",
+            "Output reaches customers",
+            "Reviewers will check how messages are reviewed before customers see them and how customers can raise issues.",
         )
     order = {"urgent": 0, "attention": 1, "info": 2}
     found.sort(key=lambda item: order[item["level"]])

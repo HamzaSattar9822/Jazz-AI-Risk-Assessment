@@ -5,7 +5,14 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-from app.intake.catalog import SEGMENTS, SLOTS_BY_ID, VALUE_DRIVERS
+from app.intake.catalog import (
+    MONEY_SLOTS,
+    SEGMENTS,
+    SLOTS_BY_ID,
+    VALUE_DRIVERS,
+    format_money_value,
+    format_usd,
+)
 
 _HELP_RE = re.compile(
     r"\b(don'?t know|do not know|not sure|unsure|help me|can you (help|estimate|calculate)|"
@@ -46,9 +53,8 @@ def _pct(text: str, default: float = 30.0) -> float:
 
 
 def _money(n: float) -> str:
-    if n >= 1000:
-        return str(int(round(n / 100.0) * 100))
-    return str(int(round(n)))
+    amount = int(round(n / 100.0) * 100) if n >= 1000 else int(round(n))
+    return format_usd(amount)
 
 
 def _estimate_annual_value(answers: dict[str, str]) -> tuple[str, str]:
@@ -92,13 +98,42 @@ def _estimate_investment(answers: dict[str, str]) -> tuple[str, str]:
     return _money(total), f"estimate from {people:g} people × {months:g} months + vendor {vendor:g}"
 
 
+_PEOPLE_BANDS = {
+    "1-5": 3.0,
+    "6-20": 13.0,
+    "21-100": 60.0,
+    "100+": 150.0,
+    "not sure": 10.0,
+}
+_WEEK_BANDS = {
+    "under 1 hour": 0.5,
+    "under 1": 0.5,
+    "1-2 hours": 1.5,
+    "1-2": 1.5,
+    "3-5 hours": 4.0,
+    "3-5": 4.0,
+    "more than 5": 6.0,
+    "not sure": 2.0,
+}
+
+
+def _band_value(raw: str, bands: dict[str, float], default: float) -> float:
+    text = re.sub(r"\s+", " ", (raw or "").strip().lower())
+    if text in bands:
+        return bands[text]
+    for key, value in bands.items():
+        if key in text:
+            return value
+    return _first_number(raw, default) or default
+
+
 def _estimate_hours(answers: dict[str, str]) -> tuple[str, str]:
-    people = _first_number(answers.get("q1", ""), 1) or 1
-    hours_week = _first_number(answers.get("q2", ""), 5) or 5
-    pct = _pct(answers.get("q3", ""), 50.0)
-    annual = people * hours_week * 52 * (pct / 100.0)
-    return f"{int(round(annual))} hours / year", (
-        f"from {people:g} people, {hours_week:g} h/week, {pct:.0f}% automatable"
+    """people × hours/week × 48 weeks (button-band midpoints when labels are used)."""
+    people = _band_value(answers.get("q1", ""), _PEOPLE_BANDS, 10.0)
+    hours_week = _band_value(answers.get("q2", ""), _WEEK_BANDS, 2.0)
+    annual = people * hours_week * 48
+    return f"{int(round(annual)):,} hours / year", (
+        f"from ~{people:g} people × ~{hours_week:g} h/week × 48 weeks"
     )
 
 
@@ -148,41 +183,40 @@ def _yes_no_from_answer(answers: dict[str, str]) -> tuple[str, str]:
 HELPERS: dict[str, dict[str, Any]] = {
     "annualValue": {
         "label": "estimated annual value",
-        "cue": "Answer these and I'll estimate annual savings, productivity gains, and operating cost impact for the form.",
+        "cue": "Optional estimate only — enter the annual value in USD if you know it.",
         "questions": [
-            ("q1", "How many queries or cases do you handle each month?"),
-            ("q2", "How many people handle them, and about how many hours per week each?"),
-            ("q3", "What percentage could the AI resolve or speed up?"),
-            ("q4", "Rough monthly staff or vendor cost to handle this today (USD)?"),
+            ("q1", "Monthly queries or cases?"),
+            ("q2", "People on it, and hours/week each?"),
+            ("q3", "Share the AI could take or speed up (%)?"),
+            ("q4", "Current monthly staff/vendor cost (USD)?"),
             ("q5", "Main gain: cut costs, free employee time, or improve service?"),
         ],
         "estimate": _estimate_annual_value,
     },
     "investmentCost": {
         "label": "estimated investment",
-        "cue": "Share build effort and vendor cost and I'll estimate investment for the form.",
+        "cue": "Optional estimate only — prefer the total investment in USD when you know it.",
         "questions": [
-            ("q1", "How many people will build or implement it?"),
+            ("q1", "People building or implementing it?"),
             ("q2", "For how many months?"),
-            ("q3", "Any vendor or licence cost (USD), or 0?"),
+            ("q3", "Vendor or licence cost (USD), or 0?"),
         ],
         "estimate": _estimate_investment,
     },
     "hoursSaved": {
         "label": "hours saved",
-        "cue": "Share effort today and I'll estimate annual hours saved.",
+        "cue": "Pick a band for each question and I'll calculate annual hours (people × hours/week × 48).",
         "questions": [
-            ("q1", "How many people do this work today?"),
-            ("q2", "Hours per week each on this work?"),
-            ("q3", "What percentage could AI take or speed up?"),
+            ("q1", "How many people would use this? (1-5 / 6-20 / 21-100 / 100+ / Not sure)"),
+            ("q2", "How much time could it save each person per week? (Under 1 hour / 1-2 hours / 3-5 hours / More than 5 / Not sure)"),
         ],
         "estimate": _estimate_hours,
     },
     "spendingToDate": {
         "label": "spending to date",
-        "cue": "Tell me spend so far and I'll put it on the form.",
+        "cue": "Enter 0 if nothing has been spent yet.",
         "questions": [
-            ("q1", "How much has been spent so far (USD)? Use 0 if none."),
+            ("q1", "Amount spent so far (USD)? Use 0 if none."),
         ],
         "estimate": _estimate_spending,
     },
@@ -269,8 +303,14 @@ def detect_helper_slot(text: str, empty_slot_ids: list[str]) -> str | None:
 
 def format_helper_prompt(slot_id: str) -> str:
     spec = HELPERS[slot_id]
+    slot = SLOTS_BY_ID.get(slot_id)
+    direct = slot.question if slot and slot.question else f"What is the {spec['label']}?"
     body = "\n".join(f"- {q}" for _, q in spec["questions"])
-    return f"{body}\n\n{spec['cue']}"
+    return (
+        f"{direct}\n\n"
+        "If you already know the number, reply with it now. "
+        f"Otherwise answer these and I'll estimate:\n{body}\n\n{spec['cue']}"
+    )
 
 
 def start_helper(state: dict, slot_id: str) -> str:
@@ -309,6 +349,8 @@ def continue_helper(state: dict, text: str) -> dict:
     direct = _DIRECT_RE.search(text or "")
     if direct and not wants_help(text):
         raw = direct.group(1).strip()
+        if slot_id in MONEY_SLOTS:
+            raw = format_money_value(raw)
         state.pop("helper", None)
         label = SLOTS_BY_ID[slot_id].label if slot_id in SLOTS_BY_ID else slot_id
         return {
@@ -359,12 +401,33 @@ def continue_helper(state: dict, text: str) -> dict:
         value = allowed[0]
     state.pop("helper", None)
     label = SLOTS_BY_ID[slot_id].label if slot_id in SLOTS_BY_ID else slot_id
+    extraction = {
+        slot_id: {"value": value, "why": why, "source": "you"},
+    }
+    # Avoid re-asking hours after an annual-value estimate that used the same effort inputs.
+    if slot_id == "annualValue":
+        hours_entry = (state.get("slots") or {}).get("hoursSaved") or {}
+        if hours_entry.get("status") == "empty":
+            nums = [float(x.replace(",", "")) for x in _NUM.findall(answers.get("q2", ""))]
+            if nums:
+                people = str(nums[0])
+                week_hours = str(nums[1] if len(nums) >= 2 else 5)
+                hours_val, _hours_why = _estimate_hours(
+                    {
+                        "q1": people,
+                        "q2": week_hours,
+                        "q3": answers.get("q3", "50"),
+                    }
+                )
+                extraction["hoursSaved"] = {
+                    "value": hours_val,
+                    "why": "derived from the same effort inputs",
+                    "source": "you",
+                }
     return {
         "done": True,
-        "reply": f"Got it. I set {label} to {value} ({why}).",
-        "extraction": {
-            slot_id: {"value": value, "why": why, "source": "you"},
-        },
+        "reply": f"Got it. I set {label} to {value}.",
+        "extraction": extraction,
     }
 
 

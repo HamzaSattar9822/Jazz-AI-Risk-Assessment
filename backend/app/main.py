@@ -16,16 +16,29 @@ from app.seed import seed_users
 logger = logging.getLogger(__name__)
 
 # Docker/Render packs the portal as /app/static/index.html.
-# Local runs can also serve the HTML file from the repo root.
+# Local runs serve the portal HTML from the repo root.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 _PORTAL_CANDIDATES = [
     Path("/app/static/index.html"),
     Path(__file__).resolve().parents[1] / "static" / "index.html",
-    Path(__file__).resolve().parents[2] / "Ai_risk_assessment_icon_toggle.html",
+    _REPO_ROOT / "AIMS_final.html",
+    _REPO_ROOT / "Ai_risk_assessment_icon_toggle.html",
 ]
 
 
 def _portal_html() -> Path | None:
     for path in _PORTAL_CANDIDATES:
+        if path.is_file():
+            return path
+    return None
+
+
+def _framework_json() -> Path | None:
+    for path in (
+        Path("/app/static/aira_risk_framework.json"),
+        Path(__file__).resolve().parents[1] / "static" / "aira_risk_framework.json",
+        _REPO_ROOT / "aira_risk_framework.json",
+    ):
         if path.is_file():
             return path
     return None
@@ -72,6 +85,7 @@ def create_app() -> FastAPI:
         }
 
     portal_html = _portal_html()
+    framework_json = _framework_json()
 
     @app.get("/")
     def root():
@@ -89,6 +103,12 @@ def create_app() -> FastAPI:
         if portal_html is None:
             return {"message": "Portal HTML was not packaged with this build."}
         return FileResponse(portal_html)
+
+    @app.get("/aira_risk_framework.json")
+    def aira_framework():
+        if framework_json is None:
+            return {"message": "aira_risk_framework.json was not packaged with this build."}
+        return FileResponse(framework_json, media_type="application/json")
 
     app.include_router(router, prefix="/api/v1")
     if portal_html is not None and portal_html.parent.is_dir():

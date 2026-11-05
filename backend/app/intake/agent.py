@@ -10,8 +10,8 @@ from typing import Any
 import httpx
 
 from app.config import Settings
-from app.intake.catalog import SLOTS_BY_ID, validate_answer
-from app.intake.llm import _parse_content, _slot_guide
+from app.intake.catalog import MONEY_AMOUNT_RE, SLOTS_BY_ID, format_money_value, validate_answer
+from app.intake.llm import _parse_content, _slot_guide, drop_ungrounded_extractions
 
 logger = logging.getLogger(__name__)
 
@@ -65,15 +65,13 @@ def llm_agent_turn(
 
     system = (
         "You are AIRA, JazzWorld's AI Risk Assistant. Your job is to help fill the intake form. "
-        "Be brief. Prefer short discovery questions over long explanations. "
-        "When the user does not know a number (annual value, investment, hours), set startHelper "
-        "to that field id instead of guessing. Closing line style: "
-        "\"If you tell me X, I can estimate Y for the form.\" "
-        "Use priorMemory when the user refers to earlier requests. Never invent facts. "
-        "For choice fields, copy an allowed value exactly. "
+        "Be brief. Prefer one clear question per turn — especially for numbers (USD value, cost, hours). "
+        "Ask for a single figure first. Only set startHelper when the user explicitly says they don't know "
+        "or asks you to estimate/calculate. Never re-ask a field that already has a value. "
+        "Never invent numbers. For choice fields, copy an allowed value exactly. "
         "Reply with JSON only. "
         'Schema: {"reply":"short message","extractions":[{"id":"...","value":"...","why":"..."}],'
-        '"startHelper":"optional field id like annualValue|investmentCost|hoursSaved|segment|valueDriver|spendingToDate|sensitive|decision|action",'
+        '"startHelper":"optional field id like annualValue|investmentCost|hoursSaved|spendingToDate",'
         '"recallNote":"optional"}.'
     )
     user_payload = {
@@ -85,7 +83,13 @@ def llm_agent_turn(
         "rules": [
             "Keep reply under 40 words. Mention only the field(s) changed in this turn — never restate the whole form.",
             "If the user discusses one field, extract and confirm only that field.",
-            "If user says don't know / help estimate a helper field, set startHelper and keep reply minimal.",
+            "If one message answers several fields, extract every one of them and list them in reply.",
+            "Check latestMessage against currentValues: if it contradicts a stored value, update that field.",
+            "forTool is a product or vendor name only, never a sentence. Data staying on JazzWorld private cloud or in-house means dataExternal=No.",
+            "Never change sensitive, decision or action once they have a value; say a RAIO reviewer handles screening changes.",
+            "Do not re-ask confirmed fields or repeat the same question.",
+            "For money/hours fields, prefer extracting a stated number over starting a helper.",
+            "Only set startHelper if the user clearly asks for help estimating that field.",
             "Update only fields clearly supported by latestMessage or recalled prior data.",
             "category: AI For Us | AI By Us | AI Against Us only.",
             "Yes/No fields must be exactly Yes or No.",
@@ -134,6 +138,7 @@ def llm_agent_turn(
         accepted = _accept(str(item.get("id") or ""), item.get("value"), item.get("why") or "")
         if accepted:
             found[str(item["id"])] = accepted
+    found = drop_ungrounded_extractions(found, latest_message)
 
     reply = str(parsed.get("reply") or "").strip()
     recall_note = str(parsed.get("recallNote") or "").strip()
@@ -244,23 +249,44 @@ def offline_intent_extractions(message: str) -> dict[str, dict]:
                 }
                 break
 
-    def money_field(slot_id: str, labels: str) -> None:
+    def money_field(slot_id: str, labels: str) -> bool:
         m_money = re.search(
-            rf"(?:(?:change|update|set)\s+)?(?:the\s+)?(?:{labels})\s*(?:to|as|:|=)\s*"
-            rf"((?:USD\s*)?\$?\s?\d[\d,]*(?:\.\d+)?(?:\s*USD)?)",
+            rf"\b(?:{labels})\b\s*(?:is|are|was|of|at|to|as|:|=|should be|will be|would be)?\s*"
+            rf"(?:(?:about|around|roughly|approx(?:imately)?|~)\s*)?({MONEY_AMOUNT_RE})",
             raw,
             re.I,
         )
-        if m_money:
-            out[slot_id] = {
-                "value": m_money.group(1).replace(" ", "").strip(),
-                "why": f"{slot_id} from your chat message",
-                "source": "you",
-            }
+        if not m_money:
+            return False
+        out[slot_id] = {
+            "value": format_money_value(m_money.group(1)),
+            "why": "from your chat message",
+            "source": "you",
+        }
+        return True
 
-    money_field("annualValue", r"annual value|roi|value|benefit")
-    money_field("investmentCost", r"investment(?:\s+cost)?|capex|budget|project cost|total cost")
-    money_field("spendingToDate", r"spending(?:\s+to\s+date)?|spent(?:\s+to\s+date|\s+so\s+far)?")
+    found_money = [
+        money_field("spendingToDate", r"spending(?:\s+to\s+date)?|spent(?:\s+to\s+date|\s+so\s+far)?|spend(?:\s+to\s+date)?"),
+        money_field(
+            "investmentCost",
+            r"investment(?:\s+cost)?|capex|budget|project cost|build cost|total cost|cost",
+        ),
+        money_field("annualValue", r"annual value|value|benefit|roi"),
+    ]
+    if re.search(
+        r"\b(no spending|nothing spent|not spent anything|haven'?t (started|spent)|spent nothing|no spend)\b",
+        t,
+    ):
+        out["spendingToDate"] = {"value": "USD 0", "why": "from your chat message", "source": "you"}
+        found_money.append(True)
+    if not any(found_money):
+        bare = re.search(
+            rf"^(?:(?:make|set|change|update)\s+(?:it|that)\s+(?:to\s+)?|it'?s\s+|it\s+is\s+)?({MONEY_AMOUNT_RE})\.?$",
+            raw.strip(),
+            re.I,
+        )
+        if bare and re.search(r"[a-z]|,|\d{4,}", bare.group(1), re.I):
+            out["_ambiguousMoney"] = {"value": format_money_value(bare.group(1))}
 
     m_hours = re.search(
         r"(?:(?:change|update|set)\s+)?(?:the\s+)?(?:hours?\s*saved|time\s*saved)\s*(?:to|as|:|=)\s*"

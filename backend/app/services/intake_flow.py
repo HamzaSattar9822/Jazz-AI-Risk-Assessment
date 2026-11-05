@@ -19,6 +19,7 @@ from app.intake.agent import (
 )
 from app.intake.catalog import (
     EXAMPLES,
+    MONEY_SLOTS,
     SLOTS_BY_ID,
     active_slots,
     apply_extractions,
@@ -27,6 +28,7 @@ from app.intake.catalog import (
     effective_answer,
     empty_slot_state,
     flags_for,
+    format_money_value,
     has_value,
     initial_state,
     keyword_extract,
@@ -46,7 +48,7 @@ from app.intake.helpers import (
     start_helper,
     wants_help,
 )
-from app.intake.llm import llm_extract
+from app.intake.llm import drop_ungrounded_extractions, llm_extract
 from app.methodology.engine import METHODOLOGY_VERSION, get_weight_profile, js_math_round
 from app.models import IntakeSession, Submission, User
 
@@ -82,14 +84,21 @@ def _merge_extractions(keyword: dict, model: dict | None) -> dict:
     return found
 
 
-def _extract(description: str, settings: Settings) -> tuple[dict, str]:
+def _extract(
+    description: str,
+    settings: Settings,
+    focus_ids: list[str] | None = None,
+) -> tuple[dict, str]:
     keyword = keyword_extract(description)
-    model = llm_extract(description, settings)
+    model = llm_extract(description, settings, focus_ids=focus_ids)
+    if model:
+        model = drop_ungrounded_extractions(model, description)
     if not model:
         found = _merge_extractions(keyword, None)
         extractor = "keyword"
     else:
         found = _merge_extractions(keyword, model)
+        found = drop_ungrounded_extractions(found, description)
         extractor = "llm"
     # Category is a governance fork — never let a biased LLM default wipe By Us / Against Us.
     classified = classify_category(description)
@@ -124,6 +133,32 @@ def _extract(description: str, settings: Settings) -> tuple[dict, str]:
             "source": "auto",
         }
     return found, extractor
+
+
+def _confirm_inferred(state: dict) -> list[str]:
+    """Promote description drafts onto the form so chat only asks empties."""
+    confirmed = []
+    for slot_id, entry in state["slots"].items():
+        slot = SLOTS_BY_ID.get(slot_id)
+        if (
+            slot
+            and entry.get("status") == "inferred"
+            and has_value(slot, entry.get("value"))
+        ):
+            entry["status"] = "confirmed"
+            confirmed.append(slot_id)
+    return confirmed
+
+
+def _empty_fillable_ids(state: dict) -> list[str]:
+    return [
+        slot_id
+        for slot_id, entry in state["slots"].items()
+        if entry.get("status") == "empty"
+        and (slot := SLOTS_BY_ID.get(slot_id))
+        and not slot.profile
+        and not slot.auto
+    ]
 
 
 def _apply_summary(state: dict, found: dict) -> None:
@@ -386,34 +421,32 @@ def create_session(db: Session, user: User, description: str, settings: Settings
     state["extractor"] = extractor
     apply_extractions(state, found)
     # Put description drafts straight on the form; chat only asks what's still empty.
-    for slot_id, entry in state["slots"].items():
-        slot = SLOTS_BY_ID.get(slot_id)
-        if (
-            slot
-            and entry.get("status") == "inferred"
-            and has_value(slot, entry.get("value"))
-        ):
-            entry["status"] = "confirmed"
+    _confirm_inferred(state)
+    # Second full extract for remaining empties only — never overwrite confirmed answers.
+    empty_ids = _empty_fillable_ids(state)
+    if empty_ids:
+        more, more_extractor = _extract(description, settings, focus_ids=empty_ids)
+        applied_more = apply_extractions(
+            state, more, allow_update=False, mark_confirmed=True
+        )
+        if applied_more:
+            state["extractor"] = more_extractor or extractor
+        _confirm_inferred(state)
     _apply_summary(state, found)
     values = values_of(state)
-    unit = user.business_unit
     if found:
         intro = (
-            f"I filled what I could from your description onto the form. "
-            f"Signed in as {user.name} ({unit}). "
-            "I'll ask only what's still missing — answers go straight onto the form. "
-            "If you don't know a number, say \"help me estimate\"."
+            "AIRA has pre-filled some fields based on your initial description. "
+            "Take a moment to review and confirm them, then choose how you'd like to complete the rest."
         )
     else:
         intro = (
-            f"Thanks. Signed in as {user.name} ({unit}) — owner and unit are set. "
-            "I'll ask short questions to fill the form. "
-            "Say \"help me estimate\" anytime for annual value, cost, or hours."
+            "Thanks. Choose how you'd like to complete the form: with AIRA's assistance or manually."
         )
     _say(state, "user", description)
     _say(state, "assistant", intro)
-    for flag in _announce(state, values):
-        _say(state, "assistant", f"Heads up: {flag['title']}. {flag['why']} This won't stop you from submitting.")
+    # Early flags are shown beneath the form, not in the chat.
+    _announce(state, values)
     draft = IntakeSession(
         id=str(uuid.uuid4()),
         user_id=user.id,
@@ -472,6 +505,8 @@ def answer_slot(db: Session, draft: IntakeSession, slot_id: str, value) -> Intak
         cleaned = validate_answer(slot, value)
     except ValueError as exc:
         raise IntakeError(str(exc), 422) from exc
+    if slot_id in MONEY_SLOTS:
+        cleaned = format_money_value(cleaned)
     entry = state["slots"][slot_id]
     was_empty = entry["status"] == "empty"
     entry["value"] = cleaned
@@ -511,10 +546,24 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
     if state["slots"]["summary"]["source"] == "auto":
         set_summary(state, make_summary(draft.description), source="auto")
 
+    previous_reply = next(
+        (
+            turn.get("text")
+            for turn in reversed(state.get("transcript") or [])
+            if turn.get("role") == "assistant" and not _is_auto_notice(turn.get("text"))
+        ),
+        None,
+    )
     _say(state, "user", text)
     applied: list[str] = []
     reply = ""
     recall_meta = None
+    blocked: list[str] = []
+
+    def apply_chat(state, found, **kwargs):
+        kept, refused = _guard_screening(state, found)
+        blocked.extend(label for label in refused if label not in blocked)
+        return apply_extractions(state, kept, **kwargs)
 
     # ---- Guided form helper (short discovery questions → estimate field) ----
     helper_handled = False
@@ -522,7 +571,7 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
         result = continue_helper(state, text)
         reply = result.get("reply") or ""
         if result.get("extraction"):
-            applied = apply_extractions(
+            applied = apply_chat(
                 state,
                 result["extraction"],
                 allow_update=True,
@@ -532,7 +581,8 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
     else:
         empty_ids = empty_helper_ids(state)
         target = detect_helper_slot(text, empty_ids)
-        if target and (wants_help(text) or target in empty_ids):
+        stated = {k for k in offline_intent_extractions(text) if not k.startswith("_")}
+        if target and (wants_help(text) or (target in empty_ids and not stated)):
             # If user already pasted answers with the ask, start then continue in one turn.
             reply = start_helper(state, target)
             # Same message may already include answers under the help request.
@@ -545,7 +595,7 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                     result = continue_helper(state, answer_blob)
                     reply = result.get("reply") or reply
                     if result.get("extraction"):
-                        applied = apply_extractions(
+                        applied = apply_chat(
                             state,
                             result["extraction"],
                             allow_update=True,
@@ -562,15 +612,22 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
         # Prefer an explicit single-field chat intent so Gemma cannot reopen the
         # whole form when the user only clarified one answer.
         intent = offline_intent_extractions(text)
+        ambiguous = intent.pop("_ambiguousMoney", None)
+        if ambiguous and not intent:
+            reply = (
+                f"Which field should {ambiguous['value']} go in: estimated annual value, "
+                "estimated investment / cost, or spending to date?"
+            )
+            helper_handled = True
         if intent:
-            applied = apply_extractions(
+            applied = apply_chat(
                 state,
                 intent,
                 allow_update=True,
                 mark_confirmed=True,
             )
 
-        if not applied:
+        if not applied and not helper_handled:
             agent = llm_agent_turn(
                 latest_message=text,
                 transcript=transcript[:-1],
@@ -589,7 +646,7 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                     helper_handled = True
                     recall_meta = {**(recall_meta or {}), "helper": agent["startHelper"]}
                 elif agent.get("extractions"):
-                    applied = apply_extractions(
+                    applied = apply_chat(
                         state,
                         agent["extractions"],
                         allow_update=True,
@@ -609,7 +666,7 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                     for slot_id, value in (reused.get("values") or {}).items()
                     if slot_id in SLOTS_BY_ID and not SLOTS_BY_ID[slot_id].profile
                 }
-                applied = apply_extractions(
+                applied = apply_chat(
                     state,
                     prior_found,
                     allow_update=True,
@@ -635,7 +692,7 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                         for key, value in (from_message or {}).items()
                         if key in intent
                     }
-                for slot_id in apply_extractions(
+                for slot_id in apply_chat(
                     state,
                     from_message,
                     allow_update=True,
@@ -667,6 +724,17 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
                         "Noted — saved. Tell me which field to change if you want an update."
                     )
 
+    blocked = [label for label in blocked if _mentions_screening(text, label)]
+    if blocked:
+        reply = (
+            f"I can't change {', '.join(blocked)} from chat. Screening answers drive the risk "
+            "assessment, so they stay as answered. If the original answer was wrong, raise it "
+            "with the Responsible AI Office reviewer handling your request."
+            + (f" {reply}" if applied and reply else "")
+        )
+    elif previous_reply and reply.strip() == str(previous_reply).strip():
+        reply = "Same as above, unless your inputs changed."
+
     _say(state, "assistant", reply, meta=recall_meta)
     _after_change(state)
     _touch(draft, state)
@@ -675,14 +743,49 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
     return draft
 
 
+SCREENING_SLOTS = ("sensitive", "decision", "action")
+_AUTO_NOTICE_RE = re.compile(r"^(Heads up:|That's everything I need)")
+
+
+_SCREENING_MENTION_RE = {
+    "sensitive": re.compile(r"sensitiv|personal|\bpii\b|confidential", re.I),
+    "decision": re.compile(r"decision|decide", re.I),
+    "action": re.compile(r"\baction|\bact\b|take steps", re.I),
+}
+
+
+def _is_auto_notice(text) -> bool:
+    return bool(_AUTO_NOTICE_RE.match(str(text or "")))
+
+
+def _mentions_screening(text: str, label: str) -> bool:
+    """A refusal is only owed when the user actually asked about the screening field."""
+    for slot_id in SCREENING_SLOTS:
+        if SLOTS_BY_ID[slot_id].label == label:
+            return bool(_SCREENING_MENTION_RE[slot_id].search(text or ""))
+    return True
+
+
+def _guard_screening(state: dict, found: dict | None) -> tuple[dict, list[str]]:
+    """Chat may fill an empty screening answer but never change an existing one."""
+    kept: dict = {}
+    refused: list[str] = []
+    for slot_id, guess in (found or {}).items():
+        current = state["slots"].get(slot_id) or {}
+        if (
+            slot_id in SCREENING_SLOTS
+            and current.get("status") != "empty"
+            and current.get("value")
+            and str(guess.get("value")) != str(current.get("value"))
+        ):
+            refused.append(SLOTS_BY_ID[slot_id].label)
+            continue
+        kept[slot_id] = guess
+    return kept, refused
+
+
 def _after_change(state: dict) -> None:
-    values = values_of(state)
-    for flag in _announce(state, values):
-        _say(
-            state,
-            "assistant",
-            f"Heads up: {flag['title']}. {flag['why']} This won't stop you from submitting.",
-        )
+    _announce(state, values_of(state))
     active = active_slots(state)
     pending = any(state["slots"][slot.id]["status"] == "inferred" for slot in active)
     empty = any(state["slots"][slot.id]["status"] == "empty" for slot in active)
