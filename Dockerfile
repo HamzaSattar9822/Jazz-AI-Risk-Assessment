@@ -6,7 +6,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/app ./app
-COPY AIMS_final.html ./static/index.html
+COPY SYRA_Frontend.html ./static/index.html
 COPY aira_risk_framework.json ./static/aira_risk_framework.json
 
 # Writable data dir for OpenShift PVC (SQLite). Render keeps using /tmp via env.

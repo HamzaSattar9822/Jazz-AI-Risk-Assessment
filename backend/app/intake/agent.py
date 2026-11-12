@@ -1,4 +1,4 @@
-"""Memory-aware AIRA agent turn: reply + optional field updates from chat history."""
+"""Memory-aware SYRA agent turn: reply + optional field updates from chat history."""
 
 from __future__ import annotations
 
@@ -64,7 +64,7 @@ def llm_agent_turn(
         history.append({"role": "assistant" if role == "assistant" else "user", "content": text[:1200]})
 
     system = (
-        "You are AIRA, JazzWorld's AI Risk Assistant. Your job is to help fill the intake form. "
+        "You are SYRA, JazzWorld's AI Risk Assistant. Your job is to help fill the intake form. "
         "Be brief. Prefer one clear question per turn — especially for numbers (USD value, cost, hours). "
         "Ask for a single figure first. Only set startHelper when the user explicitly says they don't know "
         "or asks you to estimate/calculate. Never re-ask a field that already has a value. "
@@ -125,7 +125,7 @@ def llm_agent_turn(
         content = response.json()["choices"][0]["message"]["content"]
         parsed = _parse_content(content)
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        logger.warning("AIRA agent turn failed: %s", exc)
+        logger.warning("SYRA agent turn failed: %s", exc)
         return None
 
     if not isinstance(parsed, dict):

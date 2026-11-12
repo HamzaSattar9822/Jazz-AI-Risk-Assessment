@@ -436,12 +436,12 @@ def create_session(db: Session, user: User, description: str, settings: Settings
     values = values_of(state)
     if found:
         intro = (
-            "AIRA has pre-filled some fields based on your initial description. "
+            "SYRA has pre-filled some fields based on your initial description. "
             "Take a moment to review and confirm them, then choose how you'd like to complete the rest."
         )
     else:
         intro = (
-            "Thanks. Choose how you'd like to complete the form: with AIRA's assistance or manually."
+            "Thanks. Choose how you'd like to complete the form: with SYRA's assistance or manually."
         )
     _say(state, "user", description)
     _say(state, "assistant", intro)

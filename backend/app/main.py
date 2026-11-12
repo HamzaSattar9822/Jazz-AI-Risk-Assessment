@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.router import router
 from app.config import get_settings
 from app.db import Base, SessionLocal, engine
+from app.db_migrate import ensure_schema
 from app.methodology.engine import METHODOLOGY_VERSION
 from app.seed import seed_users
 
@@ -21,6 +22,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _PORTAL_CANDIDATES = [
     Path("/app/static/index.html"),
     Path(__file__).resolve().parents[1] / "static" / "index.html",
+    _REPO_ROOT / "SYRA_Frontend.html",
     _REPO_ROOT / "AIMS_final.html",
     _REPO_ROOT / "Ai_risk_assessment_icon_toggle.html",
 ]
@@ -47,6 +49,7 @@ def _framework_json() -> Path | None:
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    ensure_schema(engine)
     with SessionLocal() as db:
         seed_users(db)
     logger.info("JazzWorld AI approval API ready (%s)", METHODOLOGY_VERSION)
@@ -57,7 +60,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title="JazzWorld AI Approval API",
-        summary="Intake, duplicate check, and AIRA risk scoring for the Responsible AI Office.",
+        summary="Intake, duplicate check, and SYRA risk scoring for the Responsible AI Office.",
         version="1.0.0",
         lifespan=lifespan,
     )
@@ -81,6 +84,7 @@ def create_app() -> FastAPI:
             "llmConfigured": settings.llm_configured,
             "llmModel": settings.llm_model if settings.llm_configured else None,
             "emailConfigured": bool(mail["configured"] and mail["provider"] != "log"),
+            "ssoConfigured": settings.entra_configured,
             "mail": mail,
         }
 

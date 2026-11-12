@@ -68,6 +68,8 @@ def decision_notice(submission: Submission) -> tuple[str, str]:
         f"Decision: {label}",
         f"Decided by: {decision.get('decidedBy', '')}",
     ]
+    if decision.get("serviceNowTicket"):
+        lines.append(f"ServiceNow ticket: {decision['serviceNowTicket']}")
     if decision.get("conditions"):
         lines.extend(["", "Conditions:", decision["conditions"]])
     if decision.get("notes"):
@@ -143,9 +145,9 @@ def notify(
 def probe_mail(settings: Settings, to: str) -> dict:
     """Send a short connectivity check (used by the mail test endpoint)."""
     provider = get_mail_provider(settings)
-    subject = "JazzWorld AIRA mail connectivity check"
+    subject = "JazzWorld SYRA mail connectivity check"
     body = (
-        f"This is a test message from the AIRA mail framework.\n"
+        f"This is a test message from the SYRA mail framework.\n"
         f"Provider: {provider.name}\n"
         f"If you received this, Outlook / Graph delivery is working."
     )

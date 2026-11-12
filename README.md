@@ -77,7 +77,7 @@ sequenceDiagram
   A-->>P: Live form + early flags + routing
   U->>P: Confirm / correct / submit
   A->>A: Completeness + duplicate check ≥90%
-  A-->>U: Reference AIRA-YYYYMMDD-XXXXX
+  A-->>U: Reference SYRA-YYYYMMDD-XXXXX
   R->>A: Assessment scores 1–5
   A->>A: Residual risk, tier, approval level
   R->>A: Final decision
@@ -173,7 +173,7 @@ Copy `backend/.env.example` → `backend/.env`. Important variables:
 | `JWT_SECRET` | **Change** before any shared environment |
 | `CORS_ORIGINS` | Comma-separated allowed origins |
 | `DUPLICATE_THRESHOLD` | Default `90` |
-| `LLM_BASE_URL` / `LLM_MODEL` | Jazz Gemma extraction |
+| `LLM_BASE_URL` / `LLM_MODEL` | Jazz AIOps Qwen extraction |
 | `MAIL_PROVIDER` | `auto` \| `log` \| `smtp` \| `graph` |
 | `GOVERNANCE_EMAIL` | Governance notice recipient |
 

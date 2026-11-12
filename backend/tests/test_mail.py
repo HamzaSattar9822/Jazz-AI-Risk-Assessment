@@ -52,7 +52,7 @@ def test_send_mail_logs_when_unconfigured():
 
 def test_submission_notice_includes_reference():
     payload = {
-        "referenceId": "AIRA-20261008-TEST1",
+        "referenceId": "SYRA-20261008-TEST1",
         "submittedAt": "2026-10-08T00:00:00Z",
         "category": "AI For Us",
         "screening": {"data": "Yes", "decision": "No", "action": "No"},
@@ -70,6 +70,6 @@ def test_submission_notice_includes_reference():
         },
     }
     subject, body = submission_notice(payload, "Ayesha Khan", "ayesha.khan@jazz.example")
-    assert "AIRA-20261008-TEST1" in subject
+    assert "SYRA-20261008-TEST1" in subject
     assert "Copilot rollout" in body
     assert "RAIO" in body

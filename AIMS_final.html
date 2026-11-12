@@ -4440,7 +4440,7 @@
         }
       }
 
-      /* Tiny AIRA provenance avatar: only used beside fields populated by AIRA. */
+      /* Tiny AIRA provenance avatar: only used beside fields populated by SYRA. */
       .aira-filled {
         display: inline-flex;
         align-items: center;
@@ -4718,7 +4718,7 @@
         </p>
         <div class="idea-card">
           <div class="aira-perch">
-            <span class="aira-greeting">Hi, I am AIRA</span>
+            <span class="aira-greeting">Hi, I am SYRA</span>
             <div class="aira-avatar" data-aira-state="idle">
               <svg viewBox="0 0 180 150" aria-hidden="true" class="aira-svg">
                 <defs>
@@ -4854,7 +4854,7 @@
           <div class="panel-in" id="panelIn"></div>
         </aside>
         <div class="chat-col">
-          <header class="chat-head" aria-label="AIRA assistant">
+          <header class="chat-head" aria-label="SYRA assistant">
             <div class="bot-avatar" aria-hidden="true">
               <svg viewBox="0 0 180 150" aria-hidden="true" class="aira-svg">
                 <g class="aira-head">
@@ -4909,7 +4909,7 @@
               </svg>
             </div>
             <div class="bot-meta">
-              <div class="bot-name">AIRA</div>
+              <div class="bot-name">SYRA</div>
               <div class="bot-role">AI Risk Assistant · JazzWorld RAIO</div>
               <div id="airaChatStatus" role="status">
                 Ready to help with your use case.
@@ -4926,7 +4926,7 @@
           >
             <span class="current">1 · Answer</span><span>2 · Review</span><span>3 · Submit</span>
           </nav>
-          <div class="chat" id="chat" aria-label="Conversation with AIRA">
+          <div class="chat" id="chat" aria-label="Conversation with SYRA">
             <div
               class="chat-inner"
               id="chatIn"
@@ -4943,11 +4943,11 @@
           </div>
           <div class="composer">
             <div class="composer-in">
-              <label for="composerText" class="sr-only">Message AIRA</label>
+              <label for="composerText" class="sr-only">Message SYRA</label>
               <textarea
                 id="composerText"
                 rows="1"
-                placeholder="Ask AIRA to help fill a field, or say “help me estimate”…"
+                placeholder="Ask SYRA to help fill a field, or say “help me estimate”…"
               ></textarea>
               <button type="button" class="btn primary" id="composerSend">
                 Send
@@ -4965,7 +4965,7 @@
       <section id="view-done" class="donewrap" hidden></section>
       <dialog id="airaQuick" class="aira-quick" aria-labelledby="quickTitle">
         <div class="quick-top">
-          <strong id="quickTitle">Hi, I am AIRA</strong
+          <strong id="quickTitle">Hi, I am SYRA</strong
           ><button
             type="button"
             class="btn small ghost"
@@ -4980,7 +4980,7 @@
           id="gdLog"
           role="log"
           aria-live="polite"
-          aria-label="Chat with AIRA"
+          aria-label="Chat with SYRA"
         ></div>
         <div
           class="gd-chips"
@@ -4997,7 +4997,7 @@
               overflow: hidden;
               clip: rect(0 0 0 0);
             "
-            >Ask AIRA a question</label
+            >Ask SYRA a question</label
           ><input
             id="gdInput"
             type="text"
@@ -5444,7 +5444,7 @@
 
         /* =====================================================================
          * Lean conversational intake.
-         * Slot answers are filled by Jazz Gemma via the local API when available;
+         * Slot answers are filled by Jazz AIOps Qwen via the local API when available;
          * keyword rules remain only as an offline fallback.
          * ===================================================================== */
         const CFG = Object.assign(
@@ -5574,11 +5574,11 @@
           perch.setAttribute("tabindex", "0");
           perch.setAttribute(
             "aria-label",
-            "Hi, I am AIRA. Open the quick guide",
+            "Hi, I am SYRA. Open the quick guide",
           );
           perch.setAttribute("aria-controls", "airaQuick");
           perch.setAttribute("aria-expanded", "false");
-          perch.title = "Ask AIRA a question";
+          perch.title = "Ask SYRA a question";
           perch.addEventListener("click", openQuickAira);
           perch.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -7041,7 +7041,7 @@
           return `<div class="aira-risk-face"><div class="bot-avatar" data-aira-state="${state}" aria-hidden="true">${BOT_AVATAR_SVG}</div><div><span class="aira-risk-label aira-risk-${state}">${severity} risk · indicative</span><p class="risk-oneliner">${explanations[severity]}</p></div></div>`;
         }
         /* ---------- chat plumbing ---------- */
-        const BOT = { name: "AIRA", role: "AI Risk Assistant" };
+        const BOT = { name: "SYRA", role: "AI Risk Assistant" };
         const BOT_AVATAR_SVG = `<svg viewBox="0 0 180 150" aria-hidden="true" class="aira-svg"><g class="aira-head"><path d="M29 105 C4 73 19 18 69 13 C122 5 149 37 148 76 L166 99 Q169 110 140 108 C113 138 57 135 29 105" fill="#e43a89" stroke="#ff75b5" stroke-width="2"/><ellipse cx="83" cy="71" rx="51" ry="42" fill="#260b28"/><g class="aira-eyes"><ellipse cx="65" cy="65" rx="9" ry="12" fill="#fff0fc"/><ellipse cx="104" cy="65" rx="9" ry="12" fill="#fff0fc"/><g class="aira-pupils" fill="#30102f"><ellipse cx="67" cy="68" rx="4" ry="6"/><ellipse cx="106" cy="68" rx="4" ry="6"/></g></g><path class="aira-mouth" d="M72 89 Q84 101 96 89" fill="none" stroke="#ff72b1" stroke-width="4" stroke-linecap="round"/><path class="aira-brows" d="M55 47 L73 43 M95 43 L113 47" fill="none" stroke="#ffb8db" stroke-width="3" stroke-linecap="round"/></g><g fill="#e43a89" stroke="#ff75b5"><rect x="30" y="119" width="28" height="19" rx="9"/><rect class="aira-hand" x="112" y="119" width="28" height="19" rx="9"/></g><path d="M157 18 L160 27 L169 30 L160 33 L157 42 L154 33 L145 30 L154 27Z" fill="#ff97ca" class="aira-spark"/></svg>`;
         const chat = $("#chat"),
           chatIn = $("#chatIn");
@@ -7250,14 +7250,14 @@
           );
           await agent(
             prefilled
-              ? "AIRA has pre-filled some fields based on your initial description. Take a moment to review and confirm them, then choose how you'd like to complete the rest."
+              ? "SYRA has pre-filled some fields based on your initial description. Take a moment to review and confirm them, then choose how you'd like to complete the rest."
               : "Choose how you'd like to complete the form.",
           );
           const w = widget("mode");
           w.innerHTML =
-            '<div class="row"><button type="button" class="pill primary" data-m="assist">Get AIRA\u2019s assistance</button>' +
+            '<div class="row"><button type="button" class="pill primary" data-m="assist">Get SYRA\u2019s assistance</button>' +
             '<button type="button" class="pill" data-m="manual">Fill the form manually</button></div>' +
-            '<p class="mode-hint">Not sure about a number? No worries, AIRA can help you estimate it!</p>';
+            '<p class="mode-hint">Not sure about a number? No worries, SYRA can help you estimate it!</p>';
           $$("button", w).forEach(
             (b) =>
               (b.onclick = () => {
@@ -7384,7 +7384,7 @@
             value: String(val),
             status: "confirmed",
             src: "you",
-            why: "estimated with AIRA helper",
+            why: "estimated with SYRA helper",
           });
           if (
             result &&
@@ -8548,7 +8548,7 @@
           })
           .catch((err) => {
             console.warn(
-              "AIRA governance reference not loaded; using built-in fallback:",
+              "SYRA governance reference not loaded; using built-in fallback:",
               err,
             );
             return null;
@@ -8593,7 +8593,7 @@
             String(d.getMonth() + 1).padStart(2, "0") +
             String(d.getDate()).padStart(2, "0");
           const rand = Math.random().toString(36).slice(2, 7).toUpperCase();
-          return "AIRA-" + ymd + "-" + rand;
+          return "SYRA-" + ymd + "-" + rand;
         }
         function useCaseFacts() {
           const access = String(V("forAccess") || "");
@@ -8752,7 +8752,7 @@
           return items.slice(0, 4);
         }
         function buildGovernanceRiskPdf() {
-          /* Exact visual match to AIRA Final Approval Report sample:
+          /* Exact visual match to SYRA Final Approval Report sample:
              A4, Helvetica, magenta accent #93003A, purple ink #2B1038 */
           const preview = runIndicativeRisk();
           const pageW = 595.28,
@@ -9214,7 +9214,7 @@
               .replace(/[^\w\-]+/g, "_")
               .slice(0, 40);
             const filename =
-              "AIRA_Final_Approval_Report_" +
+              "SYRA_Final_Approval_Report_" +
               name +
               "_" +
               new Date().toISOString().slice(0, 10) +
@@ -9344,7 +9344,7 @@
           }
           const d = new Date(),
             ref =
-              "AIRA-" +
+              "SYRA-" +
               d.getFullYear() +
               String(d.getMonth() + 1).padStart(2, "0") +
               String(d.getDate()).padStart(2, "0") +
@@ -9860,7 +9860,7 @@
           [
             /\b(what is aira|who are you|about aira|what do you do|what can you do|aira)\b/,
             [
-              "I’m AIRA, your helper for AI ideas at Jazz.",
+              "I’m SYRA, your helper for AI ideas at Jazz.",
               "- You describe your idea",
               "- I fill in the details",
               "- I show how risky it looks",
@@ -10192,7 +10192,7 @@
             .querySelector(".aira-perch")
             .setAttribute("aria-expanded", "true");
           if (!gdLog.children.length) {
-            gdAdd("aira", "Hi, I\u2019m AIRA. What would you like to know?");
+            gdAdd("aira", "Hi, I\u2019m SYRA. What would you like to know?");
             gdChipsRender();
           }
           dialog.showModal();
@@ -10217,7 +10217,7 @@
           const top = document.createElement("div");
           top.className = "tz-top";
           const title = document.createElement("strong");
-          title.textContent = "Hi, I\u2019m AIRA";
+          title.textContent = "Hi, I\u2019m SYRA";
           const x = document.createElement("button");
           x.type = "button";
           x.className = "btn small ghost";
@@ -10463,7 +10463,7 @@
                 );
                 return step();
               }
-              // If AIRA is currently asking one field, treat the chat reply as that answer
+              // If SYRA is currently asking one field, treat the chat reply as that answer
               // and put it on the form — no review batch.
               const askingId = S.askingId;
               const asking = askingId && BY[askingId] ? BY[askingId] : null;

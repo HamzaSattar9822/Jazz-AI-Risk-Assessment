@@ -56,4 +56,4 @@ The script will:
 
 - Strategy is **Recreate** (not Rolling) because the SQLite PVC is `ReadWriteOnce`.  
 - Render continues to use `/tmp` via its own `DATABASE_URL`; OpenShift overrides to `/data`.  
-- Jazz Gemma is only reachable if the cluster can resolve/reach the AIOps host (same constraint as Render).
+- Jazz AIOps Qwen is only reachable if the cluster can resolve/reach the AIOps host (same constraint as Render).

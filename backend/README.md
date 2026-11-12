@@ -31,11 +31,11 @@ Change `JWT_SECRET` before any shared deployment. These accounts exist so the se
 
 ## What a request goes through
 
-1. The requester describes the use case. Extraction uses Jazz AIOps Gemma (`LLM_BASE_URL`) when configured; otherwise the keyword extractor fills the same slots as the portal prototype. Keywords still fill any fields the model omits.
+1. The requester describes the use case. Extraction uses Jazz AIOps Qwen (`LLM_BASE_URL`) when configured; otherwise the keyword extractor fills the same slots as the portal prototype. Keywords still fill any fields the model omits.
 2. The requester confirms or corrects each answer. "Not sure" on the three screening questions is kept on the record and treated as "Yes" for routing and weights.
 3. Early flags and indicative reviewers are calculated on the server (RAIO, privacy, cybersecurity, legal, architecture, procurement).
 4. Submit checks every stored request, not just one browser. At 80% similarity or above the API returns `409` and does not save the request.
-5. The requester and `GOVERNANCE_EMAIL` each get a notice with the reference (`AIRA-YYYYMMDD-XXXXX`) and the full request. Mail goes through the Outlook framework in `app/mail/` (`MAIL_PROVIDER=auto|smtp|graph|log`). Until SMTP or Graph credentials are set, notices are stored with status `logged`.
+5. The requester and `GOVERNANCE_EMAIL` each get a notice with the reference (`SYRA-YYYYMMDD-XXXXX`) and the full request. Mail goes through the Outlook framework in `app/mail/` (`MAIL_PROVIDER=auto|smtp|graph|log`). Until SMTP or Graph credentials are set, notices are stored with status `logged`.
 
 ## Outlook mail (submit notifications)
 

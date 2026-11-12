@@ -1,4 +1,4 @@
-"""Guided helper probes so AIRA can fill form fields with short questions."""
+"""Guided helper probes so SYRA can fill form fields with short questions."""
 
 from __future__ import annotations
 
