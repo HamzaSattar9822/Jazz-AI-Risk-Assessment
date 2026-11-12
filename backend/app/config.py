@@ -32,20 +32,28 @@ class Settings(BaseSettings):
     graph_client_secret: str = ""
     graph_sender: str = ""
     llm_base_url: str = (
-        "https://gemma-3-12b-dpo-apr-merged-aws-teknosys-ai.apps.aiops.jazz.com.pk/v1"
+        "https://qwen38-27b-meter.apps.aiops.jazz.com.pk/v1"
     )
     llm_api_key: str = ""
-    llm_model: str = "gemma-3-12b-dpo-apr-merged-aws"
+    llm_model: str = "qwen38-27b"
     llm_json_mode: bool = True
     llm_timeout_seconds: float = 60
     # Jazz AIOps serves a corporate TLS chain; verification is off by default.
     llm_verify_ssl: bool = False
-    # The Gemma vLLM endpoint does not require a bearer token.
-    llm_require_api_key: bool = False
+    # Meter gateway requires a Jazz bearer token.
+    llm_require_api_key: bool = True
     cors_origins: str = (
         "http://localhost:8080,http://127.0.0.1:8080,http://10.124.50.231:8080"
     )
     duplicate_threshold: int = 90
+
+    # Microsoft Entra ID (OIDC SSO)
+    entra_tenant_id: str = ""
+    entra_client_id: str = ""
+    entra_client_secret: str = ""
+    entra_redirect_uri: str = ""
+    # Comma-separated allowed app role values from the Entra roles claim.
+    entra_allowed_roles: str = "requester,reviewer,admin"
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -58,6 +66,23 @@ class Settings(BaseSettings):
         if self.llm_require_api_key and not self.llm_api_key:
             return False
         return True
+
+    @property
+    def entra_configured(self) -> bool:
+        return bool(
+            self.entra_tenant_id
+            and self.entra_client_id
+            and self.entra_client_secret
+            and self.entra_redirect_uri
+        )
+
+    @property
+    def entra_allowed_role_set(self) -> set[str]:
+        return {
+            part.strip().lower()
+            for part in self.entra_allowed_roles.split(",")
+            if part.strip()
+        }
 
 
 @lru_cache

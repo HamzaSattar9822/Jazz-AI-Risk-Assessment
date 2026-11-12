@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.api import COOKIE_NAME, current_user, reviewer
@@ -34,6 +37,17 @@ from app.services.intake_flow import (
     reset_slot,
     view_session,
 )
+from app.services.oidc import (
+    OidcError,
+    build_authorize_url,
+    create_oidc_state,
+    exchange_code,
+    issue_session_token,
+    upsert_oidc_user,
+    user_roles,
+    verify_oidc_state,
+)
+from app.services.report_pdf import build_final_approval_pdf
 from app.services.submissions import (
     SubmissionError,
     get_visible,
@@ -52,13 +66,29 @@ router = APIRouter()
 
 
 def _user_out(user: User) -> dict:
+    roles = user_roles(user)
     return {
         "id": user.id,
         "email": user.email,
         "name": user.name,
         "businessUnit": user.business_unit,
         "role": user.role,
+        "roles": roles,
     }
+
+
+def _set_session_cookie(response: Response, token: str) -> None:
+    settings = get_settings()
+    secure = settings.entra_redirect_uri.startswith("https://")
+    response.set_cookie(
+        COOKIE_NAME,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=secure,
+        max_age=settings.jwt_expire_minutes * 60,
+        path="/",
+    )
 
 
 def _raise_intake(exc: IntakeError):
@@ -76,22 +106,84 @@ def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
     if user is None or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Email or password is incorrect.")
-    settings = get_settings()
     token = create_token(user.id)
+    _set_session_cookie(response, token)
+    return {"accessToken": token, "tokenType": "bearer", "user": _user_out(user)}
+
+
+@router.get("/auth/oidc/config")
+def oidc_config():
+    settings = get_settings()
+    return {
+        "enabled": settings.entra_configured,
+        "loginPath": "/api/v1/auth/oidc/login",
+        "provider": "microsoft-entra-id",
+        "roles": sorted(settings.entra_allowed_role_set),
+    }
+
+
+@router.get("/auth/oidc/login")
+def oidc_login():
+    settings = get_settings()
+    try:
+        state = create_oidc_state(settings)
+        url = build_authorize_url(settings, state)
+    except OidcError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    return RedirectResponse(url=url, status_code=302)
+
+
+@router.get("/auth/oidc/callback")
+def oidc_callback(
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    error_description: str | None = Query(default=None, alias="error_description"),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    portal = "/"
+    if error:
+        detail = quote(error_description or error, safe="")
+        return RedirectResponse(url=f"{portal}?sso=error&detail={detail}", status_code=302)
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing OIDC code or state.")
+    try:
+        verify_oidc_state(settings, state)
+        profile = exchange_code(settings, code)
+        user = upsert_oidc_user(db, profile)
+        token = issue_session_token(user)
+    except OidcError as exc:
+        return RedirectResponse(
+            url=f"{portal}?sso=error&detail={quote(exc.message, safe='')}",
+            status_code=302,
+        )
+    response = RedirectResponse(url=f"{portal}?sso=ok", status_code=302)
+    _set_session_cookie(response, token)
+    # Also expose token in a short-lived cookie readable by the SPA bootstrap.
     response.set_cookie(
-        COOKIE_NAME,
+        "aira_access_token",
         token,
-        httponly=True,
+        httponly=False,
         samesite="lax",
-        max_age=settings.jwt_expire_minutes * 60,
+        secure=settings.entra_redirect_uri.startswith("https://"),
+        max_age=120,
         path="/",
     )
-    return {"accessToken": token, "tokenType": "bearer", "user": _user_out(user)}
+    return response
 
 
 @router.get("/auth/me")
 def me(user: User = Depends(current_user)):
     return _user_out(user)
+
+
+@router.post("/auth/logout")
+def logout(response: Response):
+    """Clear browser session cookies (password or Entra SSO)."""
+    response.delete_cookie(COOKIE_NAME, path="/")
+    response.delete_cookie("aira_access_token", path="/")
+    return {"ok": True}
 
 
 @router.get("/intake/examples")
@@ -116,7 +208,7 @@ def list_sessions(user: User = Depends(current_user), db: Session = Depends(get_
 
 @router.get("/intake/memory")
 def intake_memory(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Prior sessions + submissions AIRA can reuse when the user refers to past data."""
+    """Prior sessions + submissions SYRA can reuse when the user refers to past data."""
     return build_user_memory(db, user)
 
 
@@ -253,6 +345,33 @@ def read_submission(reference_id: str, user: User = Depends(current_user), db: S
     return public_submission(row)
 
 
+@router.get("/submissions/{reference_id}/report.pdf")
+def download_report_pdf(
+    reference_id: str,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Direct Final Approval Report PDF for ServiceNow / RAIO integrations."""
+    try:
+        row = get_visible(db, user, reference_id)
+    except SubmissionError as exc:
+        _raise_submission(exc)
+    if row.assessment is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Score the request before downloading the final approval report.",
+        )
+    pdf_bytes, filename = build_final_approval_pdf(row)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 @router.post("/submissions/{reference_id}/assessment")
 def assess(
     reference_id: str,
@@ -288,7 +407,16 @@ def decide(
 ):
     try:
         row = get_visible(db, user, reference_id)
-        save_decision(db, user, row, body.outcome, body.conditions, body.notes, get_settings())
+        save_decision(
+            db,
+            user,
+            row,
+            body.outcome,
+            body.conditions,
+            body.notes,
+            get_settings(),
+            service_now_ticket=body.serviceNowTicket,
+        )
         row = get_visible(db, user, reference_id)
     except SubmissionError as exc:
         _raise_submission(exc)

@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import User
 from app.security import read_token
+from app.services.oidc import user_has_role
 
 COOKIE_NAME = "aira_session"
 _bearer = HTTPBearer(auto_error=False)
-REVIEW_ROLES = {"reviewer", "governance", "admin"}
+REVIEW_ROLES = ("reviewer", "governance", "admin")
+ADMIN_ROLES = ("admin",)
 
 
 def current_user(
@@ -27,6 +29,12 @@ def current_user(
 
 
 def reviewer(user: User = Depends(current_user)) -> User:
-    if user.role not in REVIEW_ROLES:
+    if not user_has_role(user, *REVIEW_ROLES):
         raise HTTPException(status_code=403, detail="Only reviewers can do that.")
+    return user
+
+
+def admin_user(user: User = Depends(current_user)) -> User:
+    if not user_has_role(user, *ADMIN_ROLES):
+        raise HTTPException(status_code=403, detail="Only admins can do that.")
     return user

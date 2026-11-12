@@ -17,7 +17,10 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(200))
     business_unit: Mapped[str] = mapped_column(String(100))
+    # Primary/effective role kept for backward-compatible authorization checks.
     role: Mapped[str] = mapped_column(String(32), index=True)
+    # Full Entra roles claim (supports multiple roles per user).
+    roles: Mapped[list] = mapped_column(JSON, default=list)
     password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

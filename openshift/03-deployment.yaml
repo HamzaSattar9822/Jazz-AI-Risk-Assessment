@@ -38,6 +38,19 @@ spec:
               value: "720"
             - name: MAIL_PROVIDER
               value: log
+            - name: LLM_BASE_URL
+              value: https://qwen38-27b-meter.apps.aiops.jazz.com.pk/v1
+            - name: LLM_MODEL
+              value: qwen38-27b
+            - name: LLM_VERIFY_SSL
+              value: "false"
+            - name: LLM_REQUIRE_API_KEY
+              value: "true"
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aira-secrets
+                  key: LLM_API_KEY
             - name: DUPLICATE_THRESHOLD
               value: "90"
             - name: GOVERNANCE_EMAIL
@@ -47,6 +60,25 @@ spec:
                 secretKeyRef:
                   name: aira-secrets
                   key: JWT_SECRET
+            - name: ENTRA_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aira-secrets
+                  key: ENTRA_TENANT_ID
+            - name: ENTRA_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aira-secrets
+                  key: ENTRA_CLIENT_ID
+            - name: ENTRA_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aira-secrets
+                  key: ENTRA_CLIENT_SECRET
+            - name: ENTRA_REDIRECT_URI
+              value: https://jazz-ai-risk-assessment-ai-risk.apps.ocpv2.jazz.com.pk/api/v1/auth/oidc/callback
+            - name: ENTRA_ALLOWED_ROLES
+              value: requester,reviewer,admin
             # CORS is set at deploy time to the Route host (see deploy.sh).
             - name: CORS_ORIGINS
               value: https://jazz-ai-risk-assessment-ai-risk.apps.ocpv2.jazz.com.pk

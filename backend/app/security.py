@@ -18,6 +18,8 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, stored: str) -> bool:
+    if not stored or stored.startswith("oidc$"):
+        return False
     try:
         scheme, iterations, salt, digest = stored.split("$", 3)
     except ValueError:

@@ -4,4 +4,5 @@ sqlalchemy==2.0.36
 pydantic==2.10.4
 pydantic-settings==2.7.1
 PyJWT==2.10.1
+cryptography==44.0.0
 httpx==0.28.1

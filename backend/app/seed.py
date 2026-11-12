@@ -34,5 +34,6 @@ def seed_users(db: Session) -> None:
         return
     password_hash = hash_password(DEMO_PASSWORD)
     for row in DEMO_USERS:
-        db.add(User(password_hash=password_hash, **row))
+        role = row["role"]
+        db.add(User(password_hash=password_hash, roles=[role], **row))
     db.commit()
