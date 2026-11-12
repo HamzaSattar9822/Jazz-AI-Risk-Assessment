@@ -87,7 +87,7 @@ def test_conversational_submit_review_and_duplicate_warns_but_allows(client):
     assert submitted.status_code == 201, submitted.text
     body = submitted.json()
     reference = body["referenceId"]
-    assert reference.startswith("AIRA-")
+    assert reference.startswith("SYRA-")
     assert body["status"] == "submitted"
     assert body["payload"]["category"] == "AI By Us"
     assert body["payload"]["aiSystem"]["businessOwner"] == "Ayesha Khan"
@@ -127,14 +127,31 @@ def test_conversational_submit_review_and_duplicate_warns_but_allows(client):
     assert result["residualRiskGovernance"] == expected["residualRiskGovernance"]
     assert assessed.json()["status"] == "in_review"
 
+    report = client.get(f"/api/v1/submissions/{reference}/report.pdf", headers=reviewer)
+    assert report.status_code == 200, report.text
+    assert report.headers["content-type"].startswith("application/pdf")
+    assert report.content[:4] == b"%PDF"
+    assert "attachment" in report.headers.get("content-disposition", "")
+    assert reference.encode() in report.content
+
     decided = client.post(
         f"/api/v1/submissions/{reference}/decision",
         headers=reviewer,
-        json={"outcome": "approved", "notes": "Approved to proceed under the stated human review."},
+        json={
+            "outcome": "approved",
+            "serviceNowTicket": "RITM0123456",
+            "notes": "Approved to proceed under the stated human review.",
+        },
     )
     assert decided.status_code == 200, decided.text
     assert decided.json()["status"] == "approved"
+    assert decided.json()["decision"]["serviceNowTicket"] == "RITM0123456"
     assert len(decided.json()["notifications"]) == 4
+
+    report_after = client.get(f"/api/v1/submissions/{reference}/report.pdf", headers=reviewer)
+    assert report_after.status_code == 200, report_after.text
+    assert b"RITM0123456" in report_after.content
+
 
     again = client.post(
         "/api/v1/intake/sessions",
@@ -154,7 +171,7 @@ def test_conversational_submit_review_and_duplicate_warns_but_allows(client):
 def test_portal_payload_is_accepted(client):
     headers = login(client, "ayesha.khan@jazz.example")
     payload = {
-        "referenceId": "AIRA-20261005-PORT1",
+        "referenceId": "SYRA-20261005-PORT1",
         "category": "AI Against Us",
         "screening": {"data": "Yes", "decision": "No", "action": "No"},
         "aiSystem": {
@@ -181,7 +198,7 @@ def test_portal_payload_is_accepted(client):
     created = client.post("/api/v1/submissions", headers=headers, json=payload)
     assert created.status_code == 201, created.text
     body = created.json()
-    assert body["referenceId"] == "AIRA-20261005-PORT1"
+    assert body["referenceId"] == "SYRA-20261005-PORT1"
     assert body["routing"][0] == "RAIO"
     assert "Cybersecurity" in body["routing"]
     assert "this is ignored" not in body["routing"]
@@ -190,7 +207,7 @@ def test_portal_payload_is_accepted(client):
     replay = client.post(
         "/api/v1/submissions",
         headers=headers,
-        json={**payload, "referenceId": "AIRA-20261005-PORT2"},
+        json={**payload, "referenceId": "SYRA-20261005-PORT2"},
     )
     assert replay.status_code == 201, replay.text
     match = replay.json().get("duplicateCheck") or {}

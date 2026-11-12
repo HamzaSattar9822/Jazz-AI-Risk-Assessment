@@ -36,7 +36,7 @@ from app.methodology.provenance import ProvenanceError
 from app.models import Submission, User, utcnow
 from app.services.emailer import decision_notice, notify, submission_notice
 
-_REF = re.compile(r"^AIRA-\d{8}-[A-Z0-9]{5}$")
+_REF = re.compile(r"^SYRA-\d{8}-[A-Z0-9]{5}$")
 _ALPHABET = string.ascii_uppercase + string.digits
 _FINAL = {"approved", "approved_with_conditions", "rejected"}
 
@@ -55,7 +55,7 @@ def _iso(moment: datetime) -> str:
 def _new_reference(db: Session, preferred: str | None = None) -> str:
     if preferred:
         if not _REF.match(preferred):
-            raise SubmissionError("Reference must look like AIRA-YYYYMMDD-XXXXX.", 422)
+            raise SubmissionError("Reference must look like SYRA-YYYYMMDD-XXXXX.", 422)
         taken = db.scalar(select(Submission.id).where(Submission.reference_id == preferred))
         if taken is not None:
             raise SubmissionError("That reference is already in use.", 409, {"code": "reference_taken"})
@@ -63,7 +63,7 @@ def _new_reference(db: Session, preferred: str | None = None) -> str:
     today = datetime.now(timezone.utc).strftime("%Y%m%d")
     for _ in range(8):
         suffix = "".join(secrets.choice(_ALPHABET) for _ in range(5))
-        reference = f"AIRA-{today}-{suffix}"
+        reference = f"SYRA-{today}-{suffix}"
         taken = db.scalar(select(Submission.id).where(Submission.reference_id == reference))
         if taken is None:
             return reference
@@ -470,15 +470,26 @@ def save_assessment(
     return row
 
 
-def save_decision(db: Session, user: User, row: Submission, outcome: str, conditions: str, notes: str, settings: Settings) -> Submission:
+def save_decision(
+    db: Session,
+    user: User,
+    row: Submission,
+    outcome: str,
+    conditions: str,
+    notes: str,
+    settings: Settings,
+    service_now_ticket: str = "",
+) -> Submission:
     if row.status in _FINAL:
         raise SubmissionError("This request already has a final decision.", 409)
     if row.assessment is None:
         raise SubmissionError("Score the request before recording a decision.", 422)
+    ticket = (service_now_ticket or "").strip()
     row.decision = {
         "outcome": outcome,
         "conditions": conditions.strip(),
         "notes": notes.strip(),
+        "serviceNowTicket": ticket,
         "decidedBy": user.email,
         "decidedAt": _iso(utcnow()),
     }

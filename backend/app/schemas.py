@@ -1,3 +1,4 @@
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -108,11 +109,17 @@ class DecisionIn(BaseModel):
     outcome: Literal["approved", "approved_with_conditions", "rejected", "needs_information"]
     conditions: str = ""
     notes: str = ""
+    # ServiceNow RITM number written back with the final RAIO decision.
+    serviceNowTicket: str = Field(default="", max_length=64)
 
     @model_validator(mode="after")
     def conditions_required(self):
         if self.outcome == "approved_with_conditions" and not self.conditions.strip():
             raise ValueError("Conditions are required when approving with conditions.")
+        ticket = self.serviceNowTicket.strip()
+        self.serviceNowTicket = ticket
+        if ticket and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{2,63}", ticket):
+            raise ValueError("serviceNowTicket must look like a ServiceNow RITM number.")
         return self
 
 
