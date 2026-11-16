@@ -47,6 +47,14 @@ class Settings(BaseSettings):
     )
     duplicate_threshold: int = 90
 
+    # RAG knowledge assistant. Runtime retrieval is read-only.
+    rag_enabled: bool = True
+    rag_index_path: str = "knowledge_base/aira_knowledge.sqlite3"
+    rag_top_k: int = 5
+    rag_min_term_coverage: int = 1
+    rag_timeout_seconds: float = 35
+    rag_verify_ssl: bool = True
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

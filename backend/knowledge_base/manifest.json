@@ -1,0 +1,38 @@
+{
+  "AI Risk Assessment Standard.docx": {
+    "authority": "official",
+    "status": "current",
+    "category": "risk_framework",
+    "description": "AI risk assessment standard; primary governance and methodology source."
+  },
+  "AIRA_Field_Reference_Table.docx": {
+    "authority": "supporting",
+    "status": "current",
+    "category": "field_reference",
+    "description": "AIRA form and field definitions."
+  },
+  "GRC-Matrix-RA-Standard_Final.xlsx": {
+    "authority": "official",
+    "status": "current",
+    "category": "governance_controls",
+    "description": "GRC and ISO/IEC 42001 aligned risk assessment and control matrix."
+  },
+  "JazzWorld_AIRA_Impact_Likelihood_Control_Scales_Final.xlsx": {
+    "authority": "official",
+    "status": "current",
+    "category": "risk_scales",
+    "description": "Final AIRA-DDA-1.0 impact, likelihood, control, weighting and risk tier scales."
+  },
+  "JazzWorld_AIRA_Impact_Likelihood_Control_Scales_V2.xlsx": {
+    "authority": "supporting",
+    "status": "superseded",
+    "category": "risk_scales",
+    "description": "Older V2 workbook retained for traceability but excluded from default retrieval."
+  },
+  "BACKEND_JazzWorld_AI_Risk_Assessment_Calculator_v4.html": {
+    "authority": "supporting",
+    "status": "current",
+    "category": "calculator_reference",
+    "description": "Calculator interface and explanatory workflow reference."
+  }
+}

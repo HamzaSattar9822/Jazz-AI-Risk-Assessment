@@ -532,6 +532,29 @@ def add_message(db: Session, draft: IntakeSession, text: str, settings: Settings
     user = draft.user
     if user is None:
         user = db.get(User, draft.user_id)
+
+    # AIRA policy/methodology questions use the approved knowledge assistant
+    # in this same transcript. They must not alter the use-case description,
+    # intake slots, or submission state.
+    from app.rag.service import is_knowledge_question, answer_question
+    if settings.rag_enabled and is_knowledge_question(text):
+        _say(state, "user", text)
+        knowledge = answer_question(text, settings)
+        _say(
+            state,
+            "assistant",
+            knowledge["answer"],
+            meta={
+                "knowledgeAnswer": True,
+                "grounded": knowledge.get("grounded", False),
+                "sources": knowledge.get("sources", []),
+            },
+        )
+        _touch(draft, state)
+        db.commit()
+        db.refresh(draft)
+        return draft
+
     memory = build_user_memory(db, user, exclude_session_id=draft.id) if user else {
         "priorSessions": [],
         "priorSubmissions": [],

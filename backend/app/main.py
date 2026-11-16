@@ -1,3 +1,4 @@
+
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -8,10 +9,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.router import router
+from app.api.gatekeeper_router import router as gatekeeper_router
 from app.config import get_settings
 from app.db import Base, SessionLocal, engine
 from app.methodology.engine import METHODOLOGY_VERSION
 from app.seed import seed_users
+from app.services.syra_explanations import get_explanation
 
 logger = logging.getLogger(__name__)
 
@@ -49,18 +52,26 @@ async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_users(db)
-    logger.info("JazzWorld AI approval API ready (%s)", METHODOLOGY_VERSION)
+    logger.info(
+        "JazzWorld AI approval API ready (%s)",
+        METHODOLOGY_VERSION,
+    )
     yield
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
+
     app = FastAPI(
         title="JazzWorld AI Approval API",
-        summary="Intake, duplicate check, and AIRA risk scoring for the Responsible AI Office.",
+        summary=(
+            "Intake, duplicate check, and AIRA risk scoring "
+            "for the Responsible AI Office."
+        ),
         version="1.0.0",
         lifespan=lifespan,
     )
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
@@ -75,22 +86,62 @@ def create_app() -> FastAPI:
         from app.mail.service import mail_status
 
         mail = mail_status(settings)
+
+        rag_index = Path(settings.rag_index_path)
+
+        if not rag_index.is_absolute():
+            rag_index = (
+                Path(__file__).resolve().parents[1]
+                / rag_index
+            )
+
         return {
             "status": "ok",
             "methodology": METHODOLOGY_VERSION,
+            "ragEnabled": settings.rag_enabled,
+            "ragIndexReady": bool(
+                settings.rag_enabled
+                and rag_index.is_file()
+            ),
             "llmConfigured": settings.llm_configured,
-            "llmModel": settings.llm_model if settings.llm_configured else None,
-            "emailConfigured": bool(mail["configured"] and mail["provider"] != "log"),
+            "llmModel": (
+                settings.llm_model
+                if settings.llm_configured
+                else None
+            ),
+            "emailConfigured": bool(
+                mail["configured"]
+                and mail["provider"] != "log"
+            ),
             "mail": mail,
         }
 
     portal_html = _portal_html()
     framework_json = _framework_json()
 
+    @app.get("/api/v1/risk-profile/explanations/{question_id}")
+    def syra_risk_profile_explanation(question_id: str):
+        """Return the approved CSV explanation for a Risk Profile question."""
+
+        explanation = get_explanation(question_id)
+
+        if explanation is None:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=404,
+                detail="Explanation not found"
+            )
+
+        return {
+            "questionId": question_id,
+            "explanation": explanation
+        }
+
     @app.get("/")
     def root():
         if portal_html is not None:
             return FileResponse(portal_html)
+
         return {
             "service": "JazzWorld AI Approval API",
             "docs": "/docs",
@@ -101,21 +152,53 @@ def create_app() -> FastAPI:
     @app.get("/app")
     def portal():
         if portal_html is None:
-            return {"message": "Portal HTML was not packaged with this build."}
+            return {
+                "message": (
+                    "Portal HTML was not packaged with this build."
+                )
+            }
+
         return FileResponse(portal_html)
 
     @app.get("/aira_risk_framework.json")
     def aira_framework():
         if framework_json is None:
-            return {"message": "aira_risk_framework.json was not packaged with this build."}
-        return FileResponse(framework_json, media_type="application/json")
+            return {
+                "message": (
+                    "aira_risk_framework.json was not "
+                    "packaged with this build."
+                )
+            }
 
-    app.include_router(router, prefix="/api/v1")
+        return FileResponse(
+            framework_json,
+            media_type="application/json",
+        )
+
+    # Existing application routes.
+    app.include_router(
+        router,
+        prefix="/api/v1",
+    )
+
+    # New semantic definition validator.
+    # This does not replace or modify any existing routes.
+    app.include_router(
+        gatekeeper_router,
+        prefix="/api/v1",
+    )
+
     if portal_html is not None and portal_html.parent.is_dir():
         # Optional assets directory when packaged as /app/static/
         static_dir = portal_html.parent
+
         if static_dir.name == "static":
-            app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+            app.mount(
+                "/static",
+                StaticFiles(directory=str(static_dir)),
+                name="static",
+            )
+
     return app
 
 

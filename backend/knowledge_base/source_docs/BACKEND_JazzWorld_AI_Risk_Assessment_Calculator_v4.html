@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JazzWorld AI Risk Assessment Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#f7f7f8; --panel:#ffffff; --text:#1e1e1e; --muted:#666b73; --border:#dedee3;
+      --accent:#880939; --accent2:#5a024e; --teal:#0b6e6b; --green:#1f7a4d;
+      --yellow:#fff2cc; --low:#e8f5ee; --med:#fff4d6; --high:#fdebd3; --critical:#fde8e8;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .topbar-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
+    .brand{font-weight:900;color:var(--accent2);font-size:15px}
+    .stepmeta{font-size:12px;color:var(--muted);margin-top:3px}
+    .top-results{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .risk-pill{border-radius:12px;padding:8px 11px;min-width:122px;border:1px solid var(--border);background:#fff}
+    .risk-pill small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.5px}
+    .risk-pill strong{font-size:16px}
+    .progress-wrap{grid-column:1/-1}
+    .progress-track{height:6px;background:#eceef1;border-radius:99px;overflow:hidden}
+    .progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:.25s}
+    .app{max-width:1000px;margin:0 auto;padding:26px 20px 48px}
+    .screen{display:none}
+    .screen.active{display:block}
+    .hero{margin-bottom:18px}
+    .hero h1{font-size:28px;margin:0 0 8px}
+    .hero p{margin:0;color:var(--muted);line-height:1.55}
+    .card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .card-head{padding:14px 18px;font-weight:900;color:#fff;background:var(--accent)}
+    .card-head.teal{background:var(--teal)} .card-head.green{background:var(--green)} .card-head.purple{background:var(--accent2)}
+    .card-body{padding:18px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .field{display:flex;flex-direction:column;gap:6px}.custom-input{margin-top:2px}
+    label{font-size:13px;font-weight:800}
+    input,select,textarea{width:100%;border:1px solid var(--border);border-radius:10px;background:#fff;padding:11px 12px;font-size:16px}
+    input:focus,select:focus,textarea:focus{outline:2px solid #d9a9c0;outline-offset:1px}
+    .full{grid-column:1/-1}
+    .actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .btn{min-height:44px;border-radius:10px;padding:10px 15px;border:1px solid var(--border);background:#fff;font-weight:900;cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+    .btn.green{background:var(--green);border-color:var(--green);color:#fff}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+    .factor-band{padding:11px 13px;border-radius:10px;font-weight:900;margin:16px 0 2px}
+    .business{background:#fcecef;color:#6c173a} .people{background:#fff6df;color:#805d00} .ai{background:#edf4ff;color:#28558d}
+    .occurrence{background:#e8f6f3;color:#126c64} .feasibility{background:#f3eefb;color:#5d4483} .controls{background:#edf7f0;color:#267049}
+    .score-row{display:grid;grid-template-columns:minmax(0,1.05fr) 130px minmax(0,1.65fr);gap:14px;padding:13px 0;border-top:1px solid var(--border);align-items:start}
+    .score-select{background:var(--yellow);font-weight:900;text-align:center}
+    .definition{font-size:13px;color:var(--muted);line-height:1.5}
+    .section-note{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 12px}
+    .control-note{background:#edf7f0;color:#267049;font-weight:800;padding:11px 12px;border-radius:10px;margin-bottom:12px}
+    .completion-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#f7f7f8;color:var(--muted);font-size:13px}
+    .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .result-card{border:1px solid var(--border);border-radius:14px;padding:18px;background:#fff}
+    .result-card h3{margin:0 0 4px}
+    .score-big{font-size:46px;font-weight:900;line-height:1;margin-top:12px}
+    .tier{display:inline-block;padding:6px 10px;border-radius:99px;font-size:12px;font-weight:900;margin-top:8px}
+    .low{background:var(--low);color:#1f6b3a} .medium{background:var(--med);color:#7a5b00} .high{background:var(--high);color:#9a4d00} .critical{background:var(--critical);color:#9b1c1c} .pending{background:#f1f2f4;color:#666}
+    .factor-table{margin-top:18px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .factor-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 12px;border-top:1px solid var(--border)}
+    .factor-row:first-child{border-top:0}
+    .thresholds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+    .threshold{padding:10px;border-radius:9px;font-size:12px;font-weight:800;text-align:center}
+    .tier-decision{margin-top:18px;border:2px solid var(--border);border-radius:16px;overflow:hidden;background:#fff}
+    .tier-decision-head{padding:10px 14px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.6px}
+    .tier-decision-body{padding:18px}
+    .tier-decision-grid{display:grid;grid-template-columns:1.1fr .8fr 1.6fr .8fr;gap:10px;margin-top:14px}
+    .decision-item{border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:10px;background:rgba(255,255,255,.72)}
+    .decision-item small{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.45px;opacity:.7;margin-bottom:4px}
+    .decision-item strong{font-size:15px}
+    .tier-decision.low{border-color:#7cc493;background:#f2fbf5}.tier-decision.low .tier-decision-head{background:#1f6b3a;color:#fff}
+    .tier-decision.medium{border-color:#dbc26b;background:#fffaf0}.tier-decision.medium .tier-decision-head{background:#9a7600;color:#fff}
+    .tier-decision.high{border-color:#e0a15a;background:#fff6eb}.tier-decision.high .tier-decision-head{background:#a95a00;color:#fff}
+    .tier-decision.critical{border-color:#da7b7b;background:#fff2f2}.tier-decision.critical .tier-decision-head{background:#a51f1f;color:#fff}
+    .tier-decision.pending{background:#f7f7f8}.tier-decision.pending .tier-decision-head{background:#666b73;color:#fff}
+    .tier-matrix{margin-top:18px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .tier-matrix-row{display:grid;grid-template-columns:.8fr .9fr .8fr 1.55fr .7fr}
+    .tier-matrix-row>div{padding:9px 10px;border-top:1px solid var(--border);font-size:12px}
+    .tier-matrix-row:first-child>div{border-top:0}
+    .tier-matrix-head{font-weight:900;background:#f3eef5;color:var(--accent2)}
+
+    .formula{font-family:Consolas,monospace;background:#f7f7f8;border:1px solid var(--border);padding:10px;border-radius:10px;font-size:12px;margin-top:14px}
+    @media(max-width:760px){
+      .topbar-inner{grid-template-columns:1fr} .top-results{justify-content:flex-start}
+      .grid2,.score-row,.result-grid{grid-template-columns:1fr} .thresholds{grid-template-columns:1fr 1fr}
+      .app{padding:18px 12px 36px} .full{grid-column:auto}
+    }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="brand">JazzWorld · AI Risk Assessment Calculator</div>
+      <div id="stepMeta" class="stepmeta">Step 1 of 5 · AI System / Use Case Information</div>
+    </div>
+    <div class="top-results" aria-live="polite">
+      <div class="risk-pill"><small>Inherent Risk</small><strong id="topInherent">Pending</strong></div>
+      <div class="risk-pill"><small>Residual Risk</small><strong id="topResidual">Pending</strong></div>
+      <div class="risk-pill"><small>Completion</small><strong id="topCompletion">0%</strong></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div></div>
+  </div>
+</div>
+
+<div class="app" id="airaApp">
+  <section id="screen-info" class="screen active">
+    <div class="hero">
+      <h1>AI System / Use Case Information</h1>
+      <p>Provide the business, ownership, value, delivery and implementation context for the AI system or use case. Fields marked * are required before the assessment can begin.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head purple">Core AI System / Use Case Profile</div>
+      <div class="card-body grid2">
+        <div class="field">
+          <label for="systemName">AI system / use case name *</label>
+          <input id="systemName" placeholder="e.g. Customer Service GenAI Assistant">
+        </div>
+
+        <div class="field">
+          <label for="owner">Business / AI system owner *</label>
+          <input id="owner" placeholder="Name or accountable owner">
+        </div>
+
+        <div class="field">
+          <label for="businessUnit">Business Unit *</label>
+          <select id="businessUnit" class="custom-select" data-custom-target="businessUnitCustom">
+            <option value="">Select Business Unit</option>
+            <option value="Custom">Custom</option>
+            <option>Compliance</option>
+            <option>CRA</option>
+            <option>Cybersecurity</option>
+            <option>Enterprise</option>
+            <option>Finance</option>
+            <option>GSM</option>
+            <option>Internal Audit</option>
+            <option>JazzCash</option>
+            <option>JLV</option>
+            <option>Legal</option>
+            <option>MMBL</option>
+            <option>P&amp;O</option>
+            <option>Strategy</option>
+            <option>Technology</option>
+            <option>Teknosys</option>
+          </select>
+          <input id="businessUnitCustom" class="custom-input" type="text" placeholder="Enter custom Business Unit" hidden>
+        </div>
+
+        <div class="field">
+          <label for="businessDivision">Business Division</label>
+          <select id="businessDivision" class="custom-select" data-custom-target="businessDivisionCustom">
+            <option value="">Select Business Division</option>
+            <option value="Custom">Custom</option>
+            <option>Amir Tasleem</option>
+            <option>APNACLINIC</option>
+            <option>Brand Experience</option>
+            <option>CRA</option>
+            <option>Cybersecurity</option>
+            <option>DFS</option>
+            <option>Digital Solutions and Innovation</option>
+            <option>E&amp;C</option>
+            <option>Enterprise</option>
+            <option>ERP</option>
+            <option>FIKRFREE</option>
+            <option>Finance</option>
+            <option>GSM</option>
+            <option>IT+RA Team</option>
+            <option>Jazz Application</option>
+            <option>Jazz Consumer Growth</option>
+            <option>Jazz CX</option>
+            <option>JazzCash</option>
+            <option>JazzCash DFS</option>
+            <option>Legal</option>
+            <option>Legal Affairs</option>
+            <option>P&amp;O</option>
+            <option>Risk/Credit</option>
+            <option>Strategic Projects - USF Programme</option>
+            <option>Strategy</option>
+            <option>Strategy (EPMO)</option>
+            <option>Strategy Consumer Insights</option>
+            <option>Technology</option>
+            <option>Technology Mobile Networks</option>
+            <option>Technology Performance &amp; Service Assurance</option>
+            <option>Technosys</option>
+          </select>
+          <input id="businessDivisionCustom" class="custom-input" type="text" placeholder="Enter custom Business Division" hidden>
+        </div>
+
+        <div class="field">
+          <label for="technicalOwner">Technical Owner</label>
+          <input id="technicalOwner" placeholder="Name or accountable technical owner">
+        </div>
+
+        <div class="field">
+          <label for="assessor">Assessor *</label>
+          <input id="assessor" placeholder="Name of person completing assessment">
+        </div>
+
+        <div class="field">
+          <label for="segment">Segment</label>
+          <select id="segment" class="custom-select" data-custom-target="segmentCustom">
+            <option value="">Select Segment</option>
+            <option value="Custom">Custom</option>
+            <option>B2C &amp; B2B GSM Customer</option>
+            <option>Consumer-Facing AI</option>
+            <option>Corporate AI</option>
+            <option>CRA</option>
+            <option>Enterprise AI</option>
+            <option>GSM</option>
+            <option>Internal Operations</option>
+          </select>
+          <input id="segmentCustom" class="custom-input" type="text" placeholder="Enter custom Segment" hidden>
+        </div>
+
+        <div class="field">
+          <label for="valueDriver">Value Driver</label>
+          <select id="valueDriver" class="custom-select" data-custom-target="valueDriverCustom">
+            <option value="">Select Value Driver</option>
+            <option value="Custom">Custom</option>
+            <option>Corporate AI</option>
+            <option>Corporate AI (Efficiency)</option>
+            <option>Cost Reduction</option>
+            <option>Customer Experience / Revenue Uplift / Productivity / Cost Reduction</option>
+            <option>Efficiency</option>
+            <option>Governance</option>
+            <option>Productivity</option>
+            <option>Productivity / Visibility (increased monitoring)</option>
+            <option>Productivity / Cost Reduction</option>
+            <option>Productivity / Reduction in bid Cycle Time and Analyst Effort</option>
+            <option>Revenue and JazzCash / Cash Flow Uplift</option>
+            <option>Revenue Uplift</option>
+            <option>Revenue Uplift &amp; NPL Reduction</option>
+          </select>
+          <input id="valueDriverCustom" class="custom-input" type="text" placeholder="Enter custom Value Driver" hidden>
+        </div>
+
+        <div class="field">
+          <label for="progress">Progress</label>
+          <select id="progress" class="custom-select" data-custom-target="progressCustom">
+            <option value="">Select Progress</option>
+            <option value="Custom">Custom</option>
+            <option>Semi-Void</option>
+            <option>Valid</option>
+            <option>Void</option>
+          </select>
+          <input id="progressCustom" class="custom-input" type="text" placeholder="Enter custom Progress" hidden>
+        </div>
+
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" class="custom-select" data-custom-target="statusCustom">
+            <option value="">Select Status</option>
+            <option value="Custom">Custom</option>
+            <option>Completed</option>
+            <option>Implemented</option>
+            <option>Implemented (Phase 1)</option>
+            <option>In Progress</option>
+            <option>Limited Launch</option>
+            <option>Live</option>
+            <option>Not Started</option>
+            <option>On Hold</option>
+            <option>Scope</option>
+            <option>To be Started</option>
+          </select>
+          <input id="statusCustom" class="custom-input" type="text" placeholder="Enter custom Status" hidden>
+        </div>
+
+        <div class="field">
+          <label for="supplier">Model / supplier / platform</label>
+          <input id="supplier" placeholder="Internal, vendor, model or platform">
+        </div>
+
+        <div class="field">
+          <label for="deployment">Deployment context</label>
+          <select id="deployment">
+            <option value="">Select context</option>
+            <option>Internal workforce use</option>
+            <option>Customer-facing</option>
+            <option>Decision support</option>
+            <option>Automated decision / action</option>
+            <option>Agentic / autonomous workflow</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="date">Assessment date</label>
+          <input id="date" type="date">
+        </div>
+
+        <div class="field">
+          <label for="timeHorizon">Time Horizon (Years)</label>
+          <input id="timeHorizon" type="number" min="0" step="0.1" placeholder="e.g. 3">
+        </div>
+
+        <div class="field">
+          <label for="annualValue">Estimated Annual Value (USD / ROI)</label>
+          <input id="annualValue" type="number" min="0" step="0.01" placeholder="e.g. 500000">
+        </div>
+
+        <div class="field">
+          <label for="investment">Estimated Investment (USD) / Cost</label>
+          <input id="investment" type="number" min="0" step="0.01" placeholder="e.g. 150000">
+        </div>
+
+        <div class="field">
+          <label for="spendingToDate">Spending Done to Date</label>
+          <input id="spendingToDate" type="number" min="0" step="0.01" placeholder="e.g. 50000">
+        </div>
+
+        <div class="field">
+          <label for="hoursSaved">Estimated Hours Saved (Annually)</label>
+          <input id="hoursSaved" type="number" min="0" step="0.1" placeholder="e.g. 2500">
+        </div>
+
+        <div class="field full">
+          <label for="summary">Summary</label>
+          <textarea id="summary" rows="2" placeholder="Provide a concise summary of the AI system or use case."></textarea>
+        </div>
+
+        <div class="field full">
+          <label for="description">Description *</label>
+          <textarea id="description" rows="4" placeholder="Describe what the AI system or use case does, how it works at a high level, who uses it, the decisions or actions it supports, and the intended business outcome."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div id="infoStatus" class="completion-note">Complete all fields marked * to begin.</div>
+    <div class="actions">
+      <button id="startBtn" class="btn primary" type="button" disabled>Start Assessment →</button>
+    </div>
+  </section>
+
+  <section id="screen-impact" class="screen">
+    <div class="hero"><h1>Impact Assessment</h1><p>Score the consequence if the identified AI risk scenario materializes. Each main factor is calculated as the average of its sub-categories.</p></div>
+    <div class="card"><div class="card-head">Impact Factors</div><div class="card-body"><div id="impactQuestions"></div></div></div>
+    <div id="impactStatus" class="completion-note">Complete all impact scores to continue.</div>
+    <div class="actions"><button class="btn" data-back="info" type="button">← Back</button><button id="toLikelihoodBtn" class="btn teal" type="button" disabled>Continue to Likelihood →</button></div>
+  </section>
+
+  <section id="screen-likelihood" class="screen">
+    <div class="hero"><h1>Likelihood Assessment</h1><p>Score the occurrence/exposure and failure/misuse feasibility factors. These form the inherent likelihood drivers before existing controls are considered.</p></div>
+    <div class="card"><div class="card-head teal">Likelihood Factors</div><div class="card-body"><div id="likelihoodQuestions"></div></div></div>
+    <div id="likelihoodStatus" class="completion-note">Complete all likelihood scores to continue.</div>
+    <div class="actions"><button class="btn" data-back="impact" type="button">← Back</button><button id="toControlsBtn" class="btn green" type="button" disabled>Continue to Existing Controls →</button></div>
+  </section>
+
+  <section id="screen-controls" class="screen">
+    <div class="hero"><h1>Existing Control Strength</h1><p>Assess the strength of controls already implemented and operating for the AI system or use case.</p></div>
+    <div class="card"><div class="card-head green">Existing Controls</div><div class="card-body"><div class="control-note">Reverse scoring: 1 = strong/effective controls · 5 = weak, ineffective or absent controls.</div><div id="controlQuestions"></div></div></div>
+    <div id="controlStatus" class="completion-note">Complete all control-strength scores to view the final result.</div>
+    <div class="actions"><button class="btn" data-back="likelihood" type="button">← Back</button><button id="viewResultsBtn" class="btn primary" type="button" disabled>View Results →</button></div>
+  </section>
+
+  <section id="screen-results" class="screen">
+    <div class="hero"><h1>AI Risk Assessment Results</h1><p>Review the calculated inherent and residual risk positions. The <strong>Risk Tier, approval level and manager level are assigned from the Residual Risk Score</strong> and are explicitly highlighted below.</p></div>
+
+    <div class="result-grid">
+      <div class="result-card">
+        <h3>Inherent Risk</h3><div class="section-note">Before considering existing controls</div>
+        <div id="inherentScore" class="score-big">—</div><span id="inherentTier" class="tier pending">Pending</span>
+        <div class="grid2" style="margin-top:16px"><div><small>Impact</small><div><strong id="inherentImpact">— / 15</strong></div></div><div><small>Likelihood</small><div><strong id="inherentLikelihood">— / 15</strong></div></div></div>
+      </div>
+      <div class="result-card">
+        <h3>Residual Risk</h3><div class="section-note">After considering existing controls</div>
+        <div id="residualScore" class="score-big">—</div><span id="residualTier" class="tier pending">Pending</span>
+        <div class="grid2" style="margin-top:16px"><div><small>Impact</small><div><strong id="residualImpact">— / 15</strong></div></div><div><small>Likelihood</small><div><strong id="residualLikelihood">— / 15</strong></div></div></div>
+      </div>
+    </div>
+
+    
+    <div id="residualTierDecision" class="tier-decision pending" aria-live="polite">
+      <div class="tier-decision-head">Residual Risk Governance Decision</div>
+      <div class="tier-decision-body">
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap">
+          <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase">Assigned from Residual Risk Score</div>
+            <div id="decisionHeadline" style="font-size:24px;font-weight:900;margin-top:4px">Complete the assessment</div>
+          </div>
+          <span id="decisionScoreBadge" class="tier pending">Pending</span>
+        </div>
+        <div class="tier-decision-grid">
+          <div class="decision-item"><small>Risk Tier</small><strong id="decisionTier">—</strong></div>
+          <div class="decision-item"><small>Severity</small><strong id="decisionSeverity">—</strong></div>
+          <div class="decision-item"><small>Approval Level</small><strong id="decisionApproval">—</strong></div>
+          <div class="decision-item"><small>Manager Level</small><strong id="decisionManager">—</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier-matrix">
+      <div class="tier-matrix-row tier-matrix-head">
+        <div>Residual Score</div><div>Severity</div><div>Risk Tier</div><div>Approval Level</div><div>Manager Level</div>
+      </div>
+      <div class="tier-matrix-row critical"><div>80–100</div><div>Critical</div><div>Tier 4</div><div>C-Suite</div><div>L6</div></div>
+      <div class="tier-matrix-row high"><div>60–79</div><div>High</div><div>Tier 3</div><div>Head of Department / Function</div><div>L5</div></div>
+      <div class="tier-matrix-row medium"><div>26–59</div><div>Medium</div><div>Tier 2</div><div>Line Manager</div><div>L4 / L3</div></div>
+      <div class="tier-matrix-row low"><div>1–25</div><div>Low</div><div>Tier 1</div><div>Self-Review</div><div>N/A</div></div>
+    </div>
+
+    <div class="factor-table" id="factorScores"></div>
+    <div class="formula">Risk Score = ((Impact × Likelihood) / 225) × 100</div>
+    <div class="thresholds">
+      <div class="threshold low">Low<br>1–25</div><div class="threshold medium">Medium<br>26–59</div><div class="threshold high">High<br>60–79</div><div class="threshold critical">Critical<br>80–100</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" data-back="controls" type="button">← Back</button>
+      <button id="downloadPdfBtn" class="btn primary" type="button">Download PDF Report</button>
+      <button id="resetBtn" class="btn" type="button">Start New Assessment</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const impact = [
+    ['Business / Use Case Impact','business',[
+      ['Business Criticality',['Experimental, discretionary or non-critical activity; no material dependency.','Supports a non-critical activity; interruption causes limited inconvenience.','Supports an important process; failure requires management intervention or workaround.','Supports a high-value or critical process; failure materially affects service or business outcomes.','Business-critical or mission-critical use; failure could cause sustained or enterprise-level disruption.']],
+      ['Customer / Service Impact',['No customer-facing effect or negligible service impact.','Small number of customers affected; short-lived and easily corrected impact.','Noticeable customer/service degradation affecting a meaningful population; generally reversible.','Significant service degradation, incorrect customer outcomes, or material customer harm.','Widespread or severe customer impact, prolonged service loss, or potentially irreversible harm.']],
+      ['Decision Consequence',['AI output is advisory only and has no meaningful effect on decisions.','Supports low-consequence decisions with simple human correction.','Influences material operational or business decisions requiring review.','Materially influences high-consequence decisions affecting customers, employees, revenue or operations.','Directly determines highly consequential or rights-/service-critical decisions with limited opportunity for correction.']],
+      ['Operational Dependency',['No operational dependency; manual alternative is readily available.','Limited dependency; simple fallback exists with minimal disruption.','Moderate dependency; fallback requires effort, delay or management intervention.','High dependency; failure disrupts important workflows and fallback capacity is constrained.','Critical dependency; AI failure could halt or materially impair essential operations.']],
+      ['Financial Exposure',['Negligible financial effect.','Limited cost, loss or revenue impact that can be absorbed within routine operations.','Material but manageable financial exposure requiring management action.','Significant loss, revenue impact, liability or remediation cost.','Severe or enterprise-significant financial loss, liability, penalty or sustained revenue impact.']],
+      ['Resilience / Continuity',['No meaningful resilience or continuity impact.','Minor disruption with rapid recovery and established workaround.','Moderate disruption requiring recovery procedures or temporary service degradation.','Significant continuity impact; recovery is complex, delayed or dependent on scarce resources.','Failure could cause prolonged outage, systemic disruption or inability to deliver critical services.']],
+      ['Third-Party / Supplier Dependency',['No material third-party dependency or easily substitutable supplier.','Low dependency with alternative suppliers or simple exit options.','Meaningful dependency; switching or remediation requires time and coordination.','High dependency on a key supplier, proprietary model, platform or service.','Critical concentration or lock-in; supplier failure, withdrawal or restriction could materially impair the use case.']],
+      ['Strategic / Sovereignty Dependency',['No material strategic, jurisdictional or sovereignty dependency.','Limited external dependency with low sensitivity and practical alternatives.','Meaningful dependency on external technology, jurisdiction, data location or strategic supplier.','Significant dependency affecting data control, technology autonomy, regulatory posture or strategic resilience.','Critical sovereignty exposure, including unacceptable external control, jurisdictional dependence, restricted data/model control or inability to operate independently.']]
+    ]],
+    ['People & Data Impact','people',[
+      ['Population Affected',['Very few or no identifiable individuals affected.','Small, contained population.','Moderate population or recurring impact across a business/customer segment.','Large population or broad customer/employee exposure.','Very large, enterprise-wide or societal-scale population affected.']],
+      ['Vulnerable / Higher-Impact Groups',['No vulnerable or higher-impact group is reasonably affected.','Limited indirect exposure with negligible differentiated harm.','A vulnerable or higher-impact group may be affected, but impacts are generally reversible and mitigable.','Material impact on vulnerable or higher-impact groups requiring enhanced safeguards.','Severe, disproportionate or potentially irreversible impact on vulnerable or protected groups.']],
+      ['Employee Impact',['No meaningful employee impact.','Minor administrative or productivity impact with easy correction.','Material effect on work allocation, performance, access, monitoring or employment-related processes.','Significant effect on employment opportunities, evaluation, discipline, compensation or working conditions.','Severe or potentially irreversible employment harm or systemic adverse workforce impact.']],
+      ['Customer Impact',['No meaningful individual customer impact.','Minor inconvenience or easily reversible customer effect.','Material but generally reversible effect on customer access, experience, treatment or decisions.','Significant adverse customer consequence, denial, exclusion, loss or prolonged impact.','Severe, widespread or potentially irreversible harm to customers or customer rights/interests.']],
+      ['Data Sensitivity',['Public, synthetic or non-sensitive data only.','Low-sensitivity internal data with limited adverse consequence if exposed or misused.','Personal/internal data or moderately sensitive business data.','Sensitive personal, confidential, regulated or high-value business data.','Highly sensitive/restricted data, critical telecom data, large-scale sensitive personal data or data whose compromise could cause severe harm.']],
+      ['Personal Data Exposure',['No personal data processed.','Minimal personal data, strongly minimized or effectively de-identified.','Personal data processed for a defined purpose with moderate scope.','Large-scale, sensitive, linked, inferred or persistent personal data processing.','Extensive or highly sensitive personal data exposure with severe privacy consequences or inability to reasonably remediate.']],
+      ['Privacy / Data Protection',['No material privacy consequence.','Minor privacy concern with low sensitivity and straightforward remediation.','Material privacy impact requiring defined safeguards, transparency or assessment.','Significant privacy risk involving sensitive data, profiling, monitoring, data sharing or rights impact.','Severe privacy/data-protection impact, unlawful processing risk, irreversible disclosure, large-scale surveillance or serious rights impact.']],
+      ['Individual Consequence',['No meaningful effect on an individual’s interests, access, opportunities or wellbeing.','Minor inconvenience or temporary, readily reversible effect.','Material effect requiring intervention, correction or remediation.','Significant effect on access, opportunity, finances, reputation, dignity or wellbeing.','Severe or potentially irreversible harm to an individual, including serious deprivation, exclusion or loss.']],
+      ['Human Rights / Wellbeing',['No credible rights or wellbeing impact.','Low-level, temporary or indirect impact.','Material impact on autonomy, dignity, accessibility, expression, equality, wellbeing or related interests.','Significant rights/wellbeing impact requiring enhanced safeguards and oversight.','Severe, systemic or potentially irreversible rights, dignity, safety or wellbeing harm.']]
+    ]],
+    ['AI Impact','ai',[
+      ['Fairness & Non-Discrimination',['No meaningful differential treatment or fairness concern.','Minor disparity with low consequence and easy correction.','Material disparity, bias or differential performance requiring mitigation.','Significant unfair treatment or discriminatory outcome affecting important decisions or groups.','Severe, systemic or unlawful discrimination, entrenched bias or large-scale exclusion.']],
+      ['Safety & Reliability',['Failure produces negligible consequence; outputs are non-critical and easily checked.','Occasional low-severity error with effective human correction.','Material accuracy, robustness or reliability issue that can affect outcomes or operations.','Significant unsafe, unreliable or unstable behavior with high-consequence effects.','Severe or systemic safety/reliability failure capable of causing major harm or critical service impact.']],
+      ['Transparency & Explainability',['No meaningful explanation need; use is obvious or low consequence.','Basic disclosure/explanation is sufficient and available.','Material decisions require understandable explanation; some limitations exist.','Important outcomes are difficult to explain, challenge or trace, creating significant governance impact.','Highly consequential decisions are opaque or effectively unchallengeable, creating severe accountability or rights impact.']],
+      ['Human Oversight & Autonomy',['Human remains fully in control; AI cannot materially act or decide independently.','Limited automation with easy human review and override.','Meaningful automation; human review exists but may be periodic, selective or constrained.','High autonomy or significant reliance on AI; human intervention may be delayed or difficult.','AI can take highly consequential actions with little/no effective human oversight, override or intervention.']],
+      ['Cybersecurity',['No material AI-specific security consequence.','Limited attack surface with strong isolation and low-value exposure.','Material AI-specific security risk such as prompt injection, model/data manipulation or misuse.','Significant compromise could affect sensitive systems, data, integrations or business operations.','Severe/systemic compromise, including privileged autonomous actions, critical infrastructure impact, major data compromise or uncontrolled propagation.']],
+      ['Legal & Regulatory',['No material legal/regulatory consequence anticipated.','Minor compliance issue with straightforward correction and no material external exposure.','Material compliance obligation or breach risk requiring legal/regulatory review.','Significant breach, regulatory intervention, contractual exposure or enforcement risk.','Severe or prohibited legal/regulatory exposure, material sanction, licence/telecom impact or activity that cannot lawfully proceed.']],
+      ['Reputation & Trust',['No meaningful external or internal trust impact.','Minor localized concern with limited visibility.','Material stakeholder concern or reputational impact requiring communication/remediation.','Significant loss of customer, employee, regulator or partner trust; likely public scrutiny.','Severe, sustained or enterprise-wide loss of trust, major public controversy or brand damage.']],
+      ['Societal Impact',['No credible broader societal consequence.','Limited indirect societal effect.','Material effect on a community, market behavior, information environment or social outcomes.','Significant broader impact affecting communities, public interests or social systems.','Severe, systemic or large-scale societal harm, including manipulation, exclusion, destabilization or widespread adverse externalities.']]
+    ]]
+  ];
+
+  const likelihood = [
+    ['Occurrence / Exposure','occurrence',[
+      ['Historical Occurrence',['No known occurrence internally or in comparable contexts; scenario is exceptional.','Rare or isolated occurrence in comparable environments.','Scenario has occurred occasionally or credible examples exist in similar use cases.','Similar events have occurred repeatedly internally or across comparable deployments.','Issue is already occurring, recurring, or has a strong established history in the current environment.']],
+      ['Frequency of Use',['Very infrequent or one-off use.','Occasional use with limited transactions/interactions.','Regular use as part of routine operations.','Frequent use across daily/high-volume processes.','Continuous, near-continuous or very high-volume use where exposure is persistent.']],
+      ['Scale of Exposure',['Very limited exposure: few users, records, decisions or systems.','Contained exposure to a small team, dataset or process.','Moderate exposure across a function, customer segment or meaningful dataset.','Broad exposure across multiple functions, large populations, integrations or datasets.','Enterprise-wide, mass-market, ecosystem or critical-system exposure.']],
+      ['Duration / Persistence of Exposure',['Short-lived, tightly time-bound exposure.','Temporary exposure with limited persistence.','Ongoing exposure during normal operation with periodic breaks or review.','Persistent exposure over long periods with limited interruption.','Continuous or enduring exposure where harmful conditions can accumulate or propagate.']],
+      ['Change / Volatility',['Stable model, data, process and environment; changes are rare and tightly controlled.','Low rate of change with established review and testing.','Regular change in model, prompts, data, users or operating conditions.','Frequent change, evolving dependencies or material drift/uncertainty.','Highly dynamic or rapidly changing environment, model, agent behavior, data or external dependency with limited predictability.']]
+    ]],
+    ['Failure / Misuse Feasibility','feasibility',[
+      ['Technical Feasibility',['Scenario requires exceptional technical conditions and is difficult to reproduce.','Technically difficult; requires uncommon conditions or sophisticated capability.','Feasible with specific conditions, tooling or moderate technical capability.','Readily feasible using common techniques, tools or known weaknesses.','Trivial or inherent to normal operation; little technical barrier exists.']],
+      ['Access Required',['Requires highly privileged, restricted or exceptional access.','Requires elevated access available to a small number of trusted users.','Requires authenticated or role-based access available to a defined user population.','Can be triggered by ordinary users, broad internal access or externally exposed interfaces.','No meaningful access barrier; public, automated or broadly accessible triggering is possible.']],
+      ['Skill / Complexity Required',['Requires rare specialist expertise, significant preparation and complex execution.','Requires advanced technical knowledge or meaningful effort.','Requires moderate knowledge, experimentation or process understanding.','Requires limited skill; common guidance/tools make the scenario easy to execute.','Requires little/no specialist skill; can occur accidentally or through simple instructions/actions.']],
+      ['Foreseeable Misuse',['Misuse is remote, implausible and inconsistent with realistic user behavior.','Misuse is conceivable but requires unusual motivation or conditions.','Misuse is reasonably foreseeable for certain users or contexts.','Misuse is likely in common scenarios or attractive due to value/convenience.','Misuse is obvious, easy, repeatedly observed or intrinsic to the way the system can be used.']],
+      ['Model / Data Susceptibility',['Model/data are highly robust to the scenario; susceptibility is negligible.','Limited susceptibility with strong technical constraints.','Known sensitivity or weakness exists under certain inputs, data conditions or contexts.','Model/data are materially susceptible to manipulation, drift, poisoning, leakage, bias or unstable behavior.','High inherent susceptibility; harmful behavior is easy to induce, recurring or difficult to constrain.']]
+    ]]
+  ];
+
+  const controls = [['Existing Control Strength','controls',[
+    ['Preventive Controls',['Comprehensive preventive controls are implemented, enforced, tested and operating effectively; no material gaps identified.','Multiple preventive controls operate effectively; only minor gaps or exceptions remain.','Preventive controls exist and provide some protection, but important gaps, manual dependencies or untested assumptions remain.','Preventive controls are incomplete, inconsistent, poorly enforced or readily bypassed.','Preventive controls are absent, materially ineffective, not implemented or inappropriate for the risk.']],
+    ['Detective Controls',['Comprehensive real-time/near-real-time detection is implemented, tested, tuned and linked to clear response actions.','Effective monitoring and alerting cover the main risk indicators with minor gaps.','Monitoring exists but has blind spots, manual review, limited thresholds or inconsistent response linkage.','Detection is delayed, fragmented, poorly tuned or covers only a small part of the relevant risk.','No meaningful monitoring, detection or alerting exists, or existing detection is known ineffective.']],
+    ['Human Oversight Controls',['Human oversight is mandatory, competent, timely, independent where needed, and supported by clear override/stop mechanisms and evidence.','Human oversight is effective and routinely performed with minor capacity or documentation gaps.','Human review exists but is selective, periodic, dependent on individual judgment or inconsistently evidenced.','Human oversight is weak, unclear, overloaded, too late to prevent harm or easy to bypass.','No meaningful human review, accountability, intervention, override or stop capability exists.']],
+    ['Governance Controls',['Ownership, approvals, roles, segregation, policy requirements, escalation and recordkeeping are clearly defined, consistently applied and evidenced.','Governance is effective with minor process or documentation gaps.','Core governance exists but some responsibilities, approval gates, escalation or evidence are incomplete or inconsistent.','Governance is informal, fragmented, inconsistently applied, poorly documented or lacks effective escalation.','No effective governance structure, accountable owner, approval route, policy requirement or escalation mechanism exists.']],
+    ['Control Validation / Testing',['Control design and operating effectiveness are regularly tested, results are evidenced, deficiencies are remediated and independent challenge is used where appropriate.','Testing demonstrates controls are generally effective; only minor findings or coverage gaps remain.','Some testing/validation exists, but scope, frequency, evidence, independence or remediation is limited.','Testing is ad hoc, stale, incomplete or reveals significant unresolved control weaknesses.','No validation evidence exists, controls are untested, or testing demonstrates that controls are ineffective.']]
+  ]]];
+
+  const root = document.getElementById('airaApp');
+  const state = {impact:{}, likelihood:{}, controls:{}};
+  const qMap = new Map();
+  let seq = 0;
+  let currentScreen = 'info';
+  const screenOrder = ['info','impact','likelihood','controls','results'];
+
+  function showScreen(name) {
+    currentScreen = name;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    const labels = {
+      info:'Step 1 of 5 · AI System / Use Case Information',
+      impact:'Step 2 of 5 · Impact Assessment',
+      likelihood:'Step 3 of 5 · Likelihood Assessment',
+      controls:'Step 4 of 5 · Existing Control Strength',
+      results:'Step 5 of 5 · Results'
+    };
+    document.getElementById('stepMeta').textContent = labels[name];
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function renderGroups(containerId, groups, type) {
+    const host = document.getElementById(containerId);
+    groups.forEach(([factor, cls, items]) => {
+      const band = document.createElement('div');
+      band.className = 'factor-band ' + cls;
+      band.textContent = factor;
+      host.appendChild(band);
+      items.forEach(([name, defs]) => {
+        const id = 'q' + (++seq);
+        qMap.set(id, {type, factor, name, defs});
+        const row = document.createElement('div');
+        row.className = 'score-row';
+        const label = document.createElement('label');
+        label.htmlFor = id;
+        label.textContent = name;
+        const select = document.createElement('select');
+        select.id = id;
+        select.className = 'score-select';
+        select.innerHTML = '<option value="">Select 1–5</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>';
+        const def = document.createElement('div');
+        def.id = id + 'd';
+        def.className = 'definition';
+        def.textContent = 'Select a score to display the scale definition.';
+        row.append(label, select, def);
+        host.appendChild(row);
+        select.addEventListener('change', () => {
+          const v = Number(select.value) || 0;
+          if(v) { state[type][id] = v; def.textContent = defs[v-1]; }
+          else { delete state[type][id]; def.textContent = 'Select a score to display the scale definition.'; }
+          update();
+        });
+      });
+    });
+  }
+
+  renderGroups('impactQuestions', impact, 'impact');
+  renderGroups('likelihoodQuestions', likelihood, 'likelihood');
+  renderGroups('controlQuestions', controls, 'controls');
+
+  function idsFor(type, factor) {
+    return [...qMap].filter(([,q]) => q.type === type && q.factor === factor).map(([id]) => id);
+  }
+  function avg(ids,type) {
+    const vals = ids.map(id => state[type][id]).filter(Boolean);
+    return vals.length === ids.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  }
+  function riskTier(score) {
+    if(score == null) return ['Pending','pending'];
+    if(score >= 80) return ['Critical','critical'];
+    if(score >= 60) return ['High','high'];
+    if(score >= 26) return ['Medium','medium'];
+    return ['Low','low'];
+  }
+  function residualGovernance(score) {
+    if(score == null) return {severity:'Pending', cls:'pending', tier:'—', approval:'—', manager:'—'};
+    if(score >= 80) return {severity:'Critical', cls:'critical', tier:'Tier 4', approval:'C-Suite', manager:'L6'};
+    if(score >= 60) return {severity:'High', cls:'high', tier:'Tier 3', approval:'Head of Department / Function', manager:'L5'};
+    if(score >= 26) return {severity:'Medium', cls:'medium', tier:'Tier 2', approval:'Line Manager', manager:'L4 / L3'};
+    return {severity:'Low', cls:'low', tier:'Tier 1', approval:'Self-Review', manager:'N/A'};
+  }
+  function riskScore(i,l) { return i==null || l==null ? null : Math.round(((i*l)/225)*100); }
+  function fmt(v) { return v==null ? '—' : v.toFixed(2); }
+  function requiredInfoComplete() {
+    const baseComplete=['systemName','owner','businessUnit','assessor','description'].every(id => document.getElementById(id).value.trim());
+    const bu=document.getElementById('businessUnit');
+    const customBuOk=bu.value!=='Custom' || document.getElementById('businessUnitCustom').value.trim();
+    return baseComplete && customBuOk;
+  }
+  function completion(type) {
+    const total = [...qMap].filter(([,q]) => q.type===type).length;
+    const done = Object.keys(state[type]).length;
+    return {done,total,complete:done===total};
+  }
+  function allScoringCount() { return Object.keys(state.impact).length + Object.keys(state.likelihood).length + Object.keys(state.controls).length; }
+
+  function calc() {
+    const b=avg(idsFor('impact','Business / Use Case Impact'),'impact');
+    const p=avg(idsFor('impact','People & Data Impact'),'impact');
+    const a=avg(idsFor('impact','AI Impact'),'impact');
+    const o=avg(idsFor('likelihood','Occurrence / Exposure'),'likelihood');
+    const f=avg(idsFor('likelihood','Failure / Misuse Feasibility'),'likelihood');
+    const c=avg(idsFor('controls','Existing Control Strength'),'controls');
+    const impactTotal=[b,p,a].every(v=>v!=null) ? b+p+a : null;
+    const inherentLik=o!=null&&f!=null ? o+f+5 : null;
+    const residualLik=o!=null&&f!=null&&c!=null ? o+f+c : null;
+    return {b,p,a,o,f,c,impactTotal,inherentLik,residualLik,inherent:riskScore(impactTotal,inherentLik),residual:riskScore(impactTotal,residualLik)};
+  }
+
+  function setTier(prefix,value) {
+    const [name,cls]=riskTier(value);
+    const s=document.getElementById(prefix+'Score'), t=document.getElementById(prefix+'Tier');
+    if(s) s.textContent=value==null?'—':value;
+    if(t) {t.textContent=name;t.className='tier '+cls;}
+  }
+
+  function update() {
+    const r=calc();
+    const imp=completion('impact'), lik=completion('likelihood'), ctl=completion('controls');
+    document.getElementById('startBtn').disabled=!requiredInfoComplete();
+    document.getElementById('toLikelihoodBtn').disabled=!imp.complete;
+    document.getElementById('toControlsBtn').disabled=!lik.complete;
+    document.getElementById('viewResultsBtn').disabled=!ctl.complete;
+
+    document.getElementById('infoStatus').textContent=requiredInfoComplete()?'Required information complete. You can start the assessment.':'Complete all fields marked * to begin.';
+    document.getElementById('impactStatus').textContent=imp.complete?'Impact assessment complete. Continue to Likelihood.':`Impact scoring: ${imp.done} of ${imp.total} completed.`;
+    document.getElementById('likelihoodStatus').textContent=lik.complete?'Likelihood assessment complete. Continue to Existing Controls.':`Likelihood scoring: ${lik.done} of ${lik.total} completed.`;
+    document.getElementById('controlStatus').textContent=ctl.complete?'Control-strength assessment complete. View the final results.':`Control scoring: ${ctl.done} of ${ctl.total} completed.`;
+
+    const infoPct=requiredInfoComplete()?10:0;
+    const scoringPct=(allScoringCount()/40)*80;
+    const resultsPct=currentScreen==='results'&&imp.complete&&lik.complete&&ctl.complete?10:0;
+    const pct=Math.round(Math.min(100,infoPct+scoringPct+resultsPct));
+    document.getElementById('topCompletion').textContent=pct+'%';
+    document.getElementById('progressBar').style.width=pct+'%';
+
+    const iTier=r.inherent==null?'Pending':`${r.inherent} · ${riskTier(r.inherent)[0]}`;
+    const resTier=r.residual==null?'Pending':`${r.residual} · ${riskTier(r.residual)[0]}`;
+    document.getElementById('topInherent').textContent=iTier;
+    document.getElementById('topResidual').textContent=resTier;
+
+    setTier('inherent',r.inherent); setTier('residual',r.residual);
+    const ii=document.getElementById('inherentImpact'); if(ii) ii.textContent=r.impactTotal==null?'— / 15':fmt(r.impactTotal)+' / 15';
+    const ri=document.getElementById('residualImpact'); if(ri) ri.textContent=r.impactTotal==null?'— / 15':fmt(r.impactTotal)+' / 15';
+    const il=document.getElementById('inherentLikelihood'); if(il) il.textContent=r.inherentLik==null?'— / 15':fmt(r.inherentLik)+' / 15';
+    const rl=document.getElementById('residualLikelihood'); if(rl) rl.textContent=r.residualLik==null?'— / 15':fmt(r.residualLik)+' / 15';
+
+
+    const gov = residualGovernance(r.residual);
+    const decision = document.getElementById('residualTierDecision');
+    if(decision) {
+      decision.className = 'tier-decision ' + gov.cls;
+      document.getElementById('decisionHeadline').textContent = r.residual == null
+        ? 'Complete the assessment'
+        : gov.tier + ' · ' + gov.severity + ' Residual Risk';
+      const badge = document.getElementById('decisionScoreBadge');
+      badge.textContent = r.residual == null ? 'Pending' : 'Residual Score ' + r.residual;
+      badge.className = 'tier ' + gov.cls;
+      document.getElementById('decisionTier').textContent = gov.tier;
+      document.getElementById('decisionSeverity').textContent = gov.severity;
+      document.getElementById('decisionApproval').textContent = gov.approval;
+      document.getElementById('decisionManager').textContent = gov.manager;
+    }
+
+    const factor=document.getElementById('factorScores');
+    if(factor) {
+      const rows=[['Business / Use Case Impact',r.b],['People & Data Impact',r.p],['AI Impact',r.a],['Occurrence / Exposure',r.o],['Failure / Misuse Feasibility',r.f],['Existing Control Strength',r.c]];
+      factor.innerHTML=rows.map(([n,v])=>`<div class="factor-row"><span>${n}</span><strong>${v==null?'—':v.toFixed(2)}</strong></div>`).join('');
+    }
+  }
+
+  ['systemName','owner','assessor','description'].forEach(id => document.getElementById(id).addEventListener('input',update));
+  document.getElementById('businessUnit').addEventListener('change',update);
+  document.getElementById('businessUnitCustom').addEventListener('input',update);
+  document.getElementById('startBtn').addEventListener('click',()=>showScreen('impact'));
+  document.getElementById('toLikelihoodBtn').addEventListener('click',()=>showScreen('likelihood'));
+  document.getElementById('toControlsBtn').addEventListener('click',()=>showScreen('controls'));
+  document.getElementById('viewResultsBtn').addEventListener('click',()=>{showScreen('results');update();});
+  document.querySelectorAll('[data-back]').forEach(btn=>btn.addEventListener('click',()=>showScreen(btn.dataset.back)));
+
+
+  function resolvedSelectValue(selectId) {
+    const select=document.getElementById(selectId);
+    if(!select) return '';
+    if(select.value==='Custom') {
+      const targetId=select.dataset.customTarget;
+      const custom=targetId ? document.getElementById(targetId) : null;
+      return custom && custom.value.trim() ? 'Custom: ' + custom.value.trim() : 'Custom';
+    }
+    return select.value;
+  }
+
+  document.querySelectorAll('.custom-select').forEach(select => {
+    const targetId=select.dataset.customTarget;
+    const custom=targetId ? document.getElementById(targetId) : null;
+    const sync=() => {
+      if(custom) {
+        const show=select.value==='Custom';
+        custom.hidden=!show;
+        if(!show) custom.value='';
+      }
+      update();
+    };
+    select.addEventListener('change',sync);
+    if(custom) custom.addEventListener('input',update);
+    sync();
+  });
+
+  const dateEl=document.getElementById('date');
+  const now=new Date();
+  dateEl.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+
+  function resetAssessment() {
+    document.querySelectorAll('#airaApp input,#airaApp textarea,#airaApp select').forEach(el=>{if(el.id!=='date')el.value='';});
+    qMap.forEach((q,id)=>{delete state[q.type][id];document.getElementById(id+'d').textContent='Select a score to display the scale definition.';});
+    document.querySelectorAll('.custom-input').forEach(el=>{el.hidden=true;el.value='';});
+    dateEl.value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+    showScreen('info'); update();
+  }
+  document.getElementById('resetBtn').addEventListener('click',resetAssessment);
+
+  function pdfLine(doc,label,value,y) {
+    doc.setFont('helvetica','bold');doc.text(label,16,y);
+    doc.setFont('helvetica','normal');
+    const lines=doc.splitTextToSize(String(value||'—'),132);
+    doc.text(lines,70,y);
+    return Math.max(6,lines.length*4.5);
+  }
+  document.getElementById('downloadPdfBtn').addEventListener('click',()=>{
+    const r=calc();
+    if(!window.jspdf || !window.jspdf.jsPDF) {
+      alert('PDF library could not be loaded. Your browser print dialog will open instead; choose “Save as PDF”.');
+      window.print(); return;
+    }
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'mm',format:'a4'});
+    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('JazzWorld AI Risk Assessment Report',16,18);
+    doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Responsible AI Office (RAIO)',16,25);
+    let y=36;
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('AI System / Use Case Information',16,y);y+=8;
+    doc.setFontSize(9);
+    const fields=[
+      ['AI system / use case',document.getElementById('systemName').value],
+      ['Business / AI owner',document.getElementById('owner').value],
+      ['Business Unit',resolvedSelectValue('businessUnit')],
+      ['Business Division',resolvedSelectValue('businessDivision')],
+      ['Technical Owner',document.getElementById('technicalOwner').value],
+      ['Assessor',document.getElementById('assessor').value],
+      ['Segment',resolvedSelectValue('segment')],
+      ['Value Driver',resolvedSelectValue('valueDriver')],
+      ['Progress',resolvedSelectValue('progress')],
+      ['Status',resolvedSelectValue('status')],
+      ['Model / supplier / platform',document.getElementById('supplier').value],
+      ['Deployment context',document.getElementById('deployment').value],
+      ['Assessment date',document.getElementById('date').value],
+      ['Time Horizon (Years)',document.getElementById('timeHorizon').value],
+      ['Estimated Annual Value (USD / ROI)',document.getElementById('annualValue').value],
+      ['Estimated Investment (USD) / Cost',document.getElementById('investment').value],
+      ['Spending Done to Date',document.getElementById('spendingToDate').value],
+      ['Estimated Hours Saved (Annually)',document.getElementById('hoursSaved').value]
+    ];
+    fields.forEach(([l,v])=>{
+      if(y>270){doc.addPage();y=18;}
+      y+=pdfLine(doc,l,v,y);
+    });
+    y+=2;doc.setFont('helvetica','bold');doc.text('Summary',16,y);y+=5;
+    doc.setFont('helvetica','normal');const summaryText=doc.splitTextToSize(document.getElementById('summary').value || '—',175);doc.text(summaryText,16,y);y+=summaryText.length*4.5+5;
+    doc.setFont('helvetica','bold');doc.text('Description',16,y);y+=5;
+    doc.setFont('helvetica','normal');const desc=doc.splitTextToSize(document.getElementById('description').value,175);doc.text(desc,16,y);y+=desc.length*4.5+7;
+
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text('Risk Results',16,y);y+=8;doc.setFontSize(10);
+    pdfLine(doc,'Inherent risk',r.inherent+' · '+riskTier(r.inherent)[0],y);y+=6;
+    pdfLine(doc,'Residual risk',r.residual+' · '+riskTier(r.residual)[0],y);y+=6;
+    const governance=residualGovernance(r.residual);
+    pdfLine(doc,'Assigned risk tier',governance.tier,y);y+=6;
+    pdfLine(doc,'Approval level',governance.approval,y);y+=6;
+    pdfLine(doc,'Manager level',governance.manager,y);y+=6;
+    pdfLine(doc,'Impact score',fmt(r.impactTotal)+' / 15',y);y+=6;
+    pdfLine(doc,'Inherent likelihood',fmt(r.inherentLik)+' / 15',y);y+=6;
+    pdfLine(doc,'Residual likelihood',fmt(r.residualLik)+' / 15',y);y+=9;
+
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('Factor Scores',16,y);y+=7;doc.setFontSize(9);
+    [['Business / Use Case Impact',r.b],['People & Data Impact',r.p],['AI Impact',r.a],['Occurrence / Exposure',r.o],['Failure / Misuse Feasibility',r.f],['Existing Control Strength',r.c]].forEach(([l,v])=>{pdfLine(doc,l,v==null?'—':v.toFixed(2),y);y+=6;});
+    y+=4;doc.setFont('helvetica','bold');doc.text('Formula',16,y);doc.setFont('helvetica','normal');doc.text('Risk Score = ((Impact × Likelihood) / 225) × 100',50,y);y+=7;
+    doc.text('Risk levels: Low 1–25 | Medium 26–59 | High 60–79 | Critical 80–100',16,y);
+    const safe=(document.getElementById('systemName').value||'AI_Risk_Assessment').replace(/[^a-z0-9_-]+/gi,'_');
+    doc.save(safe+'_AIRA_Report.pdf');
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

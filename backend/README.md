@@ -91,3 +91,117 @@ pytest
 ```
 
 Score tests compare this engine with results produced by the prototype's JavaScript methodology.
+
+
+## Approved knowledge assistant (RAG)
+
+The existing authenticated intake chat can answer AIRA policy and methodology
+questions using the approved knowledge corpus. This integration is deliberately
+limited to the chat path: ordinary use-case descriptions continue through the
+existing intake workflow, and knowledge turns are saved to the transcript without
+being appended to the use-case description or used to populate intake slots.
+
+### Architecture
+
+1. `app.rag.ingest` extracts approved source documents into bounded passages.
+2. SQLite FTS5 performs read-only keyword retrieval at chat time.
+3. Only passages with `status=current` and authority `official` or `supporting`
+   are eligible for retrieval.
+4. The configured Jazz Gemma-compatible endpoint generates a concise answer from
+   those passages only.
+5. The application, not the model, attaches the source document and locator list.
+6. If retrieval finds no evidence, or generation fails, the assistant abstains
+   rather than filling gaps with general knowledge.
+
+The RAG assistant does not calculate risk scores, assign official risk tiers,
+approve/reject systems, or change the AIRA-DDA-1.0 methodology. Those operations
+remain with the deterministic assessment engine and authorised human reviewers.
+
+### Knowledge governance
+
+Place approved reference documents in `knowledge_base/source_docs/` and register
+each filename in `knowledge_base/manifest.json`. Only explicitly manifested
+documents with `authority` set to `official` or `supporting` and `status` set to
+`current` or `superseded` are considered by ingestion. Superseded documents are
+retained for traceability but excluded from retrieval. Unlisted files, drafts,
+unclassified documents, and the restricted operational use-case inventory are
+not indexed.
+
+The supplied corpus includes the approved AIRA standard, field reference,
+governance/control matrix, final impact/likelihood/control scales, and supporting
+calculator reference. The V2 scales workbook is marked superseded. Confirm
+document ownership, classification, version, and approval status with RAIO before
+production use; the manifest is a deployment control, not a substitute for formal
+document approval.
+
+### Build or rebuild the index
+
+```bash
+cd backend
+python -m pip install -r requirements.txt
+python -m app.rag.ingest
+```
+
+The builder validates the manifest, rejects unsafe/unlisted source files, builds
+a temporary SQLite database, checks its row counts, and atomically replaces the
+active index only after a successful build. Retrieval opens the index read-only.
+Rebuild and deploy the index through a controlled release process whenever an
+approved source changes; do not expose ingestion as a public API.
+
+### Configuration
+
+```env
+RAG_ENABLED=true
+RAG_INDEX_PATH=knowledge_base/aira_knowledge.sqlite3
+RAG_TOP_K=5
+RAG_MIN_TERM_COVERAGE=1
+RAG_TIMEOUT_SECONDS=35
+RAG_VERIFY_SSL=true
+```
+
+`RAG_VERIFY_SSL=true` should remain enabled in production. If the internal Jazz
+model endpoint uses a private certificate authority, install the approved
+corporate CA certificate into the runtime trust store; do not disable TLS
+verification as a workaround. `LLM_VERIFY_SSL` remains a separate setting used
+by the existing intake extraction workflow.
+
+### Security and operational controls
+
+- The chat route continues to require the existing authenticated session and
+  session-ownership check.
+- User input and retrieved passages are treated as untrusted data; the prompt
+  explicitly prohibits following instructions embedded in either.
+- FTS query syntax is generated from tokenised terms rather than raw user input.
+- The model receives bounded question/context sizes, a bounded output budget,
+  a finite timeout, and no redirect following.
+- Runtime retrieval is read-only. Only current, allowlisted source passages can
+  support an answer.
+- Source labels and locators are attached by application code; model-generated
+  citation labels are discarded.
+- No retrieval evidence means abstention. Model/network failures return a safe
+  fallback and do not affect intake state.
+- RAG does not expose document upload, index rebuild, scoring, approval, or
+  decision capabilities.
+
+User questions and retrieved passages are sent to the configured LLM endpoint;
+confirm that the Jazz endpoint is approved for the classification of every
+indexed source. Before production deployment, additionally enforce
+organisation-wide controls at the platform boundary: managed secrets, HTTPS ingress, least-privilege
+database/filesystem permissions, network egress allowlisting to the approved
+model endpoint, centralised audit logging, dependency scanning, backup/restore
+testing, and load/rate-limit testing. These depend on the deployment platform
+and cannot be guaranteed by application code alone.
+
+### Health and tests
+
+`GET /health` reports `ragEnabled` and `ragIndexReady`; it does not expose
+document contents. Run:
+
+```bash
+cd backend
+pytest
+```
+
+The RAG tests cover approved-source retrieval, exclusion of superseded/untrusted
+content, abstention, and the guarantee that knowledge questions do not pollute
+the intake description.
